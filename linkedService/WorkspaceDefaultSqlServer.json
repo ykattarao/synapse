@@ -2,10 +2,6 @@
 	"name": "WorkspaceDefaultSqlServer",
 	"properties": {
 		"parameters": {
-			"WorkspaceName": {
-				"type": "string",
-				"defaultValue": "Testing123"
-			},
 			"DBName": {
 				"type": "string"
 			}
@@ -13,7 +9,7 @@
 		"annotations": [],
 		"type": "AzureSqlDW",
 		"typeProperties": {
-			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:@{linkedService().WorkspaceName}.sql.azuresynapse.net,1433;Initial Catalog=${linkedService().DBName}"
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:synw-pdlintegrations-nonprd-dev-e2-01.sql.azuresynapse.net,1433;Initial Catalog=${linkedService().DBName}"
 		},
 		"connectVia": {
 			"referenceName": "AutoResolveIntegrationRuntime",
