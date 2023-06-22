@@ -3,7 +3,8 @@
 	"properties": {
 		"parameters": {
 			"WorkspaceName": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "Testing123"
 			},
 			"DBName": {
 				"type": "string"
