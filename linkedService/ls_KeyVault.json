@@ -1,0 +1,10 @@
+{
+	"name": "ls_KeyVault",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kv-pdlint-syn-npdev-e201.vault.azure.net/"
+		}
+	}
+}
