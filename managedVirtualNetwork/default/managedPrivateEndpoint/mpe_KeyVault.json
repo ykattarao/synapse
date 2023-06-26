@@ -1,0 +1,7 @@
+{
+	"name": "mpe_KeyVault",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.KeyVault/vaults/kv-pdlint-syn-npdev-e201",
+		"groupId": "vault"
+	}
+}
