@@ -1,0 +1,14 @@
+{
+	"name": "ls_Storage_SelfHosted",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://sasynwpdlintnpdeve201.dfs.core.windows.net/"
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedRuntime01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
