@@ -1,0 +1,359 @@
+{
+	"name": "nb_mdm_merch_ctr_omt_prim_cat",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/merchandise/category"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "61501a6f-a455-4935-a8da-4f0080c67a1d"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": []
+				},
+				"source": [
+					"\r\n",
+					"BASE_ADLS_CONN_STR= \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH = \"opco/ppod/domain/merch/category/omt-prim-cat/lake/2023-08-01-12-52-19/\"\r\n",
+					"STAGE_MERCH_CATEGORY_NAME_PATH=\"opco/ppod/domain/merch/category/omt-prim-cat/stage/\"\r\n",
+					"TARGET_MERCH_CATEGORY_NAME_PATH=\"opco/{opco}/domain/merch/category/omt-prim-cat/master/\"\r\n",
+					"KEY_COL = \"prim_cat_id\"\r\n",
+					"VAL_CNT_THRESHOLD = 1\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
+					""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_merch_ctr_omt_prim_cat\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - CATEGORY  - OMT -PRIM - CAT - Starting with below parameters\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH : {0}\".format(SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH))\r\n",
+					"logger.info(\"\\t STAGE_MERCH_CATEGORY_NAME_PATH : {0}\".format(STAGE_MERCH_CATEGORY_NAME_PATH))\r\n",
+					"logger.info(\"\\t TARGET_MERCH_CATEGORY_NAME_PATH : {0}\".format(TARGET_MERCH_CATEGORY_NAME_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"**************************************************************************\")\r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, ShortType, StringType,TimestampType, IntegerType, LongType, DecimalType, BooleanType, DateType, ArrayType\r\n",
+					"\r\n",
+					"STAGE_MERCH_CATEGORY_NAME_SCHEMA = StructType([\r\n",
+					"    StructField(\"prim_cat_id\", LongType(), True),\r\n",
+					"    StructField(\"cat_name_tx\", StringType(), False),\r\n",
+					"    StructField(\"type_cd\", StringType(), False),\r\n",
+					"    StructField(\"actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"audt_cr_dt_tm\", TimestampType(), False),\r\n",
+					"    StructField(\"audt_cr_user_cd\", StringType(), False),\r\n",
+					"    StructField(\"audt_upd_dt_tm\", TimestampType(), True),\r\n",
+					"    StructField(\"audt_upd_user_cd\", StringType(), False)\r\n",
+					"    ])\r\n",
+					"\r\n",
+					"logger.debug(\"\\t schema-defination : Defined the schema for catalog_prod:omt_prim_cat.\\n {0}\".format(STAGE_MERCH_CATEGORY_NAME_SCHEMA))"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE DATA LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import current_timestamp, lit\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_MERCH_CATEGORY_NAME_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_MERCH_CATEGORY_NAME_PATH, recurse = True)\r\n",
+					"    logger.info(\"\\t Purging data from STG container {0}\".format(STAGE_MERCH_CATEGORY_NAME_PATH))\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"df_prod_ctr_name_stage = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"parquet\") \\\r\n",
+					"    .schema(STAGE_MERCH_CATEGORY_NAME_SCHEMA) \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH) \\\r\n",
+					"    .withColumnRenamed(\"audt_cr_dt_tm\", \"src_audt_cr_dt_tm\") \\\r\n",
+					"    .withColumnRenamed(\"audt_cr_user_cd\", \"src_audt_cr_user_cd\") \\\r\n",
+					"    .withColumnRenamed(\"audt_upd_dt_tm\", \"src_audt_upd_dt_tm\") \\\r\n",
+					"    .withColumnRenamed(\"audt_upd_user_cd\", \"src_audt_upd_user_cd\") \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_user_cd\", lit('usr-data-integration')) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_user_cd\", lit('usr-data-integration')) \r\n",
+					"  \r\n",
+					"\r\n",
+					"\r\n",
+					"df_prod_ctr_name_stage \\\r\n",
+					"    .sort(KEY_COL)\\\r\n",
+					"    .write \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .option(\"inferSchema\",\"True\")\\\r\n",
+					"    .mode(\"overwrite\") \\\r\n",
+					"    .save(BASE_ADLS_CONN_STR + STAGE_MERCH_CATEGORY_NAME_PATH)  \r\n",
+					"\r\n",
+					"logger.info(\"\\t stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH, STAGE_MERCH_CATEGORY_NAME_PATH, df_prod_ctr_name_stage.count()))  "
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA LOAD AFTER VALIDATION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"           .sort(KEY_COL) \\\r\n",
+					"           .write \\\r\n",
+					"           .option(\"mergeSchema\", \"True\") \\\r\n",
+					"           .mode(\"overwrite\") \\\r\n",
+					"           .format(\"delta\") \\\r\n",
+					"           .save(path)\r\n",
+					"    logger.info(\"\\t CATALOG_PROD:OMT_PRIM_CAT Master data overwrite.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"    \r\n",
+					"def apply_cdc():\r\n",
+					"    logger.info(\"\\t Delta master load\")\r\n",
+					"    df_prod_ctr_name_master= spark \\\r\n",
+					"                        .read \\\r\n",
+					"                        .format(\"delta\") \\\r\n",
+					"                        .load(BASE_ADLS_CONN_STR + TARGET_MERCH_CATEGORY_NAME_PATH.format(opco = opco)) \r\n",
+					"    logger.info(\"\\t CATALOG_PROD:OMT_PRIM_CAT loaded from master. OPCO = {0}, Count={1}\".format(opco, df_prod_ctr_name_master.count()))\r\n",
+					"    df_prod_ctr_name_master.createOrReplaceTempView('tbl_prod_ctr_name_mstr')\r\n",
+					"    df_prod_ctr_name_stage.createOrReplaceTempView('tbl_prod_ctr_name_stage')\r\n",
+					"    spark.sql(\r\n",
+					"        \"\"\"\r\n",
+					"        MERGE INTO tbl_prod_ctr_name_mstr\r\n",
+					"        USING tbl_prod_ctr_name_stage\r\n",
+					"        ON tbl_prod_ctr_name_mstr.prim_cat_id = tbl_prod_ctr_name_stage.prim_cat_id\r\n",
+					"        WHEN MATCHED THEN\r\n",
+					"            UPDATE SET *\r\n",
+					"        WHEN NOT MATCHED THEN\r\n",
+					"            INSERT *\r\n",
+					"        \"\"\"\r\n",
+					"        )\r\n",
+					"    logger.info(\"\\t CATALOG_PROD:OMT_PRIM_CAT merged delta records to main file. OPCO = {0}, Count={1}\".format(opco, df_prod_ctr_name_stage.count()))\r\n",
+					"def init():\r\n",
+					"        logger.info('\\t First Time Master Load')\r\n",
+					"        load_master_data(df_prod_ctr_name_stage,BASE_ADLS_CONN_STR + TARGET_MERCH_CATEGORY_NAME_PATH.format(opco = opco),opco)\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"\r\n",
+					"# FULL LOAD / DELTA LOAD\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"\\t Processing MASTER for CTR OMT_PRIM_CAT - OPCO={0}\".format(opco))\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_MERCH_CATEGORY_NAME_PATH.format(opco = opco)) == False):\r\n",
+					"        init()\r\n",
+					"    else:\r\n",
+					"        apply_cdc()    "
+				],
+				"execution_count": 7
+			}
+		]
+	}
+}

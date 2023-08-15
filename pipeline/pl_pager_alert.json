@@ -1,0 +1,67 @@
+{
+	"name": "pl_pager_alert",
+	"properties": {
+		"activities": [
+			{
+				"name": "pageronlyforprod",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@contains(pipeline().DataFactory,'adf-pdladf-dataint-prd-e2-01')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "pager_alert",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@pipeline().parameters.PAGER_ALERT",
+									"type": "Expression"
+								},
+								"connectVia": {
+									"referenceName": "AutoResolveIntegrationRuntime",
+									"type": "IntegrationRuntimeReference"
+								},
+								"method": "POST",
+								"headers": {
+									"Content-type": "application/json"
+								},
+								"body": {
+									"value": "{\n  \"service_key\": \"dbccb774e7284009c0a2409b1777678d\",\n  \"incident_key\": \"adf-dataint/pipeline\",\n  \"event_type\": \"trigger\",\n  \"description\": \"Pipeline Failed\",\n  \"client\": \"Datadog ADF - Data Integration\",\n  \"client_url\": \"https://app.datadoghq.com/monitors/manage?q=service%3A%22dataintegration-adf%22\",\n  \"details\": {\n    \"Action\": \"PAGE Data Integration Team\",\n    \"Error\": \"Failure on production for ADF Data Integration\",\n    \"Message\": \"Pipeline for sending data to citrus ad failed \"\n  },\n  \"contexts\": [\n    {\n      \"type\": \"link\",\n      \"href\": \"https://peapodllc.pagerduty.com/teams/P22CLHJ/users\",\n      \"text\": \"Team\"\n    },\n    {\n      \"type\": \"link\",\n      \"href\": \"https://peapodllc.pagerduty.com/escalation_policies#PQRR5LQ\",\n      \"text\": \"Escalation Policy\"\n    }\n  ]\n}",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PAGER_ALERT": {
+				"type": "string",
+				"defaultValue": "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
+			}
+		},
+		"variables": {
+			"var_test": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "utils/notification"
+		},
+		"annotations": []
+	}
+}

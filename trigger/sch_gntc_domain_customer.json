@@ -1,0 +1,31 @@
+{
+	"name": "sch_gntc_domain_customer",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_build_customer",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"PARAM_OPCO": "GNTC",
+					"PARAM_DOMAIN": "customer/user",
+					"PARAM_CUS_SCHEMA_PROFILE": "profile",
+					"PARAM_CUS_TBL_USR": "cpt_user",
+					"PARAM_ADLS_CONN_STR": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 60,
+				"startTime": "2023-07-17T19:23:00",
+				"timeZone": "Central Standard Time"
+			}
+		}
+	}
+}

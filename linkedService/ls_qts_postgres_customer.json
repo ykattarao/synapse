@@ -1,0 +1,30 @@
+{
+	"name": "ls_qts_postgres_customer",
+	"properties": {
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "String",
+				"defaultValue": "FDLN"
+			}
+		},
+		"annotations": [],
+		"type": "PostgreSql",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": {
+					"value": "@if(equals('FDLN',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-qts-postgres-customer-fdln', \n    if(equals('HNFD',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-qts-postgres-customer-hnfd', \n        if(equals('STSH',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-qts-postgres-customer-stsh',\n            if(equals('GNTL',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-qts-postgres-customer-gntl',\n                if(equals('GNTC',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-qts-postgres-customer-gntc',\n                if(equals('MRTN',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-qts-postgres-customer-mrtn','invalid'))))))",
+					"type": "Expression"
+				}
+			}
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedRuntime01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

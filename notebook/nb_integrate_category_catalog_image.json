@@ -1,0 +1,426 @@
+{
+	"name": "nb_integrate_category_catalog_image",
+	"properties": {
+		"folder": {
+			"name": "integration/category"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "a3fe078f-6697-406e-9d13-bb0d5b553f55"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"TARGET_CATALOG_ATTRIBUTE_PATH = \"opco/{opco}/domain/merch/catalog/omt-atr/master/\"\r\n",
+					"TARGET_CATALOG_ATTRIBUTE_VALUE_PATH = \"opco/{opco}/domain/merch/catalog/omt-atr-val/master/\"\r\n",
+					"TARGET_CONTENT_CONT_CTL_PATH = \"opco/{opco}/domain/merch/content/content-pit-cont-ctl/master/\"\r\n",
+					"TARGET_CATEGORY_IMAGE_PATH = \"opco/{opco}/integration/category/category-image/master\"\r\n",
+					"VAL_CNT_THRESHOLD = 5.0\r\n",
+					"KEY_COL = \"attributeId\"\r\n",
+					"VAR_ATR_ID = 71\r\n",
+					"VAR_ATR_TYPE_CD = 'C'\r\n",
+					"OPCO=\"fdln\""
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_category_catalog_image\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\n",
+					"logger.info(\"\\t Category Integration - Category Image - Starting with below parameters\")\n",
+					"logger.info(\"*************************************************************************\")\n",
+					"logger.info(\"\\t OPCO : {0}\".format(OPCO))\n",
+					"logger.info(\"\\t TARGET_CATALOG_ATTRIBUTE_PATH : {0}\".format(TARGET_CATALOG_ATTRIBUTE_PATH.format(opco = OPCO)))\n",
+					"logger.info(\"\\t TARGET_CATALOG_ATTRIBUTE_VALUE_PATH : {0}\".format(TARGET_CATALOG_ATTRIBUTE_VALUE_PATH.format(opco = OPCO)))\n",
+					"logger.info(\"\\t TARGET_CONTENT_CONT_CTL_PATH : {0}\".format(TARGET_CONTENT_CONT_CTL_PATH.format(opco = OPCO)))\n",
+					"logger.info(\"\\t TARGET_CATEGORY_IMAGE_PATH : {0}\".format(TARGET_CATEGORY_IMAGE_PATH.format(opco = OPCO)))\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
+					"logger.info(\"**************************************************************************\")\n",
+					"\n",
+					""
+				],
+				"execution_count": 24
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"****"
+				]
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**CATALOG ATTRIBUTE AND ATTRIBUTE VALUE DATA LOAD INTO DATAFRAMES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"ds_catalog_attribute = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + TARGET_CATALOG_ATTRIBUTE_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"ds_catalog_attribute_value = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + TARGET_CATALOG_ATTRIBUTE_VALUE_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"ds_content_cont_ctl = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + TARGET_CONTENT_CONT_CTL_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"logger.info(\"load-data : catalog-attribute, catalog-attribute-value and prod-content loaded from master\")"
+				],
+				"execution_count": 26
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**JOIN AND FILTER SOURCE CATALOG ATTRIBUTE,ATTRIBUTE VALUE DATA & SELECT REQUIRED COLUMNS DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"\r\n",
+					"logger.info(\"integrate : Started integrating catalog-attribute, catalog-attribute-value and prod-content\")\r\n",
+					"\r\n",
+					"ds_catalog_attribute_join_result=ds_catalog_attribute.join(ds_catalog_attribute_value,ds_catalog_attribute.atr_id==ds_catalog_attribute_value.atr_id) \\\r\n",
+					"                    .filter(ds_catalog_attribute.atr_id == VAR_ATR_ID) \\\r\n",
+					"                    .filter(ds_catalog_attribute.atr_type_cd == VAR_ATR_TYPE_CD) \\\r\n",
+					"                    .select(ds_catalog_attribute_value.atr_val_id.alias(\"id\"), \\\r\n",
+					"                     ds_catalog_attribute.atr_id.alias(\"attributeId\"), \\\r\n",
+					"                     F.when(ds_catalog_attribute_value.lvl_id.isNotNull(),ds_catalog_attribute_value.lvl_id.cast('long')) \\\r\n",
+					"                     .otherwise(0).alias(\"levelId\"), \\\r\n",
+					"                     ds_catalog_attribute_value.othr_key_id.alias(\"categoryId\"), \\\r\n",
+					"                     ds_catalog_attribute.atr_name_cd.alias(\"attributeName\"), \\\r\n",
+					"                     F.when(ds_catalog_attribute_value.atr_val_cd.isNotNull(),ds_catalog_attribute_value.atr_val_cd.cast('long')) \\\r\n",
+					"                     .otherwise(0).alias(\"attributeValue\"), \\\r\n",
+					"                     ds_catalog_attribute.atr_type_cd.alias(\"attributeType\")\r\n",
+					"                     )\r\n",
+					"       "
+				],
+				"execution_count": 27
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**JOIN SOURCE CATALOG ATTRIBUTE DATA,CONTEXT DATA & SELECT REQUIRED COLUMNS DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"\r\n",
+					"df_catalog_content=ds_catalog_attribute_join_result \\\r\n",
+					"        .join(ds_content_cont_ctl,  \\\r\n",
+					"        ds_catalog_attribute_join_result.attributeValue==ds_content_cont_ctl.cont_id) \\\r\n",
+					"        .select(ds_catalog_attribute_join_result.id.alias(\"id\"), \\\r\n",
+					"                     ds_catalog_attribute_join_result.attributeId, \\\r\n",
+					"                     ds_catalog_attribute_join_result.levelId, \\\r\n",
+					"                     ds_catalog_attribute_join_result.categoryId, \\\r\n",
+					"                     ds_catalog_attribute_join_result.attributeName, \\\r\n",
+					"                     ds_catalog_attribute_join_result.attributeValue, \\\r\n",
+					"                     ds_catalog_attribute_join_result.attributeType, \\\r\n",
+					"                     ds_content_cont_ctl.file_name_tx.alias(\"fileName\")\r\n",
+					"                     )\r\n",
+					"                "
+				],
+				"execution_count": 28
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**LASTMODIFIED COLUMN ADDED**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql.functions import current_timestamp\r\n",
+					"\r\n",
+					"df_catalog_content_result=df_catalog_content \\\r\n",
+					"    .withColumn(colName=\"lastModified\",col=current_timestamp())\r\n",
+					"\r\n",
+					"logger.info(\"enrich : enriched catalog-image-attribute with lastModified attribute\")\r\n",
+					""
+				],
+				"execution_count": 29
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"def save_catalog_content_result(df_catalog_content_rs):\r\n",
+					"    df_catalog_content_rs \\\r\n",
+					"                    .sort(KEY_COL) \\\r\n",
+					"                    .write \\\r\n",
+					"                    .mode(\"overwrite\") \\\r\n",
+					"                    .option(\"mergeSchema\",\"True\") \\\r\n",
+					"                    .format(\"delta\") \\\r\n",
+					"                    .save(BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH) \r\n",
+					"    logger.info(\"\\t Category image master data is overrided.OPCO = {0}, Count = {1}\".format(OPCO, df_catalog_content_rs.count()))\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH)):\r\n",
+					"    logger.info(\"\\t Category image master data already exists.\")\r\n",
+					"    df_old_catalog_image_result = spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH)\r\n",
+					"    logger.debug(\"\\t Category image master data loaded for validation. OPCO = {0}, Count={1}\".format(OPCO, df_old_catalog_image_result.count()))\r\n",
+					"    is_val_success = validate_count(df_old_catalog_image_result, df_catalog_content_result, VAL_CNT_THRESHOLD)\r\n",
+					"    if is_val_success:\r\n",
+					"        logger.info(\"\\t Category image master data threshold validation is Successfull\")\r\n",
+					"        save_catalog_content_result(df_catalog_content_result)\r\n",
+					"    else:\r\n",
+					"        logger.error(\"\\t Failed to override master since variantion is exceding the threshold\")\r\n",
+					"        raise Exception(\"EXCEEDING_CNT_THRESHOLD\")\r\n",
+					"else:\r\n",
+					"    logger.info(\"\\t Category image master data not exists.\")\r\n",
+					"    save_catalog_content_result(df_catalog_content_result)\r\n",
+					""
+				],
+				"execution_count": 31
+			}
+		]
+	}
+}

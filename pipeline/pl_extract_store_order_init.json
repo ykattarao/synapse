@@ -1,0 +1,377 @@
+{
+	"name": "pl_extract_store_order_init",
+	"properties": {
+		"activities": [
+			{
+				"name": "Until Enddate",
+				"type": "Until",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(variables('tempDate1'),pipeline().parameters.END_DT)",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Set increase-Date",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "tempDate2",
+								"value": {
+									"value": "@if(equals(variables('tempDate1'),''),pipeline().parameters.START_DT,addDays(variables('tempDate1'),1,'yyyy-MM-dd'))",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Set Collect-increased-Dates",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Set increase-Date",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "tempDate1",
+								"value": {
+									"value": "@variables('tempDate2')",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Append Dates",
+							"type": "AppendVariable",
+							"dependsOn": [
+								{
+									"activity": "Set Collect-increased-Dates",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "ArrayDate",
+								"value": {
+									"value": "@variables('tempDate1')",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"timeout": "0.12:00:00"
+				}
+			},
+			{
+				"name": "ForEach Date value copy source data",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Until Enddate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('ArrayDate')",
+						"type": "Expression"
+					},
+					"batchCount": 5,
+					"activities": [
+						{
+							"name": "ingest-store-order",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.03:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "CosmosDbMongoDbApiSource",
+									"batchSize": 50000,
+									"filter": {
+										"value": "{loyalty_id : { $ne : -1 },\n transaction_ts : { $gte : ISODate('@{item()}') ,  $lt : ISODate('@{addDays(item(),1)}') } }",
+										"type": "Expression"
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"parallelCopies": 3,
+								"dataIntegrationUnits": 32,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "$['_id']['$oid']"
+											},
+											"sink": {
+												"name": "id",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "$['loyalty_id']"
+											},
+											"sink": {
+												"name": "loyalty_id",
+												"type": "Int64"
+											}
+										},
+										{
+											"source": {
+												"path": "$['banner_id']"
+											},
+											"sink": {
+												"name": "banner_id",
+												"type": "Int32"
+											}
+										},
+										{
+											"source": {
+												"path": "$['store_id']"
+											},
+											"sink": {
+												"name": "store_id",
+												"type": "Int32"
+											}
+										},
+										{
+											"source": {
+												"path": "$['store_line1_address']"
+											},
+											"sink": {
+												"name": "store_line1_address",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "$['store_city']"
+											},
+											"sink": {
+												"name": "store_city",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "$['store_state']"
+											},
+											"sink": {
+												"name": "store_state",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "$['store_zip']"
+											},
+											"sink": {
+												"name": "store_zip",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "$['transaction_id']['$numberDecimal']"
+											},
+											"sink": {
+												"name": "transaction_id",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "$['transaction_nbr']"
+											},
+											"sink": {
+												"name": "transaction_nbr",
+												"type": "Int64"
+											}
+										},
+										{
+											"source": {
+												"path": "$['transaction_ts']['$date']"
+											},
+											"sink": {
+												"name": "transaction_ts"
+											}
+										},
+										{
+											"source": {
+												"path": "$['lane_nbr']"
+											},
+											"sink": {
+												"name": "lane_nbr",
+												"type": "Int64"
+											}
+										},
+										{
+											"source": {
+												"path": "$['transaction_total']['$numberDecimal']"
+											},
+											"sink": {
+												"name": "total",
+												"type": "Decimal"
+											}
+										},
+										{
+											"source": {
+												"path": "$['transaction_tax']['$numberDecimal']"
+											},
+											"sink": {
+												"name": "tax",
+												"type": "Decimal"
+											}
+										},
+										{
+											"source": {
+												"path": "$['transaction_subtotal']['$numberDecimal']"
+											},
+											"sink": {
+												"name": "subtotal",
+												"type": "Decimal"
+											}
+										},
+										{
+											"source": {
+												"path": "$['ecomm_cd']"
+											},
+											"sink": {
+												"name": "ecomm_cd",
+												"type": "Int32"
+											}
+										},
+										{
+											"source": {
+												"path": "$['cashier_id']"
+											},
+											"sink": {
+												"name": "cashier_id",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "$['tender_type_desc']"
+											},
+											"sink": {
+												"name": "tender_type_desc",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "$['transaction_lines']"
+											},
+											"sink": {
+												"name": "transaction_lines"
+											}
+										}
+									],
+									"collectionReference": "",
+									"mapComplexValuesToString": true
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_az_cosmos_store_order_domain",
+									"type": "DatasetReference",
+									"parameters": {
+										"PARAM_OPCO": {
+											"value": "@pipeline().parameters.OPCO",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_az_adls_store_order_domain",
+									"type": "DatasetReference",
+									"parameters": {
+										"PARAM_INGST_FLDR_PATH": {
+											"value": "@pipeline().parameters.INGST_FLDR_PATH",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"START_DT": {
+				"type": "string",
+				"defaultValue": "2023-03-01"
+			},
+			"END_DT": {
+				"type": "string",
+				"defaultValue": "2023-03-03"
+			},
+			"OPCO": {
+				"type": "string",
+				"defaultValue": "FDLN"
+			},
+			"INGST_FLDR_PATH": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			}
+		},
+		"variables": {
+			"tempDate1": {
+				"type": "String"
+			},
+			"tempDate2": {
+				"type": "String"
+			},
+			"INGST_FLDR_PATH_STORE": {
+				"type": "String"
+			},
+			"ArrayDate": {
+				"type": "Array",
+				"defaultValue": []
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/order/store-order"
+		},
+		"annotations": []
+	}
+}

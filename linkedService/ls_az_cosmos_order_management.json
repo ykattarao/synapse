@@ -1,0 +1,30 @@
+{
+	"name": "ls_az_cosmos_order_management",
+	"properties": {
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "FDLN"
+			}
+		},
+		"annotations": [],
+		"type": "CosmosDb",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": {
+					"value": "@if(equals('FDLN',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-cosmos-order-management-odb-fdln', \n    if(equals('HNFD',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-cosmos-order-management-odb-hnfd', \n        if(equals('STSH',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-cosmos-order-management-odb-stsh',\n            if(equals('GNTL',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-cosmos-order-management-odb-gntl',\n                if(equals('GNTC',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-cosmos-order-management-odb-gntc',\n                if(equals('MRTN',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-cosmos-order-management-odb-mrtn','invalid'))))))",
+					"type": "Expression"
+				}
+			}
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

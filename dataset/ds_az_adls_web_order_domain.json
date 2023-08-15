@@ -1,0 +1,32 @@
+{
+	"name": "ds_az_adls_web_order_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_Storage_AzureIR",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"PARAM_INGST_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "domain/order/web-order/lake/"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/order/web-order"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().PARAM_INGST_FLDR_PATH",
+					"type": "Expression"
+				},
+				"fileSystem": "data-integration"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

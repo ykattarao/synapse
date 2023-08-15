@@ -1,0 +1,32 @@
+{
+	"name": "ds_az_adls_merch_prod_catalog_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_Storage_SelfHosted",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"PARAM_PROD_CATALOG_LAKE_PATH": {
+				"type": "string",
+				"defaultValue": "opco/fdln/domain/merch/catalog/attribute/lake/"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/merchandise/catalog"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().PARAM_PROD_CATALOG_LAKE_PATH",
+					"type": "Expression"
+				},
+				"fileSystem": "data-integration"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

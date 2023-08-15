@@ -1,0 +1,7 @@
+{
+	"name": "mpe_az_cosmos_core_services_gntl",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/7e50b554-e55b-4ba0-914d-0bbb1ca1bf06/resourceGroups/rg-cosmos-pdlcoreservices-nonprd-cu-01/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-pdlcoreservices-gntlqa-01",
+		"groupId": "Sql"
+	}
+}

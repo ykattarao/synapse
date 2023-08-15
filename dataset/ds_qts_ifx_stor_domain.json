@@ -1,0 +1,37 @@
+{
+	"name": "ds_qts_ifx_stor_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_qts_informix_oltp_odbc",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"IFX_DB_NM": {
+					"value": "@dataset().PARAM_IFX_DB_NM",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "retailer"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "cpt_stor_zip"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/store"
+		},
+		"annotations": [],
+		"type": "InformixTable",
+		"schema": [],
+		"typeProperties": {
+			"tableName": {
+				"value": "@dataset().PARAM_IFX_TB_NM",
+				"type": "Expression"
+			}
+		}
+	}
+}

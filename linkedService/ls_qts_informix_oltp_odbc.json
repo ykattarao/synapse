@@ -1,0 +1,40 @@
+{
+	"name": "ls_qts_informix_oltp_odbc",
+	"properties": {
+		"parameters": {
+			"IFX_DB_NM": {
+				"type": "String",
+				"defaultValue": "retailer"
+			}
+		},
+		"annotations": [],
+		"type": "Informix",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": {
+					"value": "@if(equals(toLower(linkedService().IFX_DB_NM), 'retailer'), 'akv-ls-qts-informix-oltp-retailer-db-odbc', \n    if(equals(toLower(linkedService().IFX_DB_NM), 'central'), 'akv-ls-qts-informix-oltp-central-db-odbc', \n    if(equals(toLower(linkedService().IFX_DB_NM), 'content'), 'akv-ls-qts-informix-oltp-content-db-odbc', \n    if(equals(toLower(linkedService().IFX_DB_NM), 'customer'), 'akv-ls-qts-informix-oltp-customer-db-odbc', 'akv-ls-qts-informix-oltp-retailer-db-odbc'))))",
+					"type": "Expression"
+				}
+			},
+			"authenticationType": "Basic",
+			"userName": "ppaweb01",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "akv-ls-qts-informix-oltp-odbc-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedRuntime01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

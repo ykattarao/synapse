@@ -1,0 +1,565 @@
+{
+	"name": "pl_build_customer",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-fldr-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "INGST_CUSTDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/customer/user/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'HH-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "extract-user",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-fldr-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "lkp-ext-start-time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlSource",
+						"query": {
+							"value": "@concat('SELECT * FROM  profile.cpt_user  \n    WHERE opco_id = ''',toUpper(pipeline().parameters.PARAM_OPCO),''' \n    AND ( audt_cr_dt_tm >= ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''' OR audt_upd_dt_tm >= ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "user_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "user_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "hndl_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "hndl_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rtlr_card_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rtlr_card_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rtlr_card_trk_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rtlr_card_trk_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "othr_mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "othr_mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "msg_mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "msg_mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invc_mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invc_mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mail_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mail_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mail_stat_fl",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "mail_stat_fl",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "othr_mail_stat_fl",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "othr_mail_stat_fl",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "mail_opt_news_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mail_opt_news_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mail_opt_spec_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mail_opt_spec_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "gst_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "gst_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "stat_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stat_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dps_lcal_cd",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "dps_lcal_cd",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "dps_mail_send_fl",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "dps_mail_send_fl",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "omni_acct_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "omni_acct_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "opco_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "opco_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_dt_tm",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "audt_upd_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_postgres_customer_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_CUSTOMER_SCHEMA": {
+								"value": "@pipeline().parameters.PARAM_CUS_SCHEMA_PROFILE",
+								"type": "Expression"
+							},
+							"PARAM_CUSTOMER_TBL": {
+								"value": "@pipeline().parameters.PARAM_CUS_TBL_USR",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_customer_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_INGST_USER_PATH": {
+								"value": "@variables('INGST_CUSTDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "If Condition",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "extract-user",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@less(activity('extract-user').output.rowsCopied,1)\n",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "mdm-customer",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.02:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_transform_user",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"SOURCE_CUSTOMER_LAKE_PATH": {
+										"value": {
+											"value": "@variables('INGST_CUSTDR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"STAGE_CUSTOMER_PATH": {
+										"value": {
+											"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/customer/user/stage')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"TARGET_CUSTOMER_PATH": {
+										"value": {
+											"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/customer/user/master')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"RUN_TEST": {
+										"value": "False",
+										"type": "bool"
+									}
+								},
+								"snapshot": true,
+								"sparkPool": {
+									"referenceName": "synsppdlinte201",
+									"type": "BigDataPoolReference"
+								},
+								"executorSize": "Small",
+								"conf": {
+									"spark.dynamicAllocation.enabled": false
+								},
+								"driverSize": "Small"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "lkp-ext-start-time",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:05:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_cntrl_fl_latest",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_DOMAIN": {
+								"value": "@pipeline().parameters.PARAM_DOMAIN",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "update-btch-cntrl",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "If Condition",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_update_btch_cntrl_fl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"START_TIME": {
+							"value": "@convertFromUtc(activity('extract-user').ExecutionStartTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"END_TIME": {
+							"value": "@convertFromUtc(activity('extract-user').ExecutionEndTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"RECORD_COUNT": {
+							"value": "@activity('extract-user').output.rowsCopied",
+							"type": "Expression"
+						},
+						"STATUS": {
+							"value": "@activity('extract-user').status",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
+							"type": "Expression"
+						},
+						"PARAM_DOMAIN": {
+							"value": "@pipeline().parameters.PARAM_DOMAIN",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "FDLN"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "customer/user"
+			},
+			"PARAM_CUS_SCHEMA_PROFILE": {
+				"type": "string",
+				"defaultValue": "profile"
+			},
+			"PARAM_CUS_TBL_USR": {
+				"type": "string",
+				"defaultValue": "cpt_user"
+			},
+			"PARAM_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			}
+		},
+		"variables": {
+			"INGST_CUSTDR_PATH": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "domain/customer"
+		},
+		"annotations": []
+	}
+}

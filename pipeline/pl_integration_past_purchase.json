@@ -1,0 +1,139 @@
+{
+	"name": "pl_integration_past_purchase",
+	"properties": {
+		"activities": [
+			{
+				"name": "ppm",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_integrate_past-purchase",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_ADLS_BASE_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_STORE_ORDER_ITEM_PATH": {
+							"value": {
+								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/order/store-order/master/order-item/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_WEB_ORDER_ITEM_PATH": {
+							"value": {
+								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/order/web-order/master/order-item/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_USER_PATH": {
+							"value": {
+								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/customer/user/master/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_REPL_PROD_PATH": {
+							"value": {
+								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/merch/product/replacement/master/product-id/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_DEL_PROD_PATH": {
+							"value": {
+								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/merch/product/user-deleted-products/master/')\n",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"YRS_DATA": {
+							"value": {
+								"value": "@pipeline().parameters.YRS_DATA",
+								"type": "Expression"
+							},
+							"type": "int"
+						},
+						"NO_OF_PARTITIONS": {
+							"value": {
+								"value": "@pipeline().parameters.NO_OF_PARTITIONS",
+								"type": "Expression"
+							},
+							"type": "int"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": false,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_ADLS_BASE_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_TARGET_STORE_ORDER_ITEM_PATH": {
+				"type": "string",
+				"defaultValue": "opco/fdln/domain/order/store-order/master/order-item/"
+			},
+			"PARAM_TARGET_WEB_ORDER_ITEM_PATH": {
+				"type": "string",
+				"defaultValue": "opco/fdln/domain/order/web-order/master/order-item/"
+			},
+			"PARAM_TARGET_USER_PATH": {
+				"type": "string",
+				"defaultValue": "opco/fdln/domain/customer/user/master/"
+			},
+			"PARAM_TARGET_REPL_PROD_PATH": {
+				"type": "string",
+				"defaultValue": "opco/fdln/domain/merch/product/replacement/master/product-id/"
+			},
+			"PARAM_DEL_PROD_PATH": {
+				"type": "string",
+				"defaultValue": "opco/fdln/domain/merch/product/user-deleted-products/master"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "fdln"
+			},
+			"YRS_DATA": {
+				"type": "string",
+				"defaultValue": "3"
+			},
+			"NO_OF_PARTITIONS": {
+				"type": "string",
+				"defaultValue": "25"
+			}
+		},
+		"folder": {
+			"name": "integration/past-purchase"
+		},
+		"annotations": []
+	}
+}

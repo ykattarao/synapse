@@ -1,0 +1,631 @@
+{
+	"name": "pl_build_store_order",
+	"properties": {
+		"activities": [
+			{
+				"name": "ingest-store-ord",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-fldr-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "CosmosDbMongoDbApiSource",
+						"batchSize": 10000,
+						"filter": {
+							"value": "{loyalty_id : { $ne : -1 },\n transaction_ts : { $gte : ISODate('@{activity('lkp-extract-start-time').output.firstRow.Prop_0}') ,  $lt : ISODate('@{addDays(activity('lkp-extract-start-time').output.firstRow.Prop_0,1)}') } }",
+							"type": "Expression"
+						},
+						"cursorMethods": {
+							"limit": 1000
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['_id']['$oid']"
+								},
+								"sink": {
+									"name": "id",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['loyalty_id']"
+								},
+								"sink": {
+									"name": "loyalty_id",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"path": "$['banner_id']"
+								},
+								"sink": {
+									"name": "banner_id",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"path": "$['store_id']"
+								},
+								"sink": {
+									"name": "store_id",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"path": "$['store_line1_address']"
+								},
+								"sink": {
+									"name": "store_line1_address",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['store_city']"
+								},
+								"sink": {
+									"name": "store_city",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['store_state']"
+								},
+								"sink": {
+									"name": "store_state",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['store_zip']"
+								},
+								"sink": {
+									"name": "store_zip",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['transaction_id']['$numberDecimal']"
+								},
+								"sink": {
+									"name": "transaction_id",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['transaction_nbr']"
+								},
+								"sink": {
+									"name": "transaction_nbr",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"path": "$['transaction_ts']['$date']"
+								},
+								"sink": {
+									"name": "transaction_ts"
+								}
+							},
+							{
+								"source": {
+									"path": "$['lane_nbr']"
+								},
+								"sink": {
+									"name": "lane_nbr",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"path": "$['transaction_total']['$numberDecimal']"
+								},
+								"sink": {
+									"name": "total",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['transaction_tax']['$numberDecimal']"
+								},
+								"sink": {
+									"name": "tax",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['transaction_subtotal']['$numberDecimal']"
+								},
+								"sink": {
+									"name": "subtotal",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ecomm_cd']"
+								},
+								"sink": {
+									"name": "ecomm_cd",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"path": "$['cashier_id']"
+								},
+								"sink": {
+									"name": "cashier_id",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['tender_type_desc']"
+								},
+								"sink": {
+									"name": "tender_type_desc",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['transaction_lines']"
+								},
+								"sink": {
+									"name": "transaction_lines"
+								}
+							}
+						],
+						"collectionReference": "",
+						"mapComplexValuesToString": true
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_az_cosmos_store_order_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_store_order_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_INGST_FLDR_PATH": {
+								"value": "@variables('INGST_FLDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "set-ingest-fldr-path",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "lkp-extract-start-time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "INGST_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/order/store-order/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'HH-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "mdm-source-store-order",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "ingest-store-ord",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_transform_store_order",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_ADLS_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"SOURCE_LAKE_STORE_ORDER_PATH": {
+							"value": {
+								"value": "@variables('INGST_FLDR_PATH')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"STAGE_STORE_ORDER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/stage/order/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"STAGE_STORE_ORDER_HEADER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/stage/order-header/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"STAGE_STORE_ORDER_ITEM_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/stage/order-item/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_STORE_ORDER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/master/order/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"STAGE_CUSTOMER_LYLTY_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/customer/user/stage/loyalty-card/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_CUSTOMER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/customer/user/master/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"RUN_TEST": {
+							"value": "False",
+							"type": "bool"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "mdm-store-order-header",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "mdm-source-store-order",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_transform_store_order_header",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_ADLS_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"STAGE_STORE_ORDER_HEADER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/stage/order-header/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_STORE_ORDER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/master/order/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_STORE_ORDER_HEADER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/master/order-header/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"RUN_TEST": {
+							"value": "False",
+							"type": "bool"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "mdm-store-order-item",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "mdm-store-order-header",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_transform_store_order_item",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_ADLS_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"STAGE_STORE_ORDER_ITEM_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/stage/order-item/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_STORE_ORDER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/master/order/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_STORE_ORDER_ITEM_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/master/order-item/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"RUN_TEST": {
+							"value": "False",
+							"type": "bool"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "lkp-extract-start-time",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_cntrl_fl_latest",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_DOMAIN": {
+								"value": "@pipeline().parameters.PARAM_DOMAIN",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "Execute CDC",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "mdm-store-order-item",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_update_btch_cntrl_fl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"START_TIME": {
+							"value": "@convertFromUtc(activity('ingest-store-ord').ExecutionStartTime\n,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"END_TIME": {
+							"value": "@convertFromUtc(activity('ingest-store-ord').ExecutionEndTime\n,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"RECORD_COUNT": {
+							"value": "@activity('ingest-store-ord').output.rowsCopied",
+							"type": "Expression"
+						},
+						"STATUS": {
+							"value": "@activity('ingest-store-ord').status",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
+							"type": "Expression"
+						},
+						"PARAM_DOMAIN": {
+							"value": "@pipeline().parameters.PARAM_DOMAIN",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "FDLN"
+			},
+			"PARAM_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "order/store-order"
+			}
+		},
+		"variables": {
+			"INGST_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "domain/order/store-order/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/order/store-order"
+		},
+		"annotations": []
+	}
+}

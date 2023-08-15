@@ -1,0 +1,50 @@
+{
+	"name": "ds_az_adls_cntrl_fl_latest",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_Storage_SelfHosted",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "utils/btch-ctrl"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "batch_control_latest.txt",
+				"folderPath": {
+					"value": "@concat('opco/',toLower(dataset().PARAM_OPCO),'/domain/',\n                dataset().PARAM_DOMAIN,'/control-table/')",
+					"type": "Expression"
+				},
+				"fileSystem": "data-integration"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"type": "String"
+			},
+			{
+				"type": "String"
+			},
+			{
+				"type": "String"
+			},
+			{
+				"type": "String"
+			}
+		]
+	}
+}

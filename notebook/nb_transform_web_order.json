@@ -1,0 +1,363 @@
+{
+	"name": "nb_transform_web_order",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/order/web-order/order"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "e440f797-d816-4f0e-860b-3fc45e22d00c"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\n",
+					"SOURCE_LAKE_PATH = \"opco/gntl/domain/order/web-order/lake/2023-07-25-12-32-58/\"\n",
+					"STAGE_ORDER_PATH = \"opco/gntl/domain/order/web-order/stage/order/\"\n",
+					"STAGE_ORDER_HEADER_PATH = \"opco/gntl/domain/order/web-order/stage/order-header/\"\n",
+					"STAGE_ORDER_ITEM_PATH = \"opco/gntl/domain/order/web-order/stage/order-item/\"\n",
+					"TARGET_ORDER_PATH = \"opco/gntl/domain/order/web-order/master/order/\"\n",
+					"KEY_COLS = [\"userId\",\"orderId\"]\n",
+					"PARTITION_COLS = [\"year\", \"month\", \"day\"]"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_web_order\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\n",
+					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - ORDER - WEB_ORDER - ORDER_HISTORY - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
+					"logger.info(\"\\n SOURCE_LAKE_PATH : {0}\".format(SOURCE_LAKE_PATH))\n",
+					"logger.info(\"\\n STAGE_ORDER_PATH : {0}\".format(STAGE_ORDER_PATH))\n",
+					"logger.info(\"\\n STAGE_ORDER_HEADER_PATH : {0}\".format(STAGE_ORDER_HEADER_PATH))\n",
+					"logger.info(\"\\n STAGE_ORDER_ITEM_PATH : {0}\".format(STAGE_ORDER_ITEM_PATH))\n",
+					"logger.info(\"\\n TARGET_ORDER_PATH : {0}\".format(TARGET_ORDER_PATH))\n",
+					"logger.info(\"\\n KEY_COLS : {0}\".format(KEY_COLS))\n",
+					"logger.info(\"\\n PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE DATA LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\n",
+					"from delta.tables import DeltaTable\n",
+					"\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_ORDER_PATH)):\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_ORDER_PATH, recurse = True)\n",
+					"    logger.info(\"cleanup : purging stage container\")\n",
+					"\n",
+					"df_web_order_lake = spark \\\n",
+					"    .read \\\n",
+					"    .format(\"parquet\") \\\n",
+					"    .option(\"inferSchema\", \"true\") \\\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_PATH) \\\n",
+					"    .withColumn(\"year\", f.year(f.col(\"orderDate\"))) \\\n",
+					"    .withColumn(\"month\", f.month(f.col(\"orderDate\"))) \\\n",
+					"    .withColumn(\"day\", f.dayofmonth(f.col(\"orderDate\")))   \n",
+					"\n",
+					"logger.info(\"stage-load : Load web order history from lake path. Count={0}, Path={1}\".format(df_web_order_lake.count(), SOURCE_LAKE_PATH))"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\n",
+					"from delta.tables import DeltaTable\n",
+					"\n",
+					"def init():\n",
+					"    df_web_order_lake \\\n",
+					"        .repartition(5, KEY_COLS) \\\n",
+					"        .sort(KEY_COLS) \\\n",
+					"        .write \\\n",
+					"        .mode(\"overwrite\") \\\n",
+					"        .option(\"mergeSchema\", \"true\") \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .partitionBy(PARTITION_COLS)\n",
+					"        .save(BASE_ADLS_CONN_STR + TARGET_ORDER_PATH)\n",
+					"    logger.info(\"init-load : web order loaded into master. Count={0}, Path={1}\".format(df_web_order_lake.count(), TARGET_ORDER_PATH))\n",
+					"    \n",
+					"\n",
+					"def apply_cdc():\n",
+					"    df_web_order_lake \\\n",
+					"    .repartition(5, KEY_COLS) \\\n",
+					"    .sort(KEY_COLS) \\\n",
+					"    .write \\\n",
+					"    .mode(\"overwrite\") \\\n",
+					"    .format(\"delta\") \\\n",
+					"    .partitionBy(PARTITION_COLS) \\\n",
+					"    .save(BASE_ADLS_CONN_STR + STAGE_ORDER_PATH)\n",
+					"\n",
+					"    df_web_order_master = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_ORDER_PATH)\n",
+					"\n",
+					"    df_web_order_delta = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + STAGE_ORDER_PATH) \n",
+					"\n",
+					"    df_web_order_master.createOrReplaceTempView('tbl_web_order_mstr')\n",
+					"    df_web_order_delta.createOrReplaceTempView('tbl_web_order_delta')\n",
+					"\n",
+					"    spark.sql(\n",
+					"        \"\"\"\n",
+					"        MERGE INTO tbl_web_order_mstr\n",
+					"        USING tbl_web_order_delta\n",
+					"        ON tbl_web_order_mstr.year = tbl_web_order_delta.year\n",
+					"        AND tbl_web_order_mstr.month = tbl_web_order_delta.month\n",
+					"        AND tbl_web_order_mstr.day = tbl_web_order_delta.day\n",
+					"        AND tbl_web_order_mstr.orderId = tbl_web_order_delta.orderId\n",
+					"        WHEN MATCHED THEN \n",
+					"            UPDATE SET *\n",
+					"        WHEN NOT MATCHED THEN\n",
+					"            INSERT *\n",
+					"        \"\"\"\n",
+					"    )\n",
+					"    logger.info(\"cdc-load : web order loaded into master. Master_Count={0}, Delta_Count={1}, Path={2}\".format(df_web_order_master.count(), df_web_order_delta.count(), TARGET_ORDER_PATH))\n",
+					"##############################\n",
+					"# FULL LOAD / DELTA LOAD\n",
+					"##############################\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_ORDER_PATH) == False):\n",
+					"    init()\n",
+					"else:\n",
+					"    apply_cdc()"
+				],
+				"execution_count": 9
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**EMIT EVENTS TO DOWNSTREAM**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\n",
+					"from delta.tables import DeltaTable \n",
+					"\n",
+					"def emit_events():\n",
+					"    df_web_order_stage = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + STAGE_ORDER_PATH) \\\n",
+					"        .select(\"orderId\",\"userId\", \"year\", \"month\", \"day\") \\\n",
+					"        .distinct()\n",
+					"\n",
+					"    df_web_order_stage \\\n",
+					"        .repartition(5, \"userId\",\"orderId\") \\\n",
+					"        .sort(\"userId\",\"orderId\") \\\n",
+					"        .write \\\n",
+					"        .mode(\"overwrite\") \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .partitionBy(\"year\", \"month\", \"day\") \\\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_ORDER_HEADER_PATH)\n",
+					"\n",
+					"    df_web_order_stage \\\n",
+					"        .repartition(5, \"userId\",\"orderId\") \\\n",
+					"        .sort(\"userId\",\"orderId\") \\\n",
+					"        .write \\\n",
+					"        .mode(\"overwrite\") \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .partitionBy(\"year\", \"month\", \"day\") \\\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_ORDER_ITEM_PATH)\n",
+					"    logger.info(\"emit_events : web order events emitted to order-header & order-item.Count={0}, Header={1}, Item={2}\".format(df_web_order_stage.count(), STAGE_ORDER_HEADER_PATH, STAGE_ORDER_ITEM_PATH))\n",
+					"\n",
+					"def purge_stage():\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_ORDER_PATH, recurse = True)\n",
+					"    logger.info(\"purge: stage data has been cleaned at path={0}\".format(STAGE_ORDER_PATH))\n",
+					"\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_ORDER_PATH)):\n",
+					"    emit_events()\n",
+					"    purge_stage()\n",
+					"else:\n",
+					"    logger.info(\"emit_events : No delta found to emit events\")\n",
+					""
+				],
+				"execution_count": 10
+			}
+		]
+	}
+}

@@ -1,0 +1,7 @@
+{
+	"name": "mpe_az_cosmos_order_management_stsh",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/4efa5a6b-77c5-4917-a887-737a1d8fe8f5/resourceGroups/rg-cosmos-pdlordermgmt-nonprd-cu-01/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-pdlordermgmt-stshqa-01",
+		"groupId": "Sql"
+	}
+}

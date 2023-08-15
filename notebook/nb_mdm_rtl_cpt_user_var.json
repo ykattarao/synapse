@@ -1,0 +1,338 @@
+{
+	"name": "nb_mdm_rtl_cpt_user_var",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/store"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "6d02b779-32e3-4018-b021-465aab01e862"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_RTL_USER_VAR_PATH = \"opco/ppod/domain/store/retailer-cpt-user-var/lake/2023-08-01-02-14-32/\"\r\n",
+					"STAGE_RTL_USER_VAR_PATH = \"opco/ppod/domain/store/retailer-cpt-user-var/stage/\"\r\n",
+					"TARGET_RTL_USER_VAR_PATH = \"opco/{opco}/domain/store/retailer-cpt-user-var/master/\"\r\n",
+					"KEY_COL=\"ecom_stor_id\"\r\n",
+					"VAL_CNT_THRESHOLD = 2\r\n",
+					"VAL_COL_NAME=\"user_type_cd\"\r\n",
+					"VAL_COL_VL= [ 'C','G','M']\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_rtl_cpt_user_var\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"*****************************************************************************\")\n",
+					"logger.info(\"\\t MDM - STORE - RETAILER - CPT_USER_VAR - Starting with below parameters\")\n",
+					"logger.info(\"*****************************************************************************\")\n",
+					"logger.info(\"\\t SOURCE_LAKE_RTL_USER_VAR_PATH : {0}\".format(SOURCE_LAKE_RTL_USER_VAR_PATH))\n",
+					"logger.info(\"\\t STAGE_RTL_USER_VAR_PATH : {0}\".format(STAGE_RTL_USER_VAR_PATH))\n",
+					"logger.info(\"\\t TARGET_RTL_USER_VAR_PATH : {0}\".format(TARGET_RTL_USER_VAR_PATH))\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
+					"logger.info(\"\\t VAL_COL_NAME : {0}\".format(VAL_COL_NAME))\n",
+					"logger.info(\"\\t VAL_COL_VL : {0}\".format(VAL_COL_VL))\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, DoubleType, StringType,TimestampType, IntegerType, LongType, DecimalType, BooleanType, DateType, ArrayType\r\n",
+					"\r\n",
+					"STAGE_RTL_USER_VAR_SCHEMA = StructType([\r\n",
+					"    StructField(\"ecom_stor_id\", IntegerType(), False),\r\n",
+					"    StructField(\"user_type_cd\", StringType(), False),\r\n",
+					"    StructField(\"var_cd\", StringType(), False),\r\n",
+					"    StructField(\"acct_cd\", StringType(), True),\r\n",
+					"    StructField(\"var_qy\", DecimalType(38,18), True),\r\n",
+					"    ])\r\n",
+					"logger.debug(\"schema-defination : Defined the schema for retailer:cpt_user_var.\\n {0}\".format(STAGE_RTL_USER_VAR_SCHEMA))"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**USER VAR STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import current_timestamp, lit\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_RTL_USER_VAR_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_RTL_USER_VAR_PATH, recurse = True)\r\n",
+					"    logger.info(\"Purging data from STG container {0}\".format(STAGE_RTL_USER_VAR_PATH))\r\n",
+					"\r\n",
+					"df_user_var_lake = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"parquet\") \\\r\n",
+					"    .schema(STAGE_RTL_USER_VAR_SCHEMA) \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_RTL_USER_VAR_PATH) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_id\", lit('usr-data-integration')) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_id\", lit('usr-data-integration')) \r\n",
+					"\r\n",
+					"df_user_var_lake\\\r\n",
+					"    .sort(KEY_COL) \\\r\n",
+					"    .write \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .option(\"inferSchema\", \"True\") \\\r\n",
+					"    .mode(\"overwrite\") \\\r\n",
+					"    .save(BASE_ADLS_CONN_STR + STAGE_RTL_USER_VAR_PATH)\r\n",
+					"\r\n",
+					"logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RTL_USER_VAR_PATH, STAGE_RTL_USER_VAR_PATH, df_user_var_lake.count()))\r\n",
+					""
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import count_distinct, col\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .option(\"mergeSchema\", \"True\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .save(path)\r\n",
+					"    logger.info(\"RETAILER:CPT_USER_VAR Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"\r\n",
+					"# main starts here\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"_________________________________________________________________\")\r\n",
+					"    logger.info(\"Processing  MDM for RETAILER:CPT_USER_VAR. OPCO={0}\".format(opco))\r\n",
+					"    df_user_var_stage= spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + STAGE_RTL_USER_VAR_PATH)\r\n",
+					"    logger.info(\"RETAILER:CPT_USER_VAR loaded from stage. OPCO = {0}, Count={1}\".format(opco, df_user_var_stage.count()))\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RTL_USER_VAR_PATH.format(opco = opco) )): \r\n",
+					"        df_user_var_master= spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_RTL_USER_VAR_PATH.format(opco = opco)) \r\n",
+					"        logger.info(\"RETAILER:CPT_USER_VAR loaded from master. OPCO = {0}, Count={1}\".format(opco, df_user_var_master.count()))\r\n",
+					"        is_val_success= validate_count(df_user_var_master,df_user_var_stage,VAL_CNT_THRESHOLD)\r\n",
+					"        is_values_in_list= check_val_list(df_user_var_stage, VAL_COL_NAME, VAL_COL_VL)\r\n",
+					"        \r\n",
+					"        if is_val_success & is_values_in_list :\r\n",
+					"            load_master_data(df_user_var_stage,BASE_ADLS_CONN_STR + TARGET_RTL_USER_VAR_PATH.format(opco = opco), opco )\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")        \r\n",
+					"    else:\r\n",
+					"        logger.info('First Time Master Load')\r\n",
+					"        load_master_data(df_user_var_stage,BASE_ADLS_CONN_STR + TARGET_RTL_USER_VAR_PATH.format(opco = opco), opco )"
+				],
+				"execution_count": 8
+			}
+		]
+	}
+}

@@ -1,0 +1,437 @@
+{
+	"name": "nb_mdm_rtl_cpt_ecom_store_ctl",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/store"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "2b13c127-4a0c-481f-b689-6ea6b2daa359"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH = \"opco/ppod/domain/store/retailer-cpt-ecom-store-ctl/lake/2023-08-01-02-14-17/\"\r\n",
+					"STAGE_RTL_ECOM_STORE_CTL_PATH = \"opco/ppod/domain/store/retailer-cpt-ecom-store-ctl/stage/\"\r\n",
+					"TARGET_RTL_ECOM_STORE_CTL_PATH = \"opco/{opco}/domain/store/retailer-cpt-ecom-store-ctl/master/\"\r\n",
+					"KEY_COL=\"ecom_stor_id\"\r\n",
+					"VAL_CNT_THRESHOLD = 2\r\n",
+					"VAL_COL_CNT_THRESHOLD= 1\r\n",
+					"VAL_COL_LST=[\"ecom_stor_id\"]\r\n",
+					"COL_NAME=\"opco_id\"\r\n",
+					"COL_VAl= [ 'HNFD', 'FDLN', 'GNTL', 'GNTC', 'MRTN', 'STSH', 'PPOD','HANF']\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_rtl_ecom_stor_ctl\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\\n *****************************************************************************\\033[0m\")\r\n",
+					"logger.info(\"\\n SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH : {0}\".format(SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH))\r\n",
+					"logger.info(\"\\n STAGE_RTL_ECOM_STORE_CTL_PATH : {0}\".format(STAGE_RTL_ECOM_STORE_CTL_PATH))\r\n",
+					"logger.info(\"\\n TARGET_RTL_ECOM_STORE_CTL_PATH : {0}\".format(TARGET_RTL_ECOM_STORE_CTL_PATH))\r\n",
+					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\n VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\n VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
+					"logger.info(\"\\n COL_NAME : {0}\".format(COL_NAME))\r\n",
+					"logger.info(\"\\n COL_VAl : {0}\".format(COL_VAl))\r\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, DoubleType, StringType,TimestampType, IntegerType, LongType, DecimalType, BooleanType, DateType, ArrayType\r\n",
+					"\r\n",
+					"STAGE_RTL_ECOM_STORE_CTL_SCHEMA = StructType([\r\n",
+					"    StructField(\"ecom_stor_id\", IntegerType(), False),\r\n",
+					"    StructField(\"stor_stat_cd\", StringType(), True),\r\n",
+					"    StructField(\"stor_type_cd\", StringType(), True),\r\n",
+					"    StructField(\"ecom_stor_name_tx\", StringType(), True),\r\n",
+					"    StructField(\"pma_id\", StringType(), True),\r\n",
+					"    StructField(\"dc_id\", StringType(), True),\r\n",
+					"    StructField(\"opco_id\", StringType(), True),\r\n",
+					"    StructField(\"mgr_name_tx\", StringType(), True),\r\n",
+					"    StructField(\"mgr_mail_tx\", StringType(), True),\r\n",
+					"    StructField(\"cpn_vend_dc_id\", StringType(), True),\r\n",
+					"    StructField(\"cpn_vend_stat_cd\", StringType(), False),\r\n",
+					"    StructField(\"max_days_out_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"time_diff_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"root_menu_id\", StringType(), True),\r\n",
+					"    StructField(\"max_prev_ord_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"max_pers_it_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"max_pers_hdr_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"cnsm_ord_lim_qy\", DecimalType(38,18), True),   \r\n",
+					"    StructField(\"mrch_ord_lim_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"rtlr_card_actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"rtlr_card_name_tx\", StringType(), True),\r\n",
+					"    StructField(\"rtlr_card_vald_tx\", StringType(), True),\r\n",
+					"    StructField(\"rtlr_card_asgn_cd\", StringType(), False),\r\n",
+					"    StructField(\"rtlr_card_asgn_tx\", StringType(), True),\r\n",
+					"    StructField(\"rtlr_card_trk_id\", StringType(), True),\r\n",
+					"    StructField(\"tot_svgs_actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"tot_svgs_disp_tx\", StringType(), True),\r\n",
+					"    StructField(\"cpn_cart_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"cpn_cart_crs_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"cpn_cart_wkly_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"cpn_cart_max_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"cpn_shlf_cat_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"cpn_shlf_max_qy\", IntegerType(),False),\r\n",
+					"    StructField(\"cpn_wkly_spec_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"cpn_all_spec_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"dpg_shlf_cat_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"fav_psn_tab_tx\", StringType(), True),\r\n",
+					"    StructField(\"fav_purc_tab_tx\", StringType(), True),\r\n",
+					"    StructField(\"fav_rfsh_day_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"new_ariv_days_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"rte_eta_actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"rte_eta_auth_cd\", StringType(), False),\r\n",
+					"    StructField(\"drvr_tip_allw_cd\", StringType(), False),\r\n",
+					"    StructField(\"epmt_feat_actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"epmt_disc_actv_cd\", StringType(),False),\r\n",
+					"    StructField(\"epmt_disc_qy\", DecimalType(38,18),False),\r\n",
+					"    StructField(\"epmt_time_ord_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"uprm_actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"it_trk_actv_cd\", StringType(),False),\r\n",
+					"    StructField(\"shlf_it_disp_sm_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"shlf_it_disp_lg_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"list_it_disp_sm_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"list_it_disp_lg_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"pa_actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"pa_csv_req_cd\", StringType(),False),\r\n",
+					"    StructField(\"pa_cc_init_ord_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"pa_cc_ord_days_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"pa_cc_evry_ord_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"pa_auth_days_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"cnsm_fuel_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"mrch_fuel_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"unat_slot_allw_cd\", StringType(), False),\r\n",
+					"    StructField(\"brnd_ba_qy\", IntegerType(),True),\r\n",
+					"    StructField(\"cpn_ba_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"pr_exp_day_out_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"csi_actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"elec_invc_cd\", StringType(),False),\r\n",
+					"    StructField(\"snal_mail_cpn_cd\", StringType(), False),\r\n",
+					"    StructField(\"web_domn_rtrn_tx\", StringType(),True),\r\n",
+					"    StructField(\"pup_srch_rad_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"rvw_grp_cd\", StringType(), True),\r\n",
+					"    StructField(\"ord_stat_actv_cd\", StringType(),False),\r\n",
+					"    StructField(\"ord_stat_stop_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"show_reg_pr_cd\", StringType(), False),\r\n",
+					"    StructField(\"one_way_dlv_fl\", StringType(),True),\r\n",
+					"    StructField(\"pod_bag_fl\", StringType(),True),\r\n",
+					"    StructField(\"one_way_dlv_fee_qy\", DecimalType(38,18),True),\r\n",
+					"    StructField(\"svc_type_slct_fl\", StringType(), False),\r\n",
+					"    StructField(\"top_spec_actv_fl\", StringType(),False),\r\n",
+					"    StructField(\"load_cpn_actv_fl\", StringType(), False),\r\n",
+					"    StructField(\"stag_only_fl\", StringType(),False),\r\n",
+					"    StructField(\"drvr_rvw_allw_cd\", StringType(), False),\r\n",
+					"    StructField(\"ortc_stor_fl\", StringType(),False),\r\n",
+					"    StructField(\"audt_cr_dt_tm\", TimestampType(), True),\r\n",
+					"    StructField(\"audt_upd_dt_tm\", TimestampType(), True),\r\n",
+					"    StructField(\"audt_cr_id\", StringType(), True),\r\n",
+					"    StructField(\"audt_upd_id\", StringType(), True),\r\n",
+					"    StructField(\"stor_id\", StringType(), False)    \r\n",
+					"])\r\n",
+					"logger.debug(\"schema-defination : Defined the schema for retailer:cpt_stor_zip.\\n {0}\".format(STAGE_RTL_ECOM_STORE_CTL_SCHEMA))\r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**ECOM STORE CONTROL STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import current_timestamp,lit\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_RTL_ECOM_STORE_CTL_PATH )):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_RTL_ECOM_STORE_CTL_PATH , recurse = True)\r\n",
+					"    logger.info(\"Purging data from STG container {0}\".format(STAGE_RTL_ECOM_STORE_CTL_PATH))\r\n",
+					"\r\n",
+					"\r\n",
+					"df_ecom_stor_ctl_lake = spark \\\r\n",
+					"                    .read \\\r\n",
+					"                    .format(\"parquet\") \\\r\n",
+					"                    .schema(STAGE_RTL_ECOM_STORE_CTL_SCHEMA) \\\r\n",
+					"                    .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH ) \\\r\n",
+					"                    .withColumnRenamed(\"audt_cr_dt_tm\", \"src_audt_cr_dt_tm\") \\\r\n",
+					"                    .withColumnRenamed(\"audt_cr_id\", \"src_audt_cr_id\") \\\r\n",
+					"                    .withColumnRenamed(\"audt_upd_dt_tm\", \"src_audt_upd_dt_tm\") \\\r\n",
+					"                    .withColumnRenamed(\"audt_upd_id\", \"src_audt_upd_id\") \\\r\n",
+					"                    .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"                    .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"                    .withColumn(\"tgt_audt_cr_id\", lit('usr-data-integration')) \\\r\n",
+					"                    .withColumn(\"tgt_audt_upd_id\", lit('usr-data-integration')) \\\r\n",
+					"\r\n",
+					"df_ecom_stor_ctl_lake\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .option(\"inferSchema\", \"True\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_RTL_ECOM_STORE_CTL_PATH )\r\n",
+					"logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH, STAGE_RTL_ECOM_STORE_CTL_PATH, df_ecom_stor_ctl_lake.count()))"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import count_distinct, col\r\n",
+					"\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"            .sort(KEY_COL) \\\r\n",
+					"            .write \\\r\n",
+					"            .option(\"mergeSchema\", \"True\") \\\r\n",
+					"            .mode(\"overwrite\") \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .save(path)\r\n",
+					"    logger.info(\"\\tRETAILER:CPT_ECOM_STORE_CTL Master data overwritten. OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"\r\n",
+					"# main starts here\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"\\n\\033[1mProcessing MDM for RETAILER:CPT_ECOM_STORE_CTL - OPCO={0}\\033[0m\\n\".format(opco))\r\n",
+					"\r\n",
+					"    df_ecom_stor_ctl_stage= spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\") \\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + STAGE_RTL_ECOM_STORE_CTL_PATH)\r\n",
+					"    logger.info(\"\\tRETAILER:CPT_ECOM_STORE_CTL loaded from stage. OPCO = {0}, Count={1}\".format(opco, df_ecom_stor_ctl_stage.count()))\r\n",
+					"\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RTL_ECOM_STORE_CTL_PATH.format(opco = opco))): \r\n",
+					"        df_ecom_stor_ctl_master= spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\") \\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + TARGET_RTL_ECOM_STORE_CTL_PATH.format(opco = opco)) \r\n",
+					"        logger.info(\"\\tRETAILER:CPT_ECOM_STORE_CTL loaded from master. OPCO = {0}, Count={1}\".format(opco, df_ecom_stor_ctl_master.count()))\r\n",
+					"\r\n",
+					"        is_val_success= validate_count(df_ecom_stor_ctl_master,df_ecom_stor_ctl_stage,VAL_CNT_THRESHOLD)\r\n",
+					"        is_col_data_valid = unique_column_dataValidation(df_ecom_stor_ctl_master,df_ecom_stor_ctl_stage,VAL_COL_CNT_THRESHOLD,VAL_COL_LST)\r\n",
+					"        is_values_in_list= check_val_list(df_ecom_stor_ctl_stage, COL_NAME, COL_VAl)\r\n",
+					"\r\n",
+					"        if (is_val_success & is_col_data_valid & is_values_in_list)== True:            \r\n",
+					"            load_master_data(df_ecom_stor_ctl_stage,BASE_ADLS_CONN_STR + TARGET_RTL_ECOM_STORE_CTL_PATH.format(opco = opco), opco )\r\n",
+					"            \r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"\\tEXCEEDING_THRESHOLD\")        \r\n",
+					"    else:\r\n",
+					"        logger.info('\\tFirst Time Master Load')\r\n",
+					"        load_master_data(df_ecom_stor_ctl_stage,BASE_ADLS_CONN_STR + TARGET_RTL_ECOM_STORE_CTL_PATH.format(opco = opco), opco )\r\n",
+					"     \r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 10
+			}
+		]
+	}
+}

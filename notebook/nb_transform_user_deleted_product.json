@@ -1,0 +1,302 @@
+{
+	"name": "nb_transform_user_deleted_product",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/merchandise/product"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "acc4c739-90b9-4949-897d-18183253be4c"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_DELETED_PRODUCTS_LAKE_PATH = \"opco/ppod/domain/merch/product/retailer-cpt-past-purc-del/lake/2023-07-26-10-42-02/\"\r\n",
+					"STAGE_DELETED_PRODUCTS_PATH = \"opco/{opco}/domain/merch/product/retailer-cpt-past-purc-del/stage/\"\r\n",
+					"TARGET_DELETED_PRODUCTS_PATH = \"opco/{opco}/domain/merch/product/retailer-cpt-past-purc-del/master/\"\r\n",
+					"NUM_OF_PARTITION = 25\r\n",
+					"VAL_CNT_THRESHOLD = 5\r\n",
+					"KEY_COL = \"user_id\"\r\n",
+					"PARTITION_COL = \"hash\"\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_user_deleted_product\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\n",
+					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - PRODUCT - RETAILER - CPT-PAST_PURC-DEL - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
+					"logger.info(\"\\n SOURCE_DELETED_PRODUCTS_LAKE_PATH : {0}\".format(SOURCE_DELETED_PRODUCTS_LAKE_PATH))\n",
+					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\n",
+					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
+					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\n PARTITION_COL : {0}\".format(PARTITION_COL))\n",
+					"logger.info(\"\\n NUM_OF_PARTITION : {0}\".format(NUM_OF_PARTITION))\n",
+					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE DATA LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.types import StructType, StructField, IntegerType, TimestampType\r\n",
+					"\r\n",
+					"sch_merch_prod_deleted_prod = StructType([\r\n",
+					"    StructField(\"user_id\", IntegerType(), False),\r\n",
+					"    StructField(\"prod_id\", IntegerType(), False),\r\n",
+					"    StructField(\"audt_cr_dt_tm\", TimestampType(), False)\r\n",
+					"])\r\n",
+					"\r\n",
+					"df_dlt_prod_lake = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"parquet\") \\\r\n",
+					"    .option(\"inferSchema\", \"true\") \\\r\n",
+					"    .schema(sch_merch_prod_deleted_prod) \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_DELETED_PRODUCTS_LAKE_PATH)\r\n",
+					"    \r\n",
+					"logger.info(\"Deleted products loaded from lake={0}. Count={1}\".format(SOURCE_DELETED_PRODUCTS_LAKE_PATH, df_dlt_prod_lake.count()))"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"def write_master(df_dlt_prod_stg, opco):\r\n",
+					"    df_dlt_prod_stg \\\r\n",
+					"        .repartition(1, KEY_COL) \\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .partitionBy(PARTITION_COL) \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + TARGET_DELETED_PRODUCTS_PATH.format(opco = opco))\r\n",
+					"    logger.info(\"\\t Master data overwritten. Count={0}\".format(df_dlt_prod_stg.count()))\r\n",
+					"\r\n",
+					"\r\n",
+					"def init():\r\n",
+					"    logger.info(\"MDM started for Deleted Products\")\r\n",
+					"\r\n",
+					"    df_dlt_prod_stg = df_dlt_prod_lake \\\r\n",
+					"    .filter(\"user_id is NOT NULL\") \\\r\n",
+					"    .withColumn(PARTITION_COL, f.abs(f.hash(f.col(\"user_id\"))%NUM_OF_PARTITION))\r\n",
+					"    \r\n",
+					"    logger.debug(\"\\t Filtered Lake Data. Filtered Count={0}\".format(df_dlt_prod_stg.count()))\r\n",
+					"    \r\n",
+					"    for opco in OPCO_LST:\r\n",
+					"        logger.info(\"Processing OPCO {0}\".format(opco))\r\n",
+					"\r\n",
+					"        if (DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_DELETED_PRODUCTS_PATH.format(opco = opco))):\r\n",
+					"            logger.info(\"\\t Master data already exists for {0}\".format(opco))\r\n",
+					"            df_dlt_prod_mstr = spark \\\r\n",
+					"                .read \\\r\n",
+					"                .format(\"delta\") \\\r\n",
+					"                .load(BASE_ADLS_CONN_STR + TARGET_DELETED_PRODUCTS_PATH.format(opco = opco))\r\n",
+					"            logger.debug(\"\\t Master data loaded for validation. Count={0}\".format(df_dlt_prod_mstr.count()))\r\n",
+					"            is_val_success = validate_count(df_dlt_prod_stg, df_dlt_prod_mstr, VAL_CNT_THRESHOLD  )\r\n",
+					"            if is_val_success:\r\n",
+					"                write_master(df_dlt_prod_stg, opco)\r\n",
+					"            else:\r\n",
+					"                logger.error(\"\\t Failed to override master since variantion is exceding the threshold\")\r\n",
+					"                raise Exception(\"EXCEEDING_CNT_THRESHOLD\")\r\n",
+					"        else:\r\n",
+					"            logger.info(\"\\t Processing MDM first time for {0}\".format(opco))\r\n",
+					"            write_master(df_dlt_prod_stg, opco)\r\n",
+					"    \r\n",
+					"\r\n",
+					"##############################\r\n",
+					"# FULL LOAD\r\n",
+					"##############################\r\n",
+					"init()\r\n",
+					""
+				],
+				"execution_count": 9
+			}
+		]
+	}
+}

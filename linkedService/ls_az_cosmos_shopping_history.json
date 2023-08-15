@@ -1,0 +1,23 @@
+{
+	"name": "ls_az_cosmos_shopping_history",
+	"properties": {
+		"annotations": [],
+		"type": "CosmosDbMongoDbApi",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "akv-ls-azure-cosmos-store-shopping-history"
+			},
+			"database": "ShoppingHistoryDB",
+			"isServerVersionAbove32": false
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedRuntime01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,217 @@
+{
+	"name": "pl_build_stor_cntrl_pit_pr_zone_xref",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-cntrl-pit-pr-zone-xref-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_STOR_PATH",
+					"value": {
+						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-cntrl-pit-pr-zone-xref",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-cntrl-pit-pr-zone-xref-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "pr_zone_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "pr_zone_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "pr_zone_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pr_zone_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pr_zone_desc_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pr_zone_desc_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rml_in_fld_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rml_in_fld_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rml_in_fld_cd2",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rml_in_fld_cd2",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prom_out_days_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "prom_out_days_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "hypr_loc_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "hypr_loc_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "banr_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "banr_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_ifx_stor_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"PARAM_IFX_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_stor_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_STOR_LAKE_PATH": {
+								"value": "@variables('VAR_INGST_STOR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "store/central-pit-pr-zone-xref"
+			},
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "central"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "pit_pr_zone_xref"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			}
+		},
+		"variables": {
+			"VAR_INGST_STOR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/store/central-pit-pr-zone-xref/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/store"
+		},
+		"annotations": []
+	}
+}

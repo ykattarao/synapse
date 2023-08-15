@@ -1,0 +1,32 @@
+{
+	"name": "ds_az_adls_stor_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_Storage_SelfHosted",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"PARAM_STOR_LAKE_PATH": {
+				"type": "string",
+				"defaultValue": "opco/fdln/domain/store/store-zip/lake/"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/store"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().PARAM_STOR_LAKE_PATH",
+					"type": "Expression"
+				},
+				"fileSystem": "data-integration"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

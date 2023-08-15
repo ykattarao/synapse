@@ -1,0 +1,27 @@
+{
+	"name": "ds_az_cosmos_store_order_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_az_cosmos_shopping_history",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "String",
+				"defaultValue": "FDLN"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/order/store-order"
+		},
+		"annotations": [],
+		"type": "CosmosDbMongoDbApiCollection",
+		"schema": [],
+		"typeProperties": {
+			"collection": {
+				"value": "@if(equals('FDLN',toUpper(dataset().PARAM_OPCO)), 'FL', \n    if(equals('HNFD',toUpper(dataset().PARAM_OPCO)), 'HA', \n        if(equals('STSH',toUpper(dataset().PARAM_OPCO)), 'SNS',\n            if(equals('GNTL',toUpper(dataset().PARAM_OPCO)), 'GF',\n                if(equals('GNTC',toUpper(dataset().PARAM_OPCO)), 'GM',\n                if(equals('MRTN',toUpper(dataset().PARAM_OPCO)), 'GM','invalid'))))))",
+				"type": "Expression"
+			}
+		}
+	}
+}

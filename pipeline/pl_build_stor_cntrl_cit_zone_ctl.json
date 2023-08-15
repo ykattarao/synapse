@@ -1,0 +1,1879 @@
+{
+	"name": "pl_build_stor_cntrl_cit_zone_ctl",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-cntrl-cit-zone-ctl-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_STOR_PATH",
+					"value": {
+						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-cntrl-cit-zone-ctl",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-cntrl-cit-zone-ctl-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": "SELECT stor_id,\nchn_tx,\nstor_nbr_cd,\nwrm_host_stor_nbr_cd,\nstor_tx,\nadr_1_tx,\nadr_2_tx,\ncity_tx,\nst_cd,\nzip_cd,\ncity_desc_tx,\nzone_voic_phon_cd,\nms_voic_phon_cd,\nms_fax_phon_cd,\nmdm_2400_phon_cd,\nmdm_9600_phon_cd,\nzone_beep_phon_cd,\nmgr_ee_id,\ntax_hi_qy,\ntax_med_qy,\ntax_low_qy,\nzone_tab_tx,\nmax_pers_it_qy,\nmax_pers_hdr_qy,\nmbr_exp_day_qy,\nmbr_fee_freq_cd,\nmbr_fee_freq_it_cd,\nrcv_pmt_cd,\nds_qy,\nee_ds_qy,\ngroc_e_mail_tx,\nstor_e_mail_tx,\npath_id,\nvend_cd,\nap_dept_cd,\nar_dept_cd,\ngroc_dept_cd,\ncash_dept_cd,\nzone_actv_cd,\ntype_cd,\npckp_avl_cd,\ncnsm_pckp_allw_cd,\nstor_drct_msg_id,\nstor_drct_bx,\ninet_mail_allw_cd,\nsess_bill_cd,\ncnsm_max_ord_pr_qy,\nmrch_max_ord_pr_qy,\nhr_e_mail_tx,\npckp_msg_id,\nmax_prev_ord_qy,\nmain_stor_id,\nmdm_phon_audt_cd,\ncnvt_800_to_cnc_cd,\nbill_pr_msg_id,\nnon_bill_pr_msg_id,\nmrch_pr_msg_id,\nhypr_dept_cd,\nhypr_loc_cd,\nhypr_acct_cd,\nhypr_city_cd,\nsvc_modl_vrsn_cd,\ncnsm_poi_avl_cd,\ncnsm_pom_avl_cd,\ncnsm_pon_avl_cd,\ncnsm_poa_avl_cd,\nmrch_poi_avl_cd,\nmrch_pom_avl_cd,\nmrch_pon_avl_cd,\nmrch_poa_avl_cd,\nppod_by_chn_tx,\nit_tot_tab_tx,\nops_modl_type_cd,\nzm_sys_vrsn_cd,\nactv_stat_cd,\nslot_bx,\nentr_ee_ord_cd,\nit_cmt_type_cd,\nbtl_dep_cd,\nco_type_cd,\nsale_tax_cd,\nrx_msg_id,\nrx_e_mail_id,\nuse_pr_disp_cd,\nis_natl_zone_cd,\nslot_modl_type_cd,\nscan_var_wgt_cd,\nmgrp_dc_id,\nmgrp_bus_type_cd,\nupd_mgrp_tote_cd,\nsub_flo_cd,\none_clip_site_id,\ncer_div_cd,\nmult_tax_zone,\npick_modl_type_cd,\nopco_id,\nrte_db_name_tx,\nrte_est_tote_qy,\nrte_auto_ld_cd,\nprom_strt_tm::varchar(20) as prom_strt_tm,\nprom_end_tm::varchar(20) as prom_end_tm,\nfig_cd,\nnwtn_ops_live_dt::varchar(20) as nwtn_ops_live_dt,\nshow_tote_on_invc_cd,\nshow_tip_on_invc_cd,\nslot_labl_cd,\ninv_aloc_in_proc_cd,\nslot_alrt_mail_tx,\ninvc_img_tx,\nrtlr_card_vald_tx,\nrtlr_card_name_tx,\nmlti_shft_rte_rlse_cd,\ntote_calc_type_cd,\nslot_over_qy,\nshft_over_qy,\nwms_cd,\nauto_rcv_po_cd,\nprch_like_dc_tx,\naou_wk_qy,\ncns_stor_crdt_pct_qy,\ncns_cust_num_cd,\ncns_klt_cntr_qy,\ndflt_pr_zone_cd,\nklt_pr_zone_cd,\nklt_rclm_chrt_send_cd,\nslot_over_cnsm_scor_qy,\nslot_over_bskt_qy,\nacpt_unsc_po_it_cd,\nslot_bltn_freq_cd,\np3_srvr_name_tx,\np3_file_path_tx,\nhsc_cd,\ntote_inj_cd,\nthrd_pty_lqr_vend_cd,\nwnd_trim_mn_qy,\nprnt_qr_cd,\ndrvr_srvy_actv_cd,\ndrvr_srvy_hr_tm_lag_qy,\nNVL(last_tkof_adj_tm,'')::varchar(20)  as last_tkof_adj_tm,\nsame_day_rdy_hr_qy,\nsame_day_dlv_tx,\nflo_as_reg_fl,\nops_live_dt::varchar(20)  as ops_live_dt,\ncpnt_invc_cd,\ncart_rwrd_cd,\nbuyr_regn_cd,\ngd_rwrd_id,\ngd_rwrd_desc_tx,\nignr_papr_less_fl,\nblad_opco_id,\nord_rlse_allw_fl,\nload_bal_stor,\nload_bal_targ_qy_a,\nload_bal_targ_qy_c,\nload_bal_targ_qy_f,\novrd_load_bal_fl,\nsl_stor_cd,\nmanf_ignr_papr_less_fl,\nortc_stor_fl\nFROM central:cit_zone_ctl "
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "stor_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stor_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "chn_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "chn_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "stor_nbr_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stor_nbr_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "wrm_host_stor_nbr_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "wrm_host_stor_nbr_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "stor_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stor_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "adr_1_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "adr_1_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "adr_2_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "adr_2_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "city_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "city_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "st_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "st_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "zip_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "zip_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "city_desc_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "city_desc_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "zone_voic_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "zone_voic_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ms_voic_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ms_voic_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ms_fax_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ms_fax_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mdm_2400_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mdm_2400_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mdm_9600_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mdm_9600_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "zone_beep_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "zone_beep_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mgr_ee_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mgr_ee_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "tax_hi_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "tax_hi_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "tax_med_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "tax_med_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "tax_low_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "tax_low_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "zone_tab_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "zone_tab_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "max_pers_it_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "max_pers_it_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "max_pers_hdr_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "max_pers_hdr_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "mbr_exp_day_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "mbr_exp_day_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "mbr_fee_freq_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mbr_fee_freq_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mbr_fee_freq_it_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mbr_fee_freq_it_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rcv_pmt_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rcv_pmt_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ds_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "ds_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "ee_ds_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "ee_ds_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "groc_e_mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "groc_e_mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "stor_e_mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stor_e_mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "path_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "path_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "vend_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "vend_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ap_dept_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ap_dept_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ar_dept_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ar_dept_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "groc_dept_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "groc_dept_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cash_dept_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cash_dept_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "zone_actv_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "zone_actv_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pckp_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pckp_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnsm_pckp_allw_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cnsm_pckp_allw_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "stor_drct_msg_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "stor_drct_msg_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "stor_drct_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stor_drct_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "inet_mail_allw_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "inet_mail_allw_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sess_bill_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sess_bill_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnsm_max_ord_pr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "cnsm_max_ord_pr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "mrch_max_ord_pr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "mrch_max_ord_pr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "hr_e_mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "hr_e_mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pckp_msg_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "pckp_msg_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "max_prev_ord_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "max_prev_ord_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "main_stor_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "main_stor_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mdm_phon_audt_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mdm_phon_audt_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnvt_800_to_cnc_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cnvt_800_to_cnc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "bill_pr_msg_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "bill_pr_msg_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "non_bill_pr_msg_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "non_bill_pr_msg_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "mrch_pr_msg_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "mrch_pr_msg_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "hypr_dept_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "hypr_dept_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "hypr_loc_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "hypr_loc_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "hypr_acct_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "hypr_acct_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "hypr_city_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "hypr_city_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "svc_modl_vrsn_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "svc_modl_vrsn_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnsm_poi_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cnsm_poi_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnsm_pom_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cnsm_pom_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnsm_pon_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cnsm_pon_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnsm_poa_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cnsm_poa_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mrch_poi_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mrch_poi_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mrch_pom_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mrch_pom_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mrch_pon_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mrch_pon_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mrch_poa_avl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mrch_poa_avl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ppod_by_chn_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ppod_by_chn_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "it_tot_tab_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_tot_tab_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ops_modl_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ops_modl_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "zm_sys_vrsn_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "zm_sys_vrsn_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "actv_stat_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "actv_stat_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "slot_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "slot_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "entr_ee_ord_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "entr_ee_ord_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "it_cmt_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_cmt_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "btl_dep_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "btl_dep_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "co_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "co_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sale_tax_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sale_tax_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rx_msg_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "rx_msg_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "rx_e_mail_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rx_e_mail_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "use_pr_disp_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "use_pr_disp_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "is_natl_zone_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "is_natl_zone_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "slot_modl_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "slot_modl_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "scan_var_wgt_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "scan_var_wgt_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mgrp_dc_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mgrp_dc_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mgrp_bus_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mgrp_bus_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "upd_mgrp_tote_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "upd_mgrp_tote_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sub_flo_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sub_flo_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "one_clip_site_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "one_clip_site_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "cer_div_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cer_div_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mult_tax_zone",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mult_tax_zone",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pick_modl_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pick_modl_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "opco_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "opco_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rte_db_name_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rte_db_name_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rte_est_tote_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "rte_est_tote_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "rte_auto_ld_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rte_auto_ld_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prom_strt_tm",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prom_strt_tm",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prom_end_tm",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prom_end_tm",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "fig_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "fig_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "nwtn_ops_live_dt",
+									"type": "String"
+								},
+								"sink": {
+									"name": "nwtn_ops_live_dt",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "show_tote_on_invc_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "show_tote_on_invc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "show_tip_on_invc_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "show_tip_on_invc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "slot_labl_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "slot_labl_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "inv_aloc_in_proc_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "inv_aloc_in_proc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "slot_alrt_mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "slot_alrt_mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "invc_img_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "invc_img_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rtlr_card_vald_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rtlr_card_vald_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rtlr_card_name_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rtlr_card_name_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mlti_shft_rte_rlse_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mlti_shft_rte_rlse_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "tote_calc_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "tote_calc_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "slot_over_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "slot_over_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "shft_over_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "shft_over_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "wms_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "wms_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "auto_rcv_po_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "auto_rcv_po_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prch_like_dc_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prch_like_dc_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "aou_wk_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "aou_wk_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "cns_stor_crdt_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "cns_stor_crdt_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "cns_cust_num_cd",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "cns_cust_num_cd",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "cns_klt_cntr_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "cns_klt_cntr_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "dflt_pr_zone_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "dflt_pr_zone_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "klt_pr_zone_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "klt_pr_zone_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "klt_rclm_chrt_send_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "klt_rclm_chrt_send_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "slot_over_cnsm_scor_qy",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "slot_over_cnsm_scor_qy",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "slot_over_bskt_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "slot_over_bskt_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "acpt_unsc_po_it_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "acpt_unsc_po_it_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "slot_bltn_freq_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "slot_bltn_freq_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "p3_srvr_name_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "p3_srvr_name_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "p3_file_path_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "p3_file_path_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "hsc_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "hsc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "tote_inj_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "tote_inj_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "thrd_pty_lqr_vend_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "thrd_pty_lqr_vend_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "wnd_trim_mn_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "wnd_trim_mn_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "prnt_qr_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prnt_qr_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drvr_srvy_actv_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drvr_srvy_actv_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drvr_srvy_hr_tm_lag_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "drvr_srvy_hr_tm_lag_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "last_tkof_adj_tm",
+									"type": "String"
+								},
+								"sink": {
+									"name": "last_tkof_adj_tm",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "same_day_rdy_hr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "same_day_rdy_hr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "same_day_dlv_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "same_day_dlv_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "flo_as_reg_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "flo_as_reg_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ops_live_dt",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ops_live_dt",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cpnt_invc_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cpnt_invc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cart_rwrd_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cart_rwrd_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "buyr_regn_cd",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "buyr_regn_cd",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "gd_rwrd_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "gd_rwrd_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "gd_rwrd_desc_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "gd_rwrd_desc_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ignr_papr_less_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ignr_papr_less_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "blad_opco_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "blad_opco_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ord_rlse_allw_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ord_rlse_allw_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "load_bal_stor",
+									"type": "String"
+								},
+								"sink": {
+									"name": "load_bal_stor",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "load_bal_targ_qy_a",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "load_bal_targ_qy_a",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "load_bal_targ_qy_c",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "load_bal_targ_qy_c",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "load_bal_targ_qy_f",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "load_bal_targ_qy_f",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "ovrd_load_bal_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ovrd_load_bal_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sl_stor_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sl_stor_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "manf_ignr_papr_less_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "manf_ignr_papr_less_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ortc_stor_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ortc_stor_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_ifx_stor_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"PARAM_IFX_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_stor_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_STOR_LAKE_PATH": {
+								"value": "@variables('VAR_INGST_STOR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "central"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "cit_zone_ctl"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "store/central-cit-zone-ctl"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			}
+		},
+		"variables": {
+			"VAR_INGST_STOR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/store/central-cit-zone-ctl/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/store"
+		},
+		"annotations": []
+	}
+}

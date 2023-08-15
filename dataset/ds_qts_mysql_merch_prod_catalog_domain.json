@@ -1,0 +1,37 @@
+{
+	"name": "ds_qts_mysql_merch_prod_catalog_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_mysql_product_catalog",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"PARAM_MYSQL_DB_NM": {
+					"value": "@dataset().PARAM_MYSQL_DB_NM",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"PARAM_MYSQL_DB_NM": {
+				"type": "string",
+				"defaultValue": "catalog_prod"
+			},
+			"PARAM_MYSQL_TB_NM": {
+				"type": "string",
+				"defaultValue": "omt_atr_look"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/merchandise/catalog"
+		},
+		"annotations": [],
+		"type": "MySqlTable",
+		"schema": [],
+		"typeProperties": {
+			"tableName": {
+				"value": "@dataset().PARAM_MYSQL_TB_NM",
+				"type": "Expression"
+			}
+		}
+	}
+}

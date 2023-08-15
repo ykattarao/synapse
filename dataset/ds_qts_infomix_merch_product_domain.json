@@ -1,0 +1,35 @@
+{
+	"name": "ds_qts_infomix_merch_product_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_qts_informix_oltp_odbc",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"IFX_DB_NM": {
+					"value": "@dataset().IFX_DB_NM",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"IFX_DB_NM": {
+				"type": "string"
+			},
+			"IFX_TBL_NM": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/merchandise/product"
+		},
+		"annotations": [],
+		"type": "InformixTable",
+		"schema": [],
+		"typeProperties": {
+			"tableName": {
+				"value": "@dataset().IFX_TBL_NM",
+				"type": "Expression"
+			}
+		}
+	}
+}

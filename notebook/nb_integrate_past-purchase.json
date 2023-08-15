@@ -1,0 +1,719 @@
+{
+	"name": "nb_integrate_past-purchase",
+	"properties": {
+		"folder": {
+			"name": "integration/past-purchase"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "eb9d2ba2-b30f-4088-99a0-33ac54e9524f"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"TARGET_STORE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/store-order/master/order-item/\"\r\n",
+					"TARGET_WEB_ORDER_ITEM_PATH=\"opco/fdln/domain/order/web-order/master/order-item/\"\r\n",
+					"TARGET_USER_PATH = \"opco/fdln/domain/customer/user/master/\"\r\n",
+					"TARGET_REPL_PROD_PATH =\"opco/fdln/domain/merch/product/replacement/master/product-id/\"\r\n",
+					"TARGET_DEL_PROD_PATH =\"opco/fdln/domain/merch/product/user-deleted-products/master\"\r\n",
+					"STAGE_STORE_ORDER_PATH= \"opco/fdln/domain/integration/past-purchase/stage/store-order/\"\r\n",
+					"STAGE_WEB_ORDER_PATH=\"opco/fdln/domain/integration/past-purchase/stage/web-order\"\r\n",
+					"STAGE_USER_PATH = \"opco/fdln/domain/integration/past-purchase/stage/user\"\r\n",
+					"STAGE_REPL_PROD_PATH=\"opco/fdln/domain/integration/past-purchase/stage/replacement-products\"\r\n",
+					"STAGE_DEL_PROD_PATH =\"opco/fdln/domain/integration/past-purchase/stage/deleted-products\"\r\n",
+					"TARGET_PAST_PURC_PATH=\"opco/fdln/domain/integration/past-purchase/master\"\r\n",
+					"NO_OF_PARTITIONS = 25\r\n",
+					"YRS_DATA= 3\r\n",
+					"\r\n",
+					"is_stage_fl_exist= False"
+				],
+				"execution_count": 63
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE LOAD STORE DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import *\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql import functions as f\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH, recurse = True)\r\n",
+					"    print('Deleted Delta Table...')\r\n",
+					"\r\n",
+					"curr_date= current_date()\r\n",
+					"from_date = curr_date - expr(\"INTERVAL \"+ str(YRS_DATA) +\" YEARS\")\r\n",
+					"\r\n",
+					"df_store_order_items = spark.read.parquet( BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH) \r\n",
+					"df_store_order_items=df_store_order_items.filter((df_store_order_items.transactionDate >= from_date) & (df_store_order_items.transactionDate <= curr_date)) \\\r\n",
+					"                                         .filter(\"user_id IS NOT NULL\") \\\r\n",
+					"                                         .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS)) \\\r\n",
+					"                                         .select(\"loyalty_id\", \"transactionDate\", \"user_id\", \"pod_id\", \"hash\") \\\r\n",
+					"                                         .repartition(100, \"user_id\")\r\n",
+					"df_store_order_items\\\r\n",
+					"        .repartition(1, \"user_id\") \\\r\n",
+					"        .sort(\"user_id\") \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .partitionBy(\"hash\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH)"
+				],
+				"execution_count": 64
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE LOAD WEB DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import *\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql import functions as f\r\n",
+					"\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH, recurse = True)\r\n",
+					"    print('Deleted Delta Table...')\r\n",
+					"\r\n",
+					"curr_date= current_date()\r\n",
+					"from_year = curr_date - expr(\"INTERVAL \"+ str(YRS_DATA) +\" YEARS\")\r\n",
+					"\r\n",
+					"df_web_order_items = spark.read.parquet(BASE_ADLS_CONN_STR + TARGET_WEB_ORDER_ITEM_PATH) \r\n",
+					"df_web_order_items=df_web_order_items.filter((df_web_order_items.orderDate >= from_year) & (df_web_order_items.orderDate<= curr_date) ) \\\r\n",
+					"                                     .filter(\"userId IS NOT NULL\") \\\r\n",
+					"                                     .withColumn(\"hash\", f.abs(f.hash(f.col(\"userId\"))%NO_OF_PARTITIONS)) \\\r\n",
+					"                                     .select(\"orderId\", \"orderDate\", \"userId\", \"podId\", \"hash\",\"orderTime\") \\\r\n",
+					"                                     .repartition(100, \"userId\")\r\n",
+					"\r\n",
+					"df_web_order_items\\\r\n",
+					"        .repartition(1, \"userId\") \\\r\n",
+					"        .sort(\"userId\") \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .partitionBy(\"hash\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH)"
+				],
+				"execution_count": 65
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE LOAD CUSTOMER DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_USER_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_USER_PATH, recurse = True)\r\n",
+					"    print('Deleted Delta Table...')\r\n",
+					"\r\n",
+					"df_users_master = spark.read.parquet(BASE_ADLS_CONN_STR + TARGET_USER_PATH)\\\r\n",
+					"                            .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
+					"\r\n",
+					"df_users_master\\\r\n",
+					"        .repartition(1, \"user_id\") \\\r\n",
+					"        .sort(\"user_id\") \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .partitionBy(\"hash\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_USER_PATH)"
+				],
+				"execution_count": 66
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE LOAD REPLACEMENT PRODUCTS DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import *\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH, recurse = True)\r\n",
+					"    print('Deleted Delta Table...')\r\n",
+					"\r\n",
+					"df_repl_prod = spark.read.parquet(BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PATH) \r\n",
+					"df_repl_prod=df_repl_prod.filter(\"prod_id IS NOT NULL\") \\\r\n",
+					"                         .filter(size(df_repl_prod.replacement_prod_ids) >0)\r\n",
+					"                            \r\n",
+					"df_repl_prod\\\r\n",
+					"        .repartition(1) \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .partitionBy(\"ecom_stor_id\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH)"
+				],
+				"execution_count": 67
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE LOAD DELETED PRODUCTS DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH, recurse = True)\r\n",
+					"    print('Deleted Delta Table...')\r\n",
+					"\r\n",
+					"df_del_prod = spark.read.parquet(BASE_ADLS_CONN_STR + TARGET_DEL_PROD_PATH) \\\r\n",
+					"                        .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
+					"                            \r\n",
+					"df_del_prod\\\r\n",
+					"        .repartition(1, \"user_id\") \\\r\n",
+					"        .sort(\"user_id\") \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .partitionBy(\"hash\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH)"
+				],
+				"execution_count": 68
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**LOAD DATA FROM STAGE**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import *\r\n",
+					"from pyspark.sql import functions as f\r\n",
+					"import datetime\r\n",
+					"from pyspark.sql.types import StringType, ArrayType, DecimalType, IntegerType\r\n",
+					"\r\n",
+					"def check_if_stage_file_exists():\r\n",
+					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_USER_PATH) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH)\r\n",
+					"\r\n",
+					"\r\n",
+					"is_stage_fl_exist = check_if_stage_file_exists()\r\n",
+					"if(is_stage_fl_exist == True):  \r\n",
+					"    df_store_order = spark.read \\\r\n",
+					"                            .format(\"delta\") \\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH) \\\r\n",
+					"                            .select(\"transactionDate\", \"user_id\", \"pod_id\",\"loyalty_id\") \\\r\n",
+					"                            .repartition(100, \"user_id\")\r\n",
+					"                            \r\n",
+					"    df_web_order = spark \\\r\n",
+					"                        .read \\\r\n",
+					"                        .format(\"delta\") \\\r\n",
+					"                        .load(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH) \\\r\n",
+					"                        .withColumn(\"orderdatetime\",to_timestamp(concat(to_date(col(\"orderDate\"),\"yyyy-MM-dd\").cast(\"string\"), lit(\" \"), col(\"orderTime\")), \"yyyy-MM-dd HH:mm:ss\"))\\\r\n",
+					"                        .select(\"orderTime\",\"orderDate\",  \"userId\", \"podId\",  \"orderdatetime\") \\\r\n",
+					"                        .repartition(100, \"userId\")\r\n",
+					"\r\n",
+					"    df_repl_prod_id = spark \\\r\n",
+					"                        .read \\\r\n",
+					"                        .format(\"delta\") \\\r\n",
+					"                        .load(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH)\r\n",
+					"                \r\n",
+					"    df_users = spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + STAGE_USER_PATH) \\\r\n",
+					"            .select(\"user_id\", \"hndl_id\", \"rtlr_card_id\", \"mail_tx\", \"stat_cd\", \"opco_id\")\r\n",
+					"                \r\n",
+					"    df_deleted_prod= spark \\\r\n",
+					"                    .read \\\r\n",
+					"                    .format(\"delta\") \\\r\n",
+					"                    .load(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH)\r\n",
+					"\r\n",
+					"\r\n",
+					"    df_store_order.createOrReplaceTempView(\"tbl_store_order\")\r\n",
+					"    df_web_order.createOrReplaceTempView(\"tbl_web_order\")\r\n",
+					"    df_repl_prod_id.createOrReplaceTempView(\"tbl_repl_prod_id\")\r\n",
+					"    df_users.createOrReplaceTempView(\"tbl_users\")\r\n",
+					"    df_deleted_prod.createOrReplaceTempView(\"tbl_deleted_prod\")"
+				],
+				"execution_count": 69
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**JOIN STORE WEB DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print('union query')\r\n",
+					"df_union_query = spark.sql(\r\n",
+					"\r\n",
+					"\r\n",
+					"                    \"\"\"\r\n",
+					"                    SELECT transactionDate as order_date,user_id,pod_id\r\n",
+					"                    FROM tbl_store_order\r\n",
+					"                    UNION ALL\r\n",
+					"                    SELECT orderdatetime as order_date,userId,podId\r\n",
+					"                    FROM tbl_web_order\r\n",
+					"                    \"\"\"\r\n",
+					"\r\n",
+					"                    )\r\n",
+					"\r\n",
+					"df_union_query.createOrReplaceTempView(\"tbl_web_store_order\")"
+				],
+				"execution_count": 70
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**SPLITTING WEB STORE DATA INTO 3 MONTHS, 6 MONTHS & ALL TIMES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"print(' query')\r\n",
+					"df_query = spark.sql(\"\"\"\r\n",
+					"                        SELECT  a.user_id,\r\n",
+					"                        a.pod_id,\r\n",
+					"                        concat_ws(',',array_distinct(split(concat(a.pod_id,\r\n",
+					"                        CASE WHEN size(b.replacement_prod_ids)>0 THEN ',' ELSE '' END,\r\n",
+					"                        concat_ws(\",\",b.replacement_prod_ids)), ','))) as repl_prod_ids_lst,                     \r\n",
+					"                        CASE WHEN months_between(current_date(),a.order_date)<=3 THEN 'TRUE' ELSE NULL END as orderWindowThreeMonths,\r\n",
+					"                        CASE WHEN months_between(current_date(),a.order_date)<=6 THEN 'TRUE' ELSE NULL END as orderWindowSixMonths,\r\n",
+					"                        CASE WHEN months_between(current_date(),a.order_date)<=36 THEN 'TRUE' ELSE NULL END as orderWindowAllTimes\r\n",
+					"                        FROM tbl_web_store_order a\r\n",
+					"                        LEFT JOIN tbl_repl_prod_id b ON a.pod_id=b.prod_id\r\n",
+					"\r\n",
+					"                    \"\"\")\r\n",
+					"\r\n",
+					"#display(df_query)\r\n",
+					"\r\n",
+					"df_usr_prd_three_months = df_query \\\r\n",
+					"                                .where(f.col(\"orderWindowThreeMonths\") == True) \\\r\n",
+					"                                .groupBy(\"user_id\") \\\r\n",
+					"                                .agg(array(concat_ws(\",\",f.collect_set(\"repl_prod_ids_lst\"))).alias(\"three_months\")) \\\r\n",
+					"                                .repartition(100, \"user_id\")\r\n",
+					"df_usr_prd_three_months =df_usr_prd_three_months.withColumnRenamed(\"user_id\",\"user_id_three_months\")\r\n",
+					"\r\n",
+					"\r\n",
+					"df_usr_prd_six_months = df_query \\\r\n",
+					"                                .where(f.col(\"orderWindowSixMonths\") == True) \\\r\n",
+					"                                .groupBy(\"user_id\") \\\r\n",
+					"                                .agg(array(concat_ws(\",\",f.collect_set(\"repl_prod_ids_lst\"))).alias(\"six_months\"))  \\\r\n",
+					"                                .repartition(100, \"user_id\")\r\n",
+					"\r\n",
+					"df_usr_prd_six_months =df_usr_prd_six_months.withColumnRenamed(\"user_id\",\"user_id_six_months\")   \r\n",
+					"                                          \r\n",
+					"\r\n",
+					"df_usr_prd_all_times = df_query \\\r\n",
+					"                                .where(f.col(\"orderWindowAllTimes\") == True) \\\r\n",
+					"                                .groupBy(\"user_id\") \\\r\n",
+					"                                .agg(array(concat_ws(\",\",f.collect_set(\"repl_prod_ids_lst\"))).alias(\"all_times\"))  \\\r\n",
+					"                                .repartition(100, \"user_id\")\r\n",
+					"df_usr_prd_all_times=df_usr_prd_all_times.withColumnRenamed(\"user_id\",\"user_id_all\")\r\n",
+					""
+				],
+				"execution_count": 71
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**LAST ORDER DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"print('last order query')\r\n",
+					"df_last_order_query = spark.sql(\"\"\"\r\n",
+					"                        SELECT  DISTINCT\r\n",
+					"\t\t                a.user_id as user_id_last_order,\t\t                \r\n",
+					"\t\t                array(concat(concat_ws(\",\",collect_set(a.pod_id) OVER(PARTITION BY a.user_id)),\r\n",
+					"                        CASE WHEN size(c.replacement_prod_ids)>0 THEN ',' ELSE '' END,\r\n",
+					"                        concat_ws(\",\",collect_set(concat_ws(\",\",c.replacement_prod_ids)) OVER(PARTITION BY a.user_id)))) as last_order\r\n",
+					"                    FROM tbl_web_store_order a\r\n",
+					"                        INNER JOIN\r\n",
+					"                        (\r\n",
+					"                            SELECT user_id,MAX(order_date) last_ordered_time\r\n",
+					"                            FROM tbl_web_store_order\r\n",
+					"                            GROUP BY user_id\r\n",
+					"                        ) b ON a.user_id=b.user_id AND a.order_date=b.last_ordered_time\r\n",
+					"                        LEFT JOIN tbl_repl_prod_id c ON a.pod_id=c.prod_id\r\n",
+					"                    \"\"\")\r\n",
+					""
+				],
+				"execution_count": 72
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**REMOVED PURCHASES DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"print('deleted prods')\r\n",
+					"df_removed_purc=spark.sql(\r\n",
+					"                        \"\"\"\r\n",
+					"                        SELECT DISTINCT\r\n",
+					"                        a.user_id as user_id_del,\r\n",
+					"                        collect_set(a.pod_id) OVER(PARTITION BY a.user_id) as removed_purchases\r\n",
+					"                        FROM tbl_web_store_order a\r\n",
+					"                        INNER JOIN\r\n",
+					"                        tbl_deleted_prod b ON a.user_id=b.user_id AND a.pod_id=b.prod_id AND a.order_date> b.audt_cr_dt_tm\r\n",
+					"                        \"\"\")"
+				],
+				"execution_count": 73
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**PAST PURCHASE MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql.types import StringType, ArrayType\r\n",
+					"\r\n",
+					"\r\n",
+					"df_past_purc = df_users.join(df_usr_prd_all_times, df_users.user_id == df_usr_prd_all_times.user_id_all, \"left\") \\\r\n",
+					"                        .join(df_usr_prd_six_months, df_users.user_id == df_usr_prd_six_months.user_id_six_months, \"left\") \\\r\n",
+					"                        .join(df_usr_prd_three_months, df_users.user_id == df_usr_prd_three_months.user_id_three_months, \"left\") \\\r\n",
+					"                        .join(df_last_order_query, df_users.user_id == df_last_order_query.user_id_last_order, \"left\") \\\r\n",
+					"                        .join(df_removed_purc, df_users.user_id == df_removed_purc.user_id_del, \"left\") \\\r\n",
+					"                        .select(\"user_id\",\"hndl_id\", \"rtlr_card_id\", \"mail_tx\", \"stat_cd\", \"opco_id\", \\\r\n",
+					"                        coalesce(\"three_months\",array()).alias(\"three_months\").cast(ArrayType(IntegerType())), \\\r\n",
+					"                        coalesce(\"six_months\",array()).alias(\"six_months\").cast(ArrayType(IntegerType())), \\\r\n",
+					"                        coalesce(\"all_times\",array()).alias(\"all_times\").cast(ArrayType(IntegerType())), \\\r\n",
+					"                        coalesce(\"last_order\",array()).alias(\"last_order\").cast(ArrayType(IntegerType())), \\\r\n",
+					"                        coalesce(\"removed_purchases\",array()).alias(\"removed_purchases\").cast(ArrayType(IntegerType()))).distinct()  \r\n",
+					"df_past_purc = df_past_purc.withColumn(\"ordergenius_rank_partition\",array([]).cast(ArrayType(IntegerType()))) \\\r\n",
+					"                           .withColumn(\"ordergenius_default\",array([]).cast(ArrayType(IntegerType()))) \\\r\n",
+					"                           .withColumn(\"ordergenius_set_recency_decay\",array([]).cast(ArrayType(IntegerType()))) \\\r\n",
+					"                           .withColumn(\"first_lpurc_dt\",array([]).cast(ArrayType(StringType()))) \\\r\n",
+					"                           .withColumn(\"last_purc_dates\",array([]).cast(ArrayType(StringType()))) \\\r\n",
+					"                           .withColumn(\"avg_qtys\",array([]).cast(ArrayType(StringType()))) \\\r\n",
+					"                           .withColumn(\"qtys\",array([]).cast(ArrayType(StringType()))) \\\r\n",
+					"                           .withColumn(\"categories\",array([]).cast(ArrayType(StringType()))) \\\r\n",
+					"                           .withColumn(\"total_orders\",lit(0).cast(IntegerType())) \\\r\n",
+					"                           .withColumn(\"total_amount\",lit(0.00).cast(DecimalType(10,2))) \\\r\n",
+					"                           .withColumn(\"avg_ord_amt\",lit(0.00).cast(DecimalType(10,2))) \\\r\n",
+					"                           .withColumn(\"category_averages\",array([]).cast(ArrayType(StringType())))\r\n",
+					"\r\n",
+					"\r\n",
+					"df_past_purc =  df_past_purc.withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
+					"\r\n",
+					"df_past_purc\\\r\n",
+					"        .repartition(1, \"user_id\") \\\r\n",
+					"        .sort(\"user_id\") \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .partitionBy(\"hash\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH)"
+				],
+				"execution_count": 74
+			}
+		]
+	}
+}

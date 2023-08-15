@@ -1,0 +1,45 @@
+{
+	"name": "ds_qts_postgres_customer_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_qts_postgres_customer",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"PARAM_OPCO": {
+					"value": "@dataset().PARAM_OPCO",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "String",
+				"defaultValue": "FDLN"
+			},
+			"PARAM_CUSTOMER_SCHEMA": {
+				"type": "String",
+				"defaultValue": "profile"
+			},
+			"PARAM_CUSTOMER_TBL": {
+				"type": "String",
+				"defaultValue": "cpt_user"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/customer/user"
+		},
+		"annotations": [],
+		"type": "PostgreSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().PARAM_CUSTOMER_SCHEMA",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().PARAM_CUSTOMER_TBL",
+				"type": "Expression"
+			}
+		}
+	}
+}

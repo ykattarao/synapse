@@ -1,0 +1,31 @@
+{
+	"name": "ds_az_adls_customer_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_Storage_SelfHosted",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"PARAM_INGST_USER_PATH": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/customer/user"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().PARAM_INGST_USER_PATH",
+					"type": "Expression"
+				},
+				"fileSystem": "data-integration"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

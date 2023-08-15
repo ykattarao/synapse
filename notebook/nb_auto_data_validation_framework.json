@@ -1,0 +1,202 @@
+{
+	"name": "nb_auto_data_validation_framework",
+	"properties": {
+		"folder": {
+			"name": "utils/validation"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "6c0359dc-94fb-436b-8bee-cd17839ca699"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"#PARAMETERS TO BE PASSED"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**VALIDATE COUNT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def percentage_difference(num_1, num_2):\n",
+					"    return abs((num_2 - num_1) / ((num_1 + num_2)/2)) * 100\n",
+					"\n",
+					"def validate_count(df_1, df_2, threshold):\n",
+					"    percet_diff = percentage_difference(df_1.count(), df_2.count())\n",
+					"    logger.info(\"\\t Validating df_1 and df_2. df_1={0} , df_2 = {1}, percet_diff={2}\".format(df_1.count(), df_2.count(), percet_diff))\n",
+					"    return percet_diff <= threshold  "
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**VALIDATE COLUMN DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def unique_column_dataValidation(df_1, df_2,threshold, col_list):    \r\n",
+					" \r\n",
+					"    for col_name in col_list:\r\n",
+					"            df_1_count= df_1.select(count_distinct(col_name)).collect()[0][0] \r\n",
+					"            df_2_count= df_2.select(count_distinct(col_name)).collect()[0][0] \r\n",
+					"            val_fail=True   \r\n",
+					"            per_diff = percentage_difference(df_1_count,df_2_count)\r\n",
+					"            logger.info(\"\\t Validating df_1 and df_2. df_1={0} , df_2 = {1}, per_diff={2}\".format(df_1_count, df_2_count,per_diff))            \r\n",
+					"            if per_diff <= threshold:\r\n",
+					"                logger.info(f\"Validation Successful:The percentage difference for {col_name} is within the acceptable threshold.\")\r\n",
+					"                    \r\n",
+					"            else:\r\n",
+					"                logger.warning(f\"Validation Failed:The percentage difference for {col_name} is not within the acceptable threshold.\")\r\n",
+					"                val_fail=False\r\n",
+					"    return val_fail    "
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**VALIDATE LIST VALUES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def check_val_list(df_1,col_name,val_list):\r\n",
+					"    check_list=True\r\n",
+					"    if check_list== True:           \r\n",
+					"            df_list=df_1.filter(~col(col_name).isin(val_list))\r\n",
+					"            logger.info(\"\\t Validating df_1 values with column. col_name = {0}\".format(col_name))            \r\n",
+					"\r\n",
+					"            if df_list.count()==0:\r\n",
+					"                logger.info(\"All the values in the list exist\")\r\n",
+					"            else:\r\n",
+					"                logger.warning(\"Some values in the list are missing\")\r\n",
+					"                check_list=False\r\n",
+					"\r\n",
+					"    return check_list"
+				],
+				"execution_count": 3
+			}
+		]
+	}
+}

@@ -1,0 +1,393 @@
+{
+	"name": "nb_mdm_cntrl_cit_pup_ctl",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/store"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "36c7dfe1-3919-4aa6-a02e-f88aaab22a93"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_CNTRL_PUP_CTL_PATH = \"opco/ppod/domain/store/central-cit-pup-ctl/lake/2023-08-01-02-28-41/\"\r\n",
+					"STAGE_CNTRL_PUP_CTL_PATH = \"opco/ppod/domain/store/central-cit-pup-ctl/stage/\"\r\n",
+					"TARGET_CNTRL_PUP_CTL_PATH = \"opco/{opco}/domain/store/central-cit-pup-ctl/master/\"\r\n",
+					"KEY_COL=\"pup_guid_cd\"\r\n",
+					"VAL_CNT_THRESHOLD= 2\r\n",
+					"VAL_COL_CNT_THRESHOLD= 1\r\n",
+					"VAL_COL_LST=[\"zip_cd\"]\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
+				],
+				"execution_count": 13
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_cntrl_cit_pup_ctl\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 14
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 15
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\\n *****************************************************************************\\033[0m\")\r\n",
+					"logger.info(\"\\n SOURCE_LAKE_CNTRL_PUP_CTL_PATH : {0}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\n STAGE_CNTRL_PUP_CTL_PATH : {0}\".format(STAGE_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\n TARGET_CNTRL_PUP_CTL_PATH : {0}\".format(TARGET_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\n VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\n VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": 16
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, StringType,TimestampType, DoubleType, IntegerType, LongType, DecimalType, BooleanType, DateType, ArrayType\r\n",
+					"\r\n",
+					"STAGE_CNTRL_PUP_CTL_SCHEMA = StructType([\r\n",
+					"        StructField(\"pup_id\", IntegerType(), False),\r\n",
+					"        StructField(\"pup_guid_cd\", StringType(), False),\r\n",
+					"        StructField(\"pup_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"pup_grp_id\", IntegerType(), False),\r\n",
+					"        StructField(\"adr_1_tx\", StringType(), True),\r\n",
+					"        StructField(\"adr_2_tx\", StringType(), True),\r\n",
+					"        StructField(\"city_tx\", StringType(), True),\r\n",
+					"        StructField(\"st_cd\", StringType(),True),\r\n",
+					"        StructField(\"zip_cd\", StringType(), True),\r\n",
+					"        StructField(\"pup_voic_phon_cd\",StringType(), True),\r\n",
+					"        StructField(\"pup_alt_phon_cd\",StringType(), True),\r\n",
+					"        StructField(\"pup_mail_tx\", StringType(), True),\r\n",
+					"        StructField(\"loc_istr_tx\", StringType(), True),\r\n",
+					"        StructField(\"stor_id\", StringType(), True),\r\n",
+					"        StructField(\"p3_stor_id\", StringType(), True),\r\n",
+					"        StructField(\"ahld_stor_nbr_cd\", StringType(),True),\r\n",
+					"        StructField(\"lat_qy\", DoubleType(), True),\r\n",
+					"        StructField(\"long_qy\", DoubleType(), True),\r\n",
+					"        StructField(\"stor_to_pup_min_qy\", IntegerType(), True),\r\n",
+					"        StructField(\"pad_min_qy\", IntegerType(), True),\r\n",
+					"        StructField(\"tote_per_cart_qy\", IntegerType(),True),\r\n",
+					"        StructField(\"cart_off_truk_min_qy\", IntegerType(),True),\r\n",
+					"        StructField(\"pup_open_tm\", TimestampType(), True),\r\n",
+					"        StructField(\"pup_pm_open_tm\", TimestampType(),True),\r\n",
+					"        StructField(\"alt_rte_sys_cd\", StringType(), True),\r\n",
+					"        StructField(\"hypr_loc_cd\", IntegerType(),True),\r\n",
+					"        StructField(\"pup_svc_dur_mult_qy\", DecimalType(), False),\r\n",
+					"        StructField(\"pup_frmt_type_cd\", StringType(), True),\r\n",
+					"        StructField(\"live_dt\", TimestampType(), True),\r\n",
+					"        StructField(\"open_dt\", TimestampType(),True),\r\n",
+					"        StructField(\"clos_dt\", TimestampType(), True),\r\n",
+					"        StructField(\"map_web_link_tx\",StringType() , True),\r\n",
+					"        StructField(\"dlv_area_id\",IntegerType() ,True),\r\n",
+					"        StructField(\"tax_grp_cd\", StringType(), True),\r\n",
+					"        StructField(\"sns_mkt_area_tx\", StringType(), True),\r\n",
+					"        StructField(\"stor_ttl_tx\", StringType(),True),\r\n",
+					"        StructField(\"web_actv_cd\", StringType(), False),\r\n",
+					"        StructField(\"pmtt_div_cd\", StringType(),True),\r\n",
+					"        StructField(\"cnc_ord_id_qy\", IntegerType(),True),\r\n",
+					"        StructField(\"stag_only_fl\", StringType(), False),\r\n",
+					"        StructField(\"achl_wine_cd\", StringType(),False),\r\n",
+					"        StructField(\"achl_beer_cd\", StringType(), False),\r\n",
+					"        StructField(\"achl_lqr_cd\",StringType() , False),\r\n",
+					"        StructField(\"bag_fee_cd\", StringType(), False),  \r\n",
+					"        StructField(\"dlv_ptnr_tx\", StringType(), True),\r\n",
+					"        StructField(\"pckp_notf_ptnr_site_id\", IntegerType(), True),\r\n",
+					"        StructField(\"rtrn_allow_cd\",StringType() , True),\r\n",
+					"        StructField(\"ok_to_edit_ord_fl\",StringType() , True),\r\n",
+					"        StructField(\"sub_rej_cut_wnd\", IntegerType(), False),\r\n",
+					"        StructField(\"sub_rej_ntfy_cut_wnd\", IntegerType(), False),\r\n",
+					"        StructField(\"ortc_stor_fl\", StringType(), False),\r\n",
+					"        StructField(\"drop_loc_adr_1_tx\", StringType(), True),\r\n",
+					"        StructField(\"drop_loc_adr_2_tx\", StringType(), True),\r\n",
+					"        StructField(\"drop_loc_city_tx\", StringType(), True),\r\n",
+					"        StructField(\"drop_loc_st_cd\", StringType(), True),\r\n",
+					"        StructField(\"drop_loc_zip_cd\", StringType(), True)\r\n",
+					"\r\n",
+					"])\r\n",
+					"logger.debug(\"schema-defination : Defined the schema for central:cit_pup_ctl.\\n {0}\".format(STAGE_CNTRL_PUP_CTL_SCHEMA))"
+				],
+				"execution_count": 17
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**PUP CONTROL STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import current_timestamp,lit\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_CNTRL_PUP_CTL_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_CNTRL_PUP_CTL_PATH, recurse = True)\r\n",
+					"    logger.info(\"Purging data from STG container {0}\".format(STAGE_CNTRL_PUP_CTL_PATH))\r\n",
+					"\r\n",
+					"\r\n",
+					"df_pup_ctl_lake = spark \\\r\n",
+					"                    .read \\\r\n",
+					"                    .format(\"parquet\") \\\r\n",
+					"                    .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_CNTRL_PUP_CTL_PATH) \\\r\n",
+					"                    .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"                    .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"                    .withColumn(\"tgt_audt_cr_id\", lit('usr-data-integration')) \\\r\n",
+					"                    .withColumn(\"tgt_audt_upd_id\", lit('usr-data-integration'))\r\n",
+					"\r\n",
+					"df_pup_ctl_lake \\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .option(\"inferSchema\", \"True\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_CNTRL_PUP_CTL_PATH)\r\n",
+					"logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH, STAGE_CNTRL_PUP_CTL_PATH, df_pup_ctl_lake.count()))"
+				],
+				"execution_count": 18
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import count_distinct, col\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"            .sort(KEY_COL) \\\r\n",
+					"            .write \\\r\n",
+					"            .option(\"mergeSchema\", \"True\") \\\r\n",
+					"            .mode(\"overwrite\") \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .save(path)\r\n",
+					"    logger.info(\"\\tCENTRAL:CIP_PUP_CTL Master data overwritten. OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"\r\n",
+					"# main starts here\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"\\n\\033[1m Processing MDM for CENTRAL:CIT_PUP_CTL - OPCO={0}\\033[0m\\n\".format(opco))\r\n",
+					"\r\n",
+					"    df_pup_ctl_stage= spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\") \\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + STAGE_CNTRL_PUP_CTL_PATH) \r\n",
+					"    logger.info(\"\\t CENTRAL:CIT_PUP_CTL loaded from stage.OPCO = {0}, Count={1}\".format(opco,df_pup_ctl_stage.count()))\r\n",
+					"\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CNTRL_PUP_CTL_PATH.format(opco = opco) )):\r\n",
+					"        df_pup_ctl_master= spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\") \\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + TARGET_CNTRL_PUP_CTL_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"\\t CENTRAL:CIT_PUP_CTL loaded from master.OPCO = {0}, Count={1}\".format(opco,df_pup_ctl_master.count())) \r\n",
+					"\r\n",
+					"        is_val_success= validate_count(df_pup_ctl_master,df_pup_ctl_stage, VAL_CNT_THRESHOLD )\r\n",
+					"        is_col_data_valid = unique_column_dataValidation(df_pup_ctl_master,df_pup_ctl_stage,VAL_COL_CNT_THRESHOLD,VAL_COL_LST)\r\n",
+					"\r\n",
+					"        if (is_val_success & is_col_data_valid)== True:           \r\n",
+					"            load_master_data(df_pup_ctl_stage,BASE_ADLS_CONN_STR + TARGET_CNTRL_PUP_CTL_PATH.format(opco = opco), opco)\r\n",
+					"           \r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")\r\n",
+					"            \r\n",
+					"            \r\n",
+					"    else:\r\n",
+					"        logger.info(\"\\tFirst Time Master Load\")\r\n",
+					"        load_master_data(df_pup_ctl_stage,BASE_ADLS_CONN_STR + TARGET_CNTRL_PUP_CTL_PATH.format(opco = opco),opco )\r\n",
+					"  "
+				],
+				"execution_count": 20
+			}
+		]
+	}
+}

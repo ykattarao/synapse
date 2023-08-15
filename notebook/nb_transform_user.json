@@ -1,0 +1,289 @@
+{
+	"name": "nb_transform_user",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/customer/user"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "958d1ef7-46f6-4407-8c48-38ee7d337d76"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\n",
+					"SOURCE_CUSTOMER_LAKE_PATH = \"opco/fdln/domain/customer/user/lake/2023-06-11-05-31-14/\"\n",
+					"STAGE_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/stage/\"\n",
+					"TARGET_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/master/\"\n",
+					"KEY_COL = \"user_id\"\n",
+					"PARTITION_COL = \"hash\""
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_user\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\n",
+					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - CUSTOMER - PROFILE - CPT_USR - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
+					"logger.info(\"\\n SOURCE_CUSTOMER_LAKE_PATH : {0}\".format(SOURCE_CUSTOMER_LAKE_PATH))\n",
+					"logger.info(\"\\n STAGE_CUSTOMER_PATH : {0}\".format(STAGE_CUSTOMER_PATH))\n",
+					"logger.info(\"\\n TARGET_CUSTOMER_PATH : {0}\".format(TARGET_CUSTOMER_PATH))\n",
+					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\n PARTITION_COL : {0}\".format(PARTITION_COL))\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE DATA LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\n",
+					"from delta.tables import DeltaTable\n",
+					"\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_CUSTOMER_PATH)):\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_CUSTOMER_PATH, recurse = True)\n",
+					"    logger.info(\"cleanup : purging stage container\")\n",
+					"\n",
+					"df_customer_stage = spark \\\n",
+					"    .read \\\n",
+					"    .format(\"parquet\") \\\n",
+					"    .option(\"inferSchema\", \"true\") \\\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_CUSTOMER_LAKE_PATH) \\\n",
+					"    .filter(\"user_id is NOT NULL\") \\\n",
+					"    .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%25)) \\\n",
+					"    .withColumn(\"rtlr_card_id_wo_chk_dgt\", \\\n",
+					"        f.when(f.col(\"rtlr_card_id\").isNotNull() , \\\n",
+					"            f.expr(\"substring(rtlr_card_id, 1, length(rtlr_card_id)-1)\")).otherwise(f.col(\"rtlr_card_id\")))\n",
+					"            \n",
+					"logger.info(\"stage-load : Load customer profile from lake path. Count={0}, Path={1}\".format(df_customer_stage.count(), SOURCE_CUSTOMER_LAKE_PATH))"
+				],
+				"execution_count": 18
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\n",
+					"from delta.tables import DeltaTable\n",
+					"\n",
+					"def init():\n",
+					"    df_customer_stage \\\n",
+					"        .repartition(5, KEY_COL) \\\n",
+					"        .sort(KEY_COL) \\\n",
+					"        .write \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .mode(\"overwrite\") \\\n",
+					"        .partitionBy(PARTITION_COL) \\\n",
+					"        .save(BASE_ADLS_CONN_STR + TARGET_CUSTOMER_PATH)\n",
+					"    logger.info(\"init-load : customer profile created in master. Count={0}, Path={1}\".format(df_customer_stage.count(), TARGET_CUSTOMER_PATH))\n",
+					"    \n",
+					"\n",
+					"def apply_cdc():\n",
+					"    df_customer_stage \\\n",
+					"    .repartition(5, KEY_COL) \\\n",
+					"    .sort(KEY_COL) \\\n",
+					"    .write \\\n",
+					"    .format(\"delta\") \\\n",
+					"    .mode(\"overwrite\") \\\n",
+					"    .partitionBy(PARTITION_COL) \\\n",
+					"    .save(BASE_ADLS_CONN_STR + STAGE_CUSTOMER_PATH)\n",
+					"\n",
+					"    df_customer_master = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_CUSTOMER_PATH)\n",
+					"\n",
+					"    df_customer_delta = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + STAGE_CUSTOMER_PATH) \n",
+					"\n",
+					"    df_customer_master.createOrReplaceTempView('tbl_customer_mstr')\n",
+					"    df_customer_delta.createOrReplaceTempView('tbl_customer_delta')\n",
+					"\n",
+					"    spark.sql(\n",
+					"        \"\"\"\n",
+					"        MERGE INTO tbl_customer_mstr\n",
+					"        USING tbl_customer_delta\n",
+					"        ON tbl_customer_mstr.hash = tbl_customer_delta.hash\n",
+					"        AND tbl_customer_mstr.user_id = tbl_customer_delta.user_id\n",
+					"        WHEN MATCHED THEN\n",
+					"            UPDATE SET *\n",
+					"        WHEN NOT MATCHED THEN\n",
+					"            INSERT *\n",
+					"        \"\"\"\n",
+					"    )\n",
+					"    logger.info(\"cdc-load : customer profile merged into master. Master_Count={0}, Delta_Count={1}, Path={2}\".format(df_customer_master.count(), df_customer_delta.count(), TARGET_CUSTOMER_PATH))\n",
+					"##############################\n",
+					"# FULL LOAD / DELTA LOAD\n",
+					"##############################\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CUSTOMER_PATH) == False):\n",
+					"    init()\n",
+					"else:\n",
+					"    apply_cdc()\n",
+					""
+				],
+				"execution_count": 19
+			}
+		]
+	}
+}

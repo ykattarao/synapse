@@ -1,0 +1,367 @@
+{
+	"name": "nb_transform_store_order_item",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/order/store-order/order-item"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "7b3ffd48-6f13-4601-92e5-7bdbdaabc4aa"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\n",
+					"STAGE_STORE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/store-order/stage/order-item/\"\n",
+					"TARGET_STORE_ORDER_PATH = \"opco/fdln/domain/order/store-order/master/order/\"\n",
+					"TARGET_STORE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/store-order/master/order-item/\"\n",
+					"\n",
+					"TARGET_STORE_ORDER_ITEM_COLS = [\"user_id\", \"line_item_id\", \"order_num\", \"transaction_ts\", \"loyalty_id\", \"upc_nbr\", \"pod_id\",\n",
+					"                         \"qty_sld_amt\", \"ext_sell_prc_amt\", \"item_coupon_savings\", \"item_rewardsprogram_savings\",\"item_mvp_savings\", \"year\", \"month\", \"day\"]\n",
+					"KEY_COL = [\"order_num\"]\n",
+					"PARTITION_COLS = [\"year\", \"month\", \"day\"]"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_store_order_item\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\n",
+					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - ORDER-ITEM - STORE_ORDER - ORDER_HISTORY - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
+					"logger.info(\"\\n STAGE_STORE_ORDER_ITEM_PATH : {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))\n",
+					"logger.info(\"\\n TARGET_STORE_ORDER_PATH : {0}\".format(TARGET_STORE_ORDER_PATH))\n",
+					"logger.info(\"\\n TARGET_STORE_ORDER_ITEM_PATH : {0}\".format(TARGET_STORE_ORDER_ITEM_PATH))\n",
+					"logger.info(\"\\n TARGET_STORE_ORDER_ITEM_COLS : {0}\".format(TARGET_STORE_ORDER_ITEM_COLS))\n",
+					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\n PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT - FULL LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql import functions as f\n",
+					"from delta.tables import DeltaTable\n",
+					"\n",
+					"def init():\n",
+					"    df_web_order_item = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_PATH) \\\n",
+					"        .select(\"user_id\", \"order_num\", \"transaction_ts\", \"loyalty_id\", \"year\", \"month\", \"day\", f.explode(f.col(\"transaction_lines\"))) \\\n",
+					"        .withColumn(\"line_item_id\",f.col(\"col.line_item_id\")) \\\n",
+					"        .withColumn(\"upc_nbr\", f.col(\"col.upc_nbr\")) \\\n",
+					"        .withColumn(\"pod_id\", f.col(\"col.pod_id\")) \\\n",
+					"        .withColumn(\"qty_sld_amt\", f.col(\"col.qty_sld_amt\")) \\\n",
+					"        .withColumn(\"ext_sell_prc_amt\", f.col(\"col.ext_sell_prc_amt\")) \\\n",
+					"        .withColumn(\"item_coupon_savings\", f.col(\"col.item_coupon_savings\")) \\\n",
+					"        .withColumn(\"item_rewardsprogram_savings\", f.col(\"col.item_rewardsprogram_savings\")) \\\n",
+					"        .withColumn(\"item_mvp_savings\", f.col(\"col.item_mvp_savings\")) \\\n",
+					"        .dropDuplicates([\"order_num\", \"line_item_id\", \"pod_id\"]) \\\n",
+					"        .select(TARGET_STORE_ORDER_ITEM_COLS)\n",
+					"    \n",
+					"    logger.info(\"init-load: Read orders from order container. Count={0}, Path={1}\".format(df_web_order_item.count(),TARGET_STORE_ORDER_PATH))\n",
+					"\n",
+					"    df_web_order_item \\\n",
+					"       .repartition(5, KEY_COL) \\\n",
+					"       .sort(KEY_COL) \\\n",
+					"       .write \\\n",
+					"       .mode(\"overwrite\") \\\n",
+					"       .option(\"mergeSchema\", \"true\") \\\n",
+					"       .format(\"delta\") \\\n",
+					"       .partitionBy(PARTITION_COLS) \\\n",
+					"       .save(BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH)\n",
+					"\n",
+					"    logger.info(\"init-load: Created order-item. Count={0}, Path={1}\".format(df_web_order_item.count(),TARGET_ORDER_ITEM_PATH))\n",
+					"\n",
+					"##############################\n",
+					"# MAIN STARTS HERE\n",
+					"##############################\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH) == False):\n",
+					"    init()\n",
+					""
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT - DELTA LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql import functions as f\n",
+					"from delta.tables import DeltaTable\n",
+					"\n",
+					"def apply_cdc():\n",
+					"    df_store_order_master = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_PATH)\n",
+					"\n",
+					"    df_store_order_stage = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH) \\\n",
+					"\n",
+					"    logger.info(\"cdc-load: Read delta orders from stage container. Count={0}, Path={1}\".format(df_store_order_stage.count(),STAGE_STORE_ORDER_ITEM_PATH))\n",
+					"\n",
+					"    df_store_order_stage.createOrReplaceTempView(\"tbl_store_order_stage\")\n",
+					"    df_store_order_master.createOrReplaceTempView(\"tbl_store_order_master\")\n",
+					"\n",
+					"    df_store_order_item_stage = spark \\\n",
+					"        .sql(\n",
+					"            \"\"\"\n",
+					"            SELECT m.*\n",
+					"            FROM tbl_store_order_stage s\n",
+					"            INNER JOIN tbl_store_order_master m\n",
+					"            ON s.year = m.year\n",
+					"            AND s.month = m.month\n",
+					"            AND s.day = m.day\n",
+					"            AND s.order_num = m.order_num\n",
+					"            \"\"\") \\\n",
+					"        .select(\"user_id\", \"order_num\", \"transaction_ts\", \"loyalty_id\", \"year\", \"month\", \"day\", f.explode(f.col(\"transaction_lines\"))) \\\n",
+					"        .withColumn(\"line_item_id\",f.col(\"col.line_item_id\")) \\\n",
+					"        .withColumn(\"upc_nbr\", f.col(\"col.upc_nbr\")) \\\n",
+					"        .withColumn(\"pod_id\", f.col(\"col.pod_id\")) \\\n",
+					"        .withColumn(\"qty_sld_amt\", f.col(\"col.qty_sld_amt\")) \\\n",
+					"        .withColumn(\"ext_sell_prc_amt\", f.col(\"col.ext_sell_prc_amt\")) \\\n",
+					"        .withColumn(\"item_coupon_savings\", f.col(\"col.item_coupon_savings\")) \\\n",
+					"        .withColumn(\"item_rewardsprogram_savings\", f.col(\"col.item_rewardsprogram_savings\")) \\\n",
+					"        .withColumn(\"item_mvp_savings\", f.col(\"col.item_mvp_savings\")) \\\n",
+					"        .dropDuplicates([\"order_num\", \"line_item_id\", \"pod_id\"]) \\\n",
+					"        .select(TARGET_STORE_ORDER_ITEM_COLS)\n",
+					"                \n",
+					"    df_store_order_item_master = spark \\\n",
+					"        .read \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH)\n",
+					"    \n",
+					"    logger.info(\"cdc-load: Built order-item-stg & order-item-mstr datasets. Stage={0}, Master={1}\".format(df_store_order_item_stage.count(),df_store_order_item_master.count()))\n",
+					"\n",
+					"    df_store_order_item_stage.createOrReplaceTempView(\"tbl_store_order_item_stage\")\n",
+					"    df_store_order_item_master.createOrReplaceTempView(\"tbl_store_order_item_master\")\n",
+					"\n",
+					"    spark.sql(\n",
+					"        \"\"\"\n",
+					"        MERGE INTO tbl_store_order_item_master\n",
+					"        USING tbl_store_order_item_stage\n",
+					"        ON tbl_store_order_item_master.year = tbl_store_order_item_stage.year\n",
+					"        AND tbl_store_order_item_master.month = tbl_store_order_item_stage.month\n",
+					"        AND tbl_store_order_item_master.day = tbl_store_order_item_stage.day\n",
+					"        AND tbl_store_order_item_master.order_num = tbl_store_order_item_stage.order_num\n",
+					"        AND tbl_store_order_item_master.line_item_id = tbl_store_order_item_stage.line_item_id\n",
+					"        AND tbl_store_order_item_master.pod_id = tbl_store_order_item_stage.pod_id\n",
+					"        WHEN MATCHED THEN \n",
+					"            UPDATE SET *\n",
+					"        WHEN NOT MATCHED THEN\n",
+					"            INSERT *\n",
+					"        \"\"\"\n",
+					"    )\n",
+					"\n",
+					"\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH)):\n",
+					"    apply_cdc()\n",
+					"else:\n",
+					"    logger.info(\"cdc-load:No delta orders found at path = {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**PURGE STAGE**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\n",
+					"from delta.tables import DeltaTable\n",
+					"\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH)):\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH, recurse = True)\n",
+					"    logger.info(\"cdc-load:Cleaned up delta data container = {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))"
+				],
+				"execution_count": 4
+			}
+		]
+	}
+}

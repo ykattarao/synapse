@@ -1,0 +1,367 @@
+{
+	"name": "nb_transform_category_consumer",
+	"properties": {
+		"folder": {
+			"name": "integration/category"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "96eb1209-9730-4307-8ea8-b707da085626"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"TARGET_CATALOG_ATTRIBUTE_PATH = \"opco/{opco}/domain/merch/catalog/omt-atr/master/\"\r\n",
+					"TARGET_CATALOG_ATTRIBUTE_VALUE_PATH = \"opco/{opco}/domain/merch/catalog/omt-atr-val/master/\"\r\n",
+					"TARGET_CATEGORY_CONSUMAR_PATH = \"opco/{opco}/integration/category/category-consumer/master\"\r\n",
+					"VAL_CNT_THRESHOLD = 5.0\r\n",
+					"KEY_COL = \"attributeId\"\r\n",
+					"VAR_ATR_ID = 71\r\n",
+					"VAR_ATR_TYPE_CD = 'C'\r\n",
+					"OPCO = \"fdln\""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_category_consumer\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"*****************************************************************************\")\n",
+					"logger.info(\"\\t Category Integration - Category Consumer - Starting with below parameters\")\n",
+					"logger.info(\"*****************************************************************************\")\n",
+					"logger.info(\"\\t OPCO : {0}\".format(OPCO))\n",
+					"logger.info(\"\\t TARGET_CATALOG_ATTRIBUTE_PATH : {0}\".format(TARGET_CATALOG_ATTRIBUTE_PATH.format(opco = OPCO)))\n",
+					"logger.info(\"\\t TARGET_CATALOG_ATTRIBUTE_VALUE_PATH : {0}\".format(TARGET_CATALOG_ATTRIBUTE_VALUE_PATH.format(opco = OPCO)))\n",
+					"logger.info(\"\\t TARGET_CATEGORY_CONSUMAR_PATH : {0}\".format(TARGET_CATEGORY_CONSUMAR_PATH.format(opco = OPCO)))\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
+					"logger.info(\"**************************************************************************\")\n",
+					""
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**CATALOG ATTRIBUTE AND ATTRIBUTE VALUE DATA LOAD INTO DATAFRAMES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"ds_catalog_attribute = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + TARGET_CATALOG_ATTRIBUTE_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"ds_catalog_attribute_value = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + TARGET_CATALOG_ATTRIBUTE_VALUE_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"logger.info(\"load-data : catalog-attribute, catalog-attribute-value loaded from master\")"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**JOIN AND FILTER SOURCE CATALOG ATTRIBUTE,ATTRIBUTE VALUE DATA & SELECT REQUIRED COLUMNS DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import pyspark.sql.functions as F\r\n",
+					"\r\n",
+					"logger.info(\"integrate : Started integrating catalog-attribute, catalog-attribute-value\")\r\n",
+					"\r\n",
+					"ds_category_consumer=ds_catalog_attribute.join(ds_catalog_attribute_value,ds_catalog_attribute.atr_id==ds_catalog_attribute_value.atr_id) \\\r\n",
+					"                    .filter(ds_catalog_attribute.atr_id == VAR_ATR_ID) \\\r\n",
+					"                    .filter(ds_catalog_attribute.atr_type_cd == VAR_ATR_TYPE_CD) \\\r\n",
+					"                    .select(ds_catalog_attribute_value.atr_val_id.alias(\"id\"), \\\r\n",
+					"                     ds_catalog_attribute.atr_id.alias(\"attributeId\"), \\\r\n",
+					"                     F.when(ds_catalog_attribute_value.lvl_id.isNotNull(),ds_catalog_attribute_value.lvl_id.cast('long')) \\\r\n",
+					"                     .otherwise(0).alias(\"levelId\"), \\\r\n",
+					"                     ds_catalog_attribute_value.othr_key_id.alias(\"categoryId\"), \\\r\n",
+					"                     ds_catalog_attribute.atr_name_cd.alias(\"attributeName\"), \\\r\n",
+					"                     F.when(ds_catalog_attribute_value.atr_val_cd.isNotNull(),ds_catalog_attribute_value.atr_val_cd.cast('long')) \\\r\n",
+					"                     .otherwise(0).alias(\"attributeValue\"), \\\r\n",
+					"                     ds_catalog_attribute.atr_type_cd.alias(\"attributeType\")\r\n",
+					"                     )"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**LASTMODIFIED COLUMN ADDED**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import current_timestamp\r\n",
+					"\r\n",
+					"ds_category_consumer_result=ds_category_consumer \\\r\n",
+					"    .withColumn(colName=\"lastModified\",col=current_timestamp())\r\n",
+					"\r\n",
+					"logger.info(\"enrich : enriched catalog-consumer-attribute with lastModified attribute\")"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"def save_category_consumer_result(df_category_consumer_rs):\r\n",
+					"    df_category_consumer_rs \\\r\n",
+					"                    .sort(KEY_COL) \\\r\n",
+					"                    .write \\\r\n",
+					"                    .mode(\"overwrite\") \\\r\n",
+					"                    .option(\"mergeSchema\",\"True\") \\\r\n",
+					"                    .format(\"delta\") \\\r\n",
+					"                    .save(BASE_ADLS_CONN_STR + TARGET_CATEGORY_CONSUMAR_PATH.format(opco = OPCO)) \r\n",
+					"    logger.info(\"\\t Category consumer master data is overrided.OPCO = {0}, Count = {1}\".format(OPCO, df_category_consumer_rs.count()))\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATEGORY_CONSUMAR_PATH.format(opco = OPCO))):\r\n",
+					"    logger.info(\"\\t Category consumer master data already exists.\")\r\n",
+					"    df_old_category_consumer_result = spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_CONSUMAR_PATH.format(opco = OPCO))\r\n",
+					"    logger.debug(\"\\t Category image master data loaded for validation. count={0}\".format(df_old_category_consumer_result.count()))\r\n",
+					"    is_val_success = validate_count(df_old_category_consumer_result, ds_category_consumer_result, VAL_CNT_THRESHOLD)\r\n",
+					"    if is_val_success:\r\n",
+					"        logger.info(\"\\t Category consumer master data threshold validation is Successful\")\r\n",
+					"        save_category_consumer_result(ds_category_consumer_result)\r\n",
+					"    else:\r\n",
+					"        logger.error(\"\\t Failed to override master since variantion is exceding the threshold\")\r\n",
+					"        raise Exception(\"EXCEEDING_CNT_THRESHOLD\")\r\n",
+					"else:\r\n",
+					"    logger.info(\"\\t Category consumer master data not exists.\")\r\n",
+					"    save_category_consumer_result(ds_category_consumer_result)"
+				],
+				"execution_count": 11
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"****"
+				]
+			}
+		]
+	}
+}

@@ -1,0 +1,412 @@
+{
+	"name": "pl_build_merch_prod_catalog_attribute_value",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-fldr-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_FLDR_PATH_CTR_ATR_VAL",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-prod-catalog-attribute-value",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-fldr-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "lkp-ext-start-time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "MySqlSource",
+						"query": {
+							"value": "@concat('SELECT atr_val_id,\n            lvl_id,\n            othr_key_id,\n            atr_id,\n            atr_val_cd, \n            srce_cd,\n            audt_cr_dt_tm,\n            audt_cr_user_cd,\n            audt_upd_dt_tm,\n            audt_upd_user_cd \n            FROM catalog_prod.omt_atr_val  \n            WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "atr_val_id",
+									"type": "Int64"
+								},
+								"sink": {
+									"name": "atr_val_id",
+									"type": "Int64",
+									"physicalType": "INT_64"
+								}
+							},
+							{
+								"source": {
+									"name": "lvl_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "lvl_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "othr_key_id",
+									"type": "Int64"
+								},
+								"sink": {
+									"name": "othr_key_id",
+									"type": "Int64",
+									"physicalType": "INT_64"
+								}
+							},
+							{
+								"source": {
+									"name": "atr_id",
+									"type": "Int64"
+								},
+								"sink": {
+									"name": "atr_id",
+									"type": "Int64",
+									"physicalType": "INT_64"
+								}
+							},
+							{
+								"source": {
+									"name": "atr_val_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "atr_val_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "srce_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "srce_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_user_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_user_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_dt_tm",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "audt_upd_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_user_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_user_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_mysql_merch_prod_catalog_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_MYSQL_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_MYSQL_DB_NM",
+								"type": "Expression"
+							},
+							"PARAM_MYSQL_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_MYSQL_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_merch_prod_catalog_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_PROD_CATALOG_LAKE_PATH": {
+								"value": "@variables('VAR_INGST_FLDR_PATH_CTR_ATR_VAL')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "update-btch-cntrl",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "mdm-catalog-attr-val",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_update_btch_cntrl_fl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"START_TIME": {
+							"value": "@convertFromUtc(activity('ingest-prod-catalog-attribute-value').ExecutionStartTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"END_TIME": {
+							"value": "@convertFromUtc(activity('ingest-prod-catalog-attribute-value').ExecutionEndTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"RECORD_COUNT": {
+							"value": "@activity('ingest-prod-catalog-attribute-value').output.rowsCopied",
+							"type": "Expression"
+						},
+						"STATUS": {
+							"value": "@activity('ingest-prod-catalog-attribute-value').status",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
+							"type": "Expression"
+						},
+						"PARAM_DOMAIN": {
+							"value": "@pipeline().parameters.PARAM_DOMAIN",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "lkp-ext-start-time",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:30:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_cntrl_fl_latest",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_DOMAIN": {
+								"value": "@pipeline().parameters.PARAM_DOMAIN",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "mdm-catalog-attr-val",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "ingest-prod-catalog-attribute-value",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_mdm_merch_ctlg_omt_atr_val",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"SOURCE_CTLG_ATR_VAL_LAKE_PATH": {
+							"value": {
+								"value": "@variables('VAR_INGST_FLDR_PATH_CTR_ATR_VAL')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"VAL_CNT_THRESHOLD": {
+							"value": {
+								"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD",
+								"type": "Expression"
+							},
+							"type": "int"
+						},
+						"KEY_COL": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_KEY_COL",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": false,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "merch/catalog/omt-atr-val"
+			},
+			"PARAM_MYSQL_DB_NM": {
+				"type": "string",
+				"defaultValue": "catalog_prod"
+			},
+			"PARAM_MYSQL_TB_NM": {
+				"type": "string",
+				"defaultValue": "omt_atr_val"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARM_VAL_CNT_THRESHOLD": {
+				"type": "string",
+				"defaultValue": "5"
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "atr_val_id"
+			}
+		},
+		"variables": {
+			"VAR_INGST_FLDR_PATH_CTR_ATR_VAL": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/merch/catalog/omt-atr-val/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/merchandise/catalog"
+		},
+		"annotations": []
+	}
+}

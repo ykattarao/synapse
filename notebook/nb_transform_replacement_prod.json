@@ -1,0 +1,444 @@
+{
+	"name": "nb_transform_replacement_prod",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/merchandise/product"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "f0f81699-898a-45e4-b3ae-16c018cbc96c"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_REPL_PROD_LAKE_PATH = \"opco/ppod/domain/merch/product/retailer-cpt-it-rtlr-repl/lake/2023-07-25-21-54-24\"\r\n",
+					"TARGET_REPL_PROD_PATH = \"opco/{opco}/domain/merch/product/retailer-cpt-it-rtlr-repl/master/replacement\"\r\n",
+					"TARGET_CPT_IT_STOR_PATH = \"opco/{opco}/domain/merch/product/retailer-cpt-it-stor/master/\"\r\n",
+					"TARGET_REPL_PROD_UPC_CD_PATH = \"opco/{opco}/domain/merch/product/retailer-cpt-it-rtlr-repl/master/upc/\"\r\n",
+					"TARGET_REPL_PROD_PROD_ID_PATH = \"opco/{opco}/domain/merch/product/retailer-cpt-it-rtlr-repl/master/product-id/\"\r\n",
+					"VAL_CNT_THRESHOLD = 5\r\n",
+					"KEY_COL = \"repl_prod_id\"\r\n",
+					"PARTITION_COL = \"ecom_stor_id\"\r\n",
+					"KEY_COL_UPC = \"upc_cd\"\r\n",
+					"KEY_COL_PROD_ID = \"prod_id\"\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_replacement_prod\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\n",
+					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - PRODUCT - RETAILER - CPT-IT-RTLR-REPL - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
+					"logger.info(\"\\n SOURCE_REPL_PROD_LAKE_PATH : {0}\".format(SOURCE_REPL_PROD_LAKE_PATH))\n",
+					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\n",
+					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
+					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\n PARTITION_COL : {0}\".format(PARTITION_COL))\n",
+					"logger.info(\"\\n KEY_COL_UPC : {0}\".format(KEY_COL_UPC))\n",
+					"logger.info(\"\\n KEY_COL_PROD_ID : {0}\".format(KEY_COL_PROD_ID))\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE DATA LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as f\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.types import StructType, StructField, IntegerType, TimestampType, StringType\r\n",
+					"\r\n",
+					"\r\n",
+					"sch_merch_repl_prod = StructType([\r\n",
+					"    StructField(\"ecom_stor_id\", IntegerType(), False),\r\n",
+					"    StructField(\"upc_cd\", StringType(), False),\r\n",
+					"    StructField(\"repl_prod_id\", IntegerType(), False),\r\n",
+					"    StructField(\"it_long_name_tx\", StringType(), True),\r\n",
+					"    StructField(\"it_size_cd\", StringType(), True),\r\n",
+					"    StructField(\"audt_cr_dt\", StringType(), False)\r\n",
+					"])\r\n",
+					"\r\n",
+					"df_repl_prod_lake = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"parquet\") \\\r\n",
+					"    .option(\"inferSchema\", \"true\") \\\r\n",
+					"    .schema(sch_merch_repl_prod) \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_REPL_PROD_LAKE_PATH)\r\n",
+					"logger.info(\"replcaement_products loaded from lake. Count={0}\".format(df_repl_prod_lake.count()))\r\n",
+					"\r\n",
+					"\r\n",
+					"df_repl_prod_stage = df_repl_prod_lake \\\r\n",
+					"    .withColumnRenamed(\"audt_cr_dt\", \"src_audt_cr_dt_tm\") \\\r\n",
+					"    .withColumn(\"src_audt_cr_user_id\", f.lit(\"ifx\")) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_dt_tm\", f.current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_user_id\", f.lit(\"mdm-data-integration\"))\r\n",
+					"logger.info(\"Enriched Lake Data. Count={0}\".format(df_repl_prod_stage.count()))    "
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\n",
+					"from pyspark.sql.functions import collect_list\n",
+					"\n",
+					"def write_master(df_stg, opco):\n",
+					"    df_stg \\\n",
+					"        .repartition(1, KEY_COL) \\\n",
+					"        .sort(KEY_COL) \\\n",
+					"        .write \\\n",
+					"        .format(\"delta\") \\\n",
+					"        .mode(\"overwrite\") \\\n",
+					"        .option(\"mergeSchema\", \"true\") \\\n",
+					"        .partitionBy(PARTITION_COL) \\\n",
+					"        .save(BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PATH.format(opco = opco))\n",
+					"    logger.info(\"\\t Master data overwritten. Count={0}\".format(df_stg.count()))\n",
+					"\n",
+					"\n",
+					"def init():\n",
+					"    logger.info(\"MDM started for replaement_products\")\n",
+					"    \n",
+					"    for opco in OPOC_LST:\n",
+					"        logger.info(\"Processing OPCO={0}\".format(opco))\n",
+					"\n",
+					"        if (DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PATH.format(opco = opco))):\n",
+					"            logger.info(\"\\t Master data already exists for {0}\".format(opco))\n",
+					"            df_repl_prod_mstr = spark \\\n",
+					"                .read \\\n",
+					"                .format(\"delta\") \\\n",
+					"                .load(BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PATH.format(opco = opco))\n",
+					"            logger.debug(\"\\t Master data loaded for validation. Count={0}\".format(df_repl_prod_mstr.count()))\n",
+					"            is_val_success = validate_count(df_repl_prod_stage, df_repl_prod_mstr, VAL_CNT_THRESHOLD  )\n",
+					"            if is_val_success:\n",
+					"                write_master(df_repl_prod_stage, opco)\n",
+					"            else:\n",
+					"                logger.error(\"\\t Failed to override master since variantion is exceding the threshold\")\n",
+					"                raise Exception(\"EXCEEDING_CNT_THRESHOLD\")\n",
+					"        else:\n",
+					"            logger.info(\"\\t Processing MDM first time for {0}\".format(opco))\n",
+					"            write_master(df_repl_prod_stage, opco)\n",
+					"    \n",
+					"\n",
+					"##############################\n",
+					"# FULL LOAD\n",
+					"##############################\n",
+					"init()\n",
+					""
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**BUILD REPLACEMENT PRODUCTS - UPC & PROD-ID**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import collect_list    \r\n",
+					"\r\n",
+					"\r\n",
+					"def write_master(df_data, path, key_col, partition_col):\r\n",
+					"    df_data \\\r\n",
+					"        .repartition(1, key_col) \\\r\n",
+					"        .sort(key_col) \\\r\n",
+					"        .write \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .option(\"mergeSchema\", \"true\") \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .partitionBy(partition_col) \\\r\n",
+					"        .save(path)\r\n",
+					"\r\n",
+					"# build replcement products for each upc\r\n",
+					"def build_repl_prod_upc(opco):\r\n",
+					"    logger.info(\"\\t Starting to build replacement product for upc for opco={0}\".format(opco))\r\n",
+					"    df_upc_cd_stg = spark.sql(\r\n",
+					"        \"\"\"\r\n",
+					"        SELECT DISTINCT ecom_stor_id,  upc_cd,replacement_prod_ids\r\n",
+					"        FROM(\r\n",
+					"            SELECT a.ecom_stor_id,b.upc_cd,\r\n",
+					"            COLLECT_SET(b.prod_id) OVER(PARTITION BY a.ecom_stor_id,a.upc_cd) as replacement_prod_ids,\r\n",
+					"            COUNT(b.prod_id) OVER(PARTITION BY a.ecom_stor_id,a.upc_cd) as prod_ids_cnt        \r\n",
+					"            FROM tbl_repl_prod_master a \r\n",
+					"            INNER JOIN tbl_prod_stor_master b ON (a.ecom_stor_id=b.ecom_stor_id) AND ((a.repl_prod_id=b.prod_id AND a.upc_cd!=b.upc_cd) OR (a.repl_prod_id!=b.prod_id AND a.upc_cd=b.upc_cd))\r\n",
+					"            GROUP BY a.ecom_stor_id,a.upc_cd, b.upc_cd,b.prod_id\r\n",
+					"            ) a\r\n",
+					"            WHERE a.prod_ids_cnt >1 \r\n",
+					"        \"\"\")\r\n",
+					"    if (DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_REPL_PROD_UPC_CD_PATH.format(opco = opco))):\r\n",
+					"        df_upc_cd_mstr = spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_REPL_PROD_UPC_CD_PATH.format(opco = opco))\r\n",
+					"        \r\n",
+					"        is_val_successful = validate_count(df_upc_cd_stg, df_upc_cd_mstr, VAL_CNT_THRESHOLD)\r\n",
+					"\r\n",
+					"        if is_val_successful:\r\n",
+					"            write_master(df_upc_cd_stg, BASE_ADLS_CONN_STR + TARGET_REPL_PROD_UPC_CD_PATH.format(opco = opco), KEY_COL_UPC, PARTITION_COL)\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override repl-prod-upc master since variantion is exceding the threshold\")\r\n",
+					"            raise Exception(\"EXCEEDING_CNT_THRESHOLD\")\r\n",
+					"    else:\r\n",
+					"        write_master(df_upc_cd_stg, BASE_ADLS_CONN_STR + TARGET_REPL_PROD_UPC_CD_PATH.format(opco = opco), KEY_COL_UPC, PARTITION_COL)\r\n",
+					"    logger.info(\"\\t Built replacement product for each upc for opco={0}, count={1}\".format(opco, df_upc_cd_stg.count()))\r\n",
+					"\r\n",
+					"\r\n",
+					"# build replcement products for each product id\r\n",
+					"def build_repl_prod_prod_id(opco):\r\n",
+					"    logger.info(\"\\t Starting to build replacement product for product-id for opco={0}\".format(opco))\r\n",
+					"    df_prod_id_stg = spark.sql(\r\n",
+					"        \"\"\" \r\n",
+					"        SELECT DISTINCT a.ecom_stor_id, a.prod_id, a.replacement_prod_ids \r\n",
+					"        FROM\r\n",
+					"        (   SELECT a.ecom_stor_id,b.prod_id,\r\n",
+					"            COLLECT_SET(b.prod_id) OVER(PARTITION BY a.ecom_stor_id,a.upc_cd) as replacement_prod_ids,\r\n",
+					"            COUNT(b.prod_id) OVER(PARTITION BY a.ecom_stor_id,a.upc_cd) as prod_ids_cnt\r\n",
+					"            FROM tbl_repl_prod_master a \r\n",
+					"            INNER JOIN tbl_prod_stor_master b ON (a.ecom_stor_id=b.ecom_stor_id) AND ((a.repl_prod_id=b.prod_id AND a.upc_cd!=b.upc_cd) OR (a.repl_prod_id!=b.prod_id AND a.upc_cd=b.upc_cd))\r\n",
+					"            GROUP BY a.ecom_stor_id,a.upc_cd,b.prod_id \r\n",
+					"        ) a \r\n",
+					"        WHERE a.prod_ids_cnt >1\r\n",
+					"        \"\"\")\r\n",
+					"    if (DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PROD_ID_PATH.format(opco = opco))):\r\n",
+					"        df_prod_id_mstr = spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PROD_ID_PATH.format(opco = opco))\r\n",
+					"        \r\n",
+					"        is_val_successful = validate_count(df_prod_id_stg, df_prod_id_mstr, VAL_CNT_THRESHOLD)\r\n",
+					"\r\n",
+					"        if is_val_successful:\r\n",
+					"            write_master(df_prod_id_stg, BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PROD_ID_PATH.format(opco = opco), KEY_COL_PROD_ID, PARTITION_COL)\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override repl-prod-prod-id master since variantion is exceding the threshold\")\r\n",
+					"            raise Exception(\"EXCEEDING_CNT_THRESHOLD\")\r\n",
+					"    else:\r\n",
+					"        write_master(df_prod_id_stg, BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PROD_ID_PATH.format(opco = opco), KEY_COL_PROD_ID, PARTITION_COL)\r\n",
+					"    logger.info(\"\\t Built replacement product for each prod-id for {0}, count={1}\".format(opco, df_prod_id_stg.count()))\r\n",
+					"\r\n",
+					"# main starts here\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"Started building replacement product for each upc & prod_id - OPCO={0}\".format(opco))\r\n",
+					"\r\n",
+					"    df_repl_prod_master= spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PATH.format(opco = opco))\r\n",
+					"    logger.info(\"\\t Loaded repl-prod for opco={0},count={1}\".format(opco, df_repl_prod_master.count()))\r\n",
+					"\r\n",
+					"    df_prod_stor_master= spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_CPT_IT_STOR_PATH.format(opco = opco))\r\n",
+					"    logger.info(\"\\t Loaded prod-store for opco={0},count={1}\".format(opco, df_prod_stor_master.count()))\r\n",
+					"\r\n",
+					"    df_repl_prod_master.createOrReplaceTempView(\"tbl_repl_prod_master\")\r\n",
+					"    df_prod_stor_master.createOrReplaceTempView(\"tbl_prod_stor_master\")\r\n",
+					"\r\n",
+					"    build_repl_prod_upc(opco)\r\n",
+					"    build_repl_prod_prod_id(opco)\r\n",
+					"\r\n",
+					"   "
+				],
+				"execution_count": 12
+			}
+		]
+	}
+}

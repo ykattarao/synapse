@@ -1,0 +1,746 @@
+{
+	"name": "pl_build_stor_cntrl_cit_pup_ctl",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-cntrl-cit-pup-ctl-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_STOR_PATH",
+					"value": {
+						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-cntrl-cit-pup-ctl",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-cntrl-cit-pup-ctl-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": "SELECT pup_ctl.pup_id,\n  pup_ctl.pup_guid_cd,\n  pup_ctl.pup_type_cd,\n  pup_ctl.pup_grp_id,\n  pup_ctl.adr_1_tx,\n  pup_ctl.adr_2_tx,\n  pup_ctl.city_tx,\n  pup_ctl.st_cd,\n  pup_ctl.zip_cd,\n  pup_ctl.pup_voic_phon_cd,\n  pup_ctl.pup_alt_phon_cd,\n  pup_ctl.pup_mail_tx,\n  pup_ctl.loc_istr_tx,\n  pup_ctl.stor_id,\n  pup_ctl.p3_stor_id,\n  pup_ctl.ahld_stor_nbr_cd,\n  pup_ctl.lat_qy,\n  pup_ctl.long_qy,\n  pup_ctl.stor_to_pup_min_qy,\n  pup_ctl.pad_min_qy,\n  pup_ctl.tote_per_cart_qy,\n  pup_ctl.cart_off_truk_min_qy,\n  pup_ctl.pup_open_tm,\n  pup_ctl.pup_pm_open_tm,\n  pup_ctl.alt_rte_sys_cd,\n  pup_ctl.hypr_loc_cd,\n  pup_ctl.pup_svc_dur_mult_qy,\n  pup_ctl.pup_frmt_type_cd,\n  pup_ctl.live_dt,\n  pup_ctl.open_dt,\n  pup_ctl.clos_dt,\n  pup_ctl.map_web_link_tx,\n  pup_ctl.dlv_area_id,\n  pup_ctl.tax_grp_cd,\n  pup_ctl.sns_mkt_area_tx,\n  pup_ctl.stor_ttl_tx,\n  pup_ctl.web_actv_cd,\n  pup_ctl.pmtt_div_cd,\n  pup_ctl.cnc_ord_id_qy,\n  pup_ctl.stag_only_fl,\n  pup_ctl.achl_wine_cd,\n  pup_ctl.achl_beer_cd,\n  pup_ctl.achl_lqr_cd,\n  pup_ctl.bag_fee_cd,\n  pup_ctl.dlv_ptnr_tx,\n  pup_ctl.pckp_notf_ptnr_site_id,\n  pup_ctl.rtrn_allow_cd,\n  pup_ctl.ok_to_edit_ord_fl,\n  pup_ctl.sub_rej_cut_wnd,\n  pup_ctl.sub_rej_ntfy_cut_wnd,\n  pup_ctl.ortc_stor_fl,\n  pup_ctl.drop_loc_adr_1_tx,\n  pup_ctl.drop_loc_adr_2_tx,\n  pup_ctl.drop_loc_city_tx,\n  pup_ctl.drop_loc_st_cd,\n  pup_ctl.drop_loc_zip_cd\nFROM central:cit_pup_ctl pup_ctl"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "pup_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "pup_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_guid_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pup_guid_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pup_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_grp_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "pup_grp_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "adr_1_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "adr_1_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "adr_2_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "adr_2_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "city_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "city_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "st_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "st_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "zip_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "zip_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_voic_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pup_voic_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_alt_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pup_alt_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_mail_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pup_mail_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "loc_istr_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "loc_istr_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "stor_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stor_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "p3_stor_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "p3_stor_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ahld_stor_nbr_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ahld_stor_nbr_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "lat_qy",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "lat_qy",
+									"type": "Double",
+									"physicalType": "DOUBLE"
+								}
+							},
+							{
+								"source": {
+									"name": "long_qy",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "long_qy",
+									"type": "Double",
+									"physicalType": "DOUBLE"
+								}
+							},
+							{
+								"source": {
+									"name": "stor_to_pup_min_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "stor_to_pup_min_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "pad_min_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "pad_min_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "tote_per_cart_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "tote_per_cart_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "cart_off_truk_min_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "cart_off_truk_min_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_open_tm",
+									"type": "TimeSpan"
+								},
+								"sink": {
+									"name": "pup_open_tm",
+									"type": "TimeSpan",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_pm_open_tm",
+									"type": "TimeSpan"
+								},
+								"sink": {
+									"name": "pup_pm_open_tm",
+									"type": "TimeSpan",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "alt_rte_sys_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "alt_rte_sys_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "hypr_loc_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "hypr_loc_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_svc_dur_mult_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "pup_svc_dur_mult_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "pup_frmt_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pup_frmt_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "live_dt",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "live_dt",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "open_dt",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "open_dt",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "clos_dt",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "clos_dt",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "map_web_link_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "map_web_link_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dlv_area_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "dlv_area_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "tax_grp_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "tax_grp_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sns_mkt_area_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sns_mkt_area_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "stor_ttl_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stor_ttl_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "web_actv_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "web_actv_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pmtt_div_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pmtt_div_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnc_ord_id_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "cnc_ord_id_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "stag_only_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stag_only_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "achl_wine_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "achl_wine_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "achl_beer_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "achl_beer_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "achl_lqr_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "achl_lqr_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "bag_fee_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "bag_fee_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dlv_ptnr_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dlv_ptnr_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pckp_notf_ptnr_site_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "pckp_notf_ptnr_site_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "rtrn_allow_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rtrn_allow_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ok_to_edit_ord_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ok_to_edit_ord_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sub_rej_cut_wnd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "sub_rej_cut_wnd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "sub_rej_ntfy_cut_wnd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "sub_rej_ntfy_cut_wnd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "ortc_stor_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ortc_stor_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drop_loc_adr_1_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drop_loc_adr_1_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drop_loc_adr_2_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drop_loc_adr_2_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drop_loc_city_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drop_loc_city_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drop_loc_st_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drop_loc_st_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drop_loc_zip_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drop_loc_zip_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_ifx_stor_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"PARAM_IFX_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_stor_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_STOR_LAKE_PATH": {
+								"value": "@variables('VAR_INGST_STOR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "central"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "cit_pup_ctl"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "store/central-cit-pup-ctl"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			}
+		},
+		"variables": {
+			"VAR_INGST_STOR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/store/central-cit-pup-ctl/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/store"
+		},
+		"annotations": []
+	}
+}

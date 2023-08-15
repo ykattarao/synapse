@@ -1,0 +1,138 @@
+{
+	"name": "pl_slack_notification",
+	"properties": {
+		"activities": [
+			{
+				"name": "If_condition_notify_slack",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@and(and(and(or(or(or(contains(pipeline().parameters.STATUS,'SUCCESS'),contains(pipeline().parameters.STATUS,'FAILURE')),contains(pipeline().parameters.STATUS,'WARNING')),contains(pipeline().parameters.STATUS,'INFORMATION')),not(empty(pipeline().parameters.HEADER))),not(empty(pipeline().parameters.BODY))),not(empty(pipeline().parameters.URL)))\n",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Fail_pl_notify_slack",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "INVALID PARAMETERS PASSED",
+								"errorCode": "400"
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Set_alert_type",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "ALERT_TYPE",
+								"value": {
+									"value": "@if(equals(\n        toUpper(pipeline().parameters.STATUS),'SUCCESS'),'*SUCCESS* :smile:',\n    if(equals(\n        toUpper(pipeline().parameters.STATUS),'FAILURE'),'*FAILURE* :unamused:',\n    if(equals(\n        toUpper(pipeline().parameters.STATUS),'INFORMATION'),'*INFORMATION* :information_source:','*WARNING* :warning:')\n            )\n    )\n\n",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Set_alert_color",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "ALERT_COLOR",
+								"value": {
+									"value": "@if(equals(\n        toUpper(pipeline().parameters.STATUS),'SUCCESS'),'#22bb33',if(equals(\n        toUpper(pipeline().parameters.STATUS),'FAILURE'),'#df4759',if(equals(\n        toUpper(pipeline().parameters.STATUS),'WARNING'),'#f0ad4e','#5bc0de')))",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "notify_slack",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Set_alert_type",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Set_alert_color",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.0:03:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@pipeline().parameters.URL",
+									"type": "Expression"
+								},
+								"method": "POST",
+								"body": {
+									"value": "{\n    \"attachments\": [\n        {\n            \"text\":\n            \"*@{pipeline().parameters.HEADER}*\\n\\n@{pipeline().parameters.BODY}\\n\\n@{pipeline().parameters.FOOTER}\\nTimestamp: @{convertFromUtc(utcnow(),'Central Standard Time')}\",\n            \"color\":\"@{variables('ALERT_COLOR')}\"\n\n   \n            \n    \n        } \n         \n    ]\n}",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"STATUS": {
+				"type": "string",
+				"defaultValue": "SUCCESS"
+			},
+			"URL": {
+				"type": "string",
+				"defaultValue": "https://hooks.slack.com/services/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"
+			},
+			"HEADER": {
+				"type": "string",
+				"defaultValue": "CITRUS AD"
+			},
+			"BODY": {
+				"type": "string",
+				"defaultValue": "EXPORTED"
+			},
+			"FOOTER": {
+				"type": "string",
+				"defaultValue": "Successfully Executed!"
+			}
+		},
+		"variables": {
+			"ALERT_TYPE": {
+				"type": "String"
+			},
+			"ALERT_COLOR": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "utils/notification"
+		},
+		"annotations": []
+	}
+}

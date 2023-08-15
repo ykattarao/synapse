@@ -1,0 +1,471 @@
+{
+	"name": "nb_mbm_cntrl_cit_zone_ctl",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/store"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "1382a729-8f5b-4fe9-bab4-327bb0bcde0d"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_CNTRL_ZONE_CTL_PATH = \"opco/ppod/domain/store/central-cit-zone-ctl/lake/2023-08-01-02-28-49/\"\r\n",
+					"STAGE_CNTRL_ZONE_CTL_PATH = \"opco/ppod/domain/store/central-cit-zone-ctl/stage/\"\r\n",
+					"TARGET_CNTRL_ZONE_CTL_PATH = \"opco/{opco}/domain/store/central-cit-zone-ctl/master/\"\r\n",
+					"KEY_COL=\"stor_id\"\r\n",
+					"VAL_CNT_THRESHOLD = 2\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mbm_cntrl_cit_zone_ctl\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\n",
+					"logger.info(\"\\t MDM - STORE - CENTRAL - CIT_ZONE_CTL - Starting with below parameters\")\n",
+					"logger.info(\"*************************************************************************\")\n",
+					"logger.info(\"\\t SOURCE_LAKE_CNTRL_ZONE_CTL_PATH : {0}\".format(SOURCE_LAKE_CNTRL_ZONE_CTL_PATH))\n",
+					"logger.info(\"\\t STAGE_CNTRL_ZONE_CTL_PATH : {0}\".format(STAGE_CNTRL_ZONE_CTL_PATH))\n",
+					"logger.info(\"\\t TARGET_CNTRL_ZONE_CTL_PATH : {0}\".format(TARGET_CNTRL_ZONE_CTL_PATH))\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
+					"logger.info(\"**************************************************************************\")\n",
+					"\n",
+					""
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, DoubleType, StringType,StringType, IntegerType, LongType, DecimalType, BooleanType, DateType, ArrayType\r\n",
+					"\r\n",
+					"STAGE_CNTRL_ZONE_CTL_SCHEMA = StructType([\r\n",
+					"    StructField(\"stor_id\", StringType(), True),\r\n",
+					"    StructField(\"chn_tx\", StringType(), True),\r\n",
+					"    StructField(\"stor_nbr_cd\", StringType(), True),\r\n",
+					"    StructField(\"wrm_host_stor_nbr_cd\", StringType(), True),\r\n",
+					"    StructField(\"stor_tx\", StringType(), True),\r\n",
+					"    StructField(\"adr_1_tx\", StringType(), True),\r\n",
+					"    StructField(\"adr_2_tx\", StringType(), True),\r\n",
+					"    StructField(\"city_tx\", StringType(), True),\r\n",
+					"    StructField(\"st_cd\", StringType(), True),\r\n",
+					"    StructField(\"zip_cd\", StringType(), True),\r\n",
+					"    StructField(\"city_desc_tx\", StringType(), True),\r\n",
+					"    StructField(\"zone_voic_phon_cd\", StringType(), True),\r\n",
+					"    StructField(\"ms_voic_phon_cd\", StringType(), True),\r\n",
+					"    StructField(\"ms_fax_phon_cd\", StringType(), True),\r\n",
+					"    StructField(\"mdm_2400_phon_cd\", StringType(), True),\r\n",
+					"    StructField(\"mdm_9600_phon_cd\", StringType(), True),\r\n",
+					"    StructField(\"zone_beep_phon_cd\", StringType(), True),\r\n",
+					"    StructField(\"mgr_ee_id\", StringType(), True), \r\n",
+					"    StructField(\"tax_hi_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"tax_med_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"tax_low_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"zone_tab_tx\", StringType(), True),\r\n",
+					"    StructField(\"max_pers_it_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"max_pers_hdr_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"mbr_exp_day_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"mbr_fee_freq_cd\", StringType(), True),\r\n",
+					"    StructField(\"mbr_fee_freq_it_cd\", StringType(), True),\r\n",
+					"    StructField(\"rcv_pmt_cd\", StringType(), True),\r\n",
+					"    StructField(\"ds_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"ee_ds_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"groc_e_mail_tx\", StringType(), False),\r\n",
+					"    StructField(\"stor_e_mail_tx\", StringType(), False),\r\n",
+					"    StructField(\"path_id\", StringType(), False),\r\n",
+					"    StructField(\"vend_cd\", StringType(), False),\r\n",
+					"    StructField(\"ap_dept_cd\", StringType(), False),\r\n",
+					"    StructField(\"ar_dept_cd\", StringType(), True),\r\n",
+					"    StructField(\"groc_dept_cd\", StringType(), True),\r\n",
+					"    StructField(\"cash_dept_cd\", StringType(), False), \r\n",
+					"    StructField(\"zone_actv_cd\", StringType(), True),\r\n",
+					"    StructField(\"type_cd\", StringType(), True),\r\n",
+					"    StructField(\"pckp_avl_cd\", StringType(), True),\r\n",
+					"    StructField(\"cnsm_pckp_allw_cd\", StringType(), True),\r\n",
+					"    StructField(\"stor_drct_msg_id\", IntegerType(), True),\r\n",
+					"    StructField(\"stor_drct_bx\", StringType(), True),\r\n",
+					"    StructField(\"inet_mail_allw_cd\", StringType(), True),\r\n",
+					"    StructField(\"sess_bill_cd\", StringType(), True),\r\n",
+					"    StructField(\"cnsm_max_ord_pr_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"mrch_max_ord_pr_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"hr_e_mail_tx\", StringType(), True),\r\n",
+					"    StructField(\"pckp_msg_id\", IntegerType(), True),\r\n",
+					"    StructField(\"max_prev_ord_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"main_stor_id\", StringType(), True),\r\n",
+					"    StructField(\"mdm_phon_audt_cd\", StringType(), True),\r\n",
+					"    StructField(\"cnvt_800_to_cnc_cd\", StringType(), True),\r\n",
+					"    StructField(\"bill_pr_msg_id\", IntegerType(), True),\r\n",
+					"    StructField(\"non_bill_pr_msg_id\", IntegerType(), True),\r\n",
+					"    StructField(\"mrch_pr_msg_id\", IntegerType(), True),\r\n",
+					"    StructField(\"hypr_dept_cd\", IntegerType(), True), \r\n",
+					"    StructField(\"hypr_loc_cd\", IntegerType(), True),\r\n",
+					"    StructField(\"hypr_acct_cd\", IntegerType(), True),\r\n",
+					"    StructField(\"hypr_city_cd\", StringType(), True),\r\n",
+					"    StructField(\"svc_modl_vrsn_cd\", StringType(), True),\r\n",
+					"    StructField(\"cnsm_poi_avl_cd\", StringType(), True),\r\n",
+					"    StructField(\"cnsm_pom_avl_cd\", StringType(), True),\r\n",
+					"    StructField(\"cnsm_pon_avl_cd\", StringType(), True),\r\n",
+					"    StructField(\"cnsm_poa_avl_cd\", StringType(), True),\r\n",
+					"    StructField(\"mrch_poi_avl_cd\", StringType(), True),\r\n",
+					"    StructField(\"mrch_pom_avl_cd\", StringType(), True), \r\n",
+					"    StructField(\"mrch_pon_avl_cd\", StringType(), True),\r\n",
+					"    StructField(\"mrch_poa_avl_cd\", StringType(), True),\r\n",
+					"    StructField(\"ppod_by_chn_tx\", StringType(), True),\r\n",
+					"    StructField(\"it_tot_tab_tx\", StringType(), True),\r\n",
+					"    StructField(\"ops_modl_type_cd\", StringType(), True),\r\n",
+					"    StructField(\"zm_sys_vrsn_cd\", StringType(), True),\r\n",
+					"    StructField(\"actv_stat_cd\", StringType(), True),\r\n",
+					"    StructField(\"slot_bx\", StringType(), True),\r\n",
+					"    StructField(\"entr_ee_ord_cd\", StringType(), True),\r\n",
+					"    StructField(\"it_cmt_type_cd\", StringType(), True),\r\n",
+					"    StructField(\"btl_dep_cd\", StringType(), False),\r\n",
+					"    StructField(\"co_type_cd\", StringType(), False),\r\n",
+					"    StructField(\"sale_tax_cd\", StringType(), False),\r\n",
+					"    StructField(\"rx_msg_id\", IntegerType(), True),\r\n",
+					"    StructField(\"rx_e_mail_id\", StringType(), True),\r\n",
+					"    StructField(\"use_pr_disp_cd\", StringType(), False),\r\n",
+					"    StructField(\"is_natl_zone_cd\", StringType(), False),\r\n",
+					"    StructField(\"slot_modl_type_cd\", StringType(), False),\r\n",
+					"    StructField(\"scan_var_wgt_cd\", StringType(), True),\r\n",
+					"    StructField(\"mgrp_dc_id\", StringType(),True), \r\n",
+					"    StructField(\"mgrp_bus_type_cd\", StringType(), True),\r\n",
+					"    StructField(\"upd_mgrp_tote_cd\", StringType(), False),\r\n",
+					"    StructField(\"sub_flo_cd\", StringType(), False),\r\n",
+					"    StructField(\"one_clip_site_id\", IntegerType(), True),\r\n",
+					"    StructField(\"cer_div_cd\", StringType(), True),\r\n",
+					"    StructField(\"mult_tax_zone\", StringType(), False),\r\n",
+					"    StructField(\"pick_modl_type_cd\", StringType(), True),\r\n",
+					"    StructField(\"opco_id\", StringType(), True),\r\n",
+					"    StructField(\"rte_db_name_tx\", StringType(), True),\r\n",
+					"    StructField(\"rte_est_tote_qy\", IntegerType(),True), \r\n",
+					"    StructField(\"rte_auto_ld_cd\", StringType(), False),\r\n",
+					"    StructField(\"prom_strt_tm\", StringType(), True),\r\n",
+					"    StructField(\"prom_end_tm\", StringType(), True),\r\n",
+					"    StructField(\"fig_cd\", IntegerType(), False),\r\n",
+					"    StructField(\"nwtn_ops_live_dt\", StringType(), False),\r\n",
+					"    StructField(\"show_tote_on_invc_cd\", StringType(), False),\r\n",
+					"    StructField(\"show_tip_on_invc_cd\", StringType(), False),\r\n",
+					"    StructField(\"slot_labl_cd\", StringType(), False),\r\n",
+					"    StructField(\"inv_aloc_in_proc_cd\", StringType(), False),\r\n",
+					"    StructField(\"slot_alrt_mail_tx\", StringType(),True), \r\n",
+					"    StructField(\"invc_img_tx\", StringType(), True),\r\n",
+					"    StructField(\"rtlr_card_vald_tx\", StringType(), True),\r\n",
+					"    StructField(\"rtlr_card_name_tx\", StringType(),True),\r\n",
+					"    StructField(\"mlti_shft_rte_rlse_cd\", StringType(), False),\r\n",
+					"    StructField(\"tote_calc_type_cd\", StringType(), False),\r\n",
+					"    StructField(\"slot_over_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"shft_over_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"wms_cd\", StringType(), False),\r\n",
+					"    StructField(\"auto_rcv_po_cd\", StringType(), False),\r\n",
+					"    StructField(\"prch_like_dc_tx\", StringType(),True), \r\n",
+					"    StructField(\"aou_wk_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"cns_stor_crdt_pct_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"cns_cust_num_cd\", IntegerType(), True),\r\n",
+					"    StructField(\"cns_klt_cntr_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"dflt_pr_zone_cd\", IntegerType(), True),\r\n",
+					"    StructField(\"klt_pr_zone_cd\", IntegerType(), True),\r\n",
+					"    StructField(\"klt_rclm_chrt_send_cd\", StringType(), False),\r\n",
+					"    StructField(\"slot_over_cnsm_scor_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"slot_over_bskt_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"acpt_unsc_po_it_cd\", StringType(),False), \r\n",
+					"    StructField(\"slot_bltn_freq_cd\", StringType(), False),\r\n",
+					"    StructField(\"p3_srvr_name_tx\",StringType(), True),\r\n",
+					"    StructField(\"p3_file_path_tx\", StringType(),  True),\r\n",
+					"    StructField(\"hsc_cd\", StringType(),False),\r\n",
+					"    StructField(\"tote_inj_cd\", StringType(), False),\r\n",
+					"    StructField(\"thrd_pty_lqr_vend_cd\", IntegerType(), True),\r\n",
+					"    StructField(\"wnd_trim_mn_qy\", IntegerType(), False),\r\n",
+					"    StructField(\"prnt_qr_cd\", StringType(), False),\r\n",
+					"    StructField(\"drvr_srvy_actv_cd\", StringType(), False),\r\n",
+					"    StructField(\"drvr_srvy_hr_tm_lag_qy\", IntegerType(), False), \r\n",
+					"    StructField(\"last_tkof_adj_tm\", StringType(), True),\r\n",
+					"    StructField(\"same_day_rdy_hr_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"same_day_dlv_tx\", StringType(), True),\r\n",
+					"    StructField(\"flo_as_reg_fl\", StringType(), False),\r\n",
+					"    StructField(\"ops_live_dt\", StringType(), False),\r\n",
+					"    StructField(\"cpnt_invc_cd\", StringType(), True),\r\n",
+					"    StructField(\"cart_rwrd_cd\", StringType(), True),\r\n",
+					"    StructField(\"buyr_regn_cd\",IntegerType(),True),\r\n",
+					"    StructField(\"gd_rwrd_id\", IntegerType(), True),\r\n",
+					"    StructField(\"gd_rwrd_desc_tx\", StringType(),True), \r\n",
+					"    StructField(\"ignr_papr_less_fl\",StringType(), True),\r\n",
+					"    StructField(\"blad_opco_id\", StringType(), True),\r\n",
+					"    StructField(\"ord_rlse_allw_fl\", StringType(), True),\r\n",
+					"    StructField(\"load_bal_stor\",StringType(), False),\r\n",
+					"    StructField(\"load_bal_targ_qy_a\", IntegerType(), False),\r\n",
+					"    StructField(\"load_bal_targ_qy_c\", IntegerType(), False),\r\n",
+					"    StructField(\"load_bal_targ_qy_f\", IntegerType(), False),\r\n",
+					"    StructField(\"ovrd_load_bal_fl\", StringType(), True),\r\n",
+					"    StructField(\"sl_stor_cd\", StringType(), False),\r\n",
+					"    StructField(\"manf_ignr_papr_less_fl\", StringType(),False), \r\n",
+					"    StructField(\"ortc_stor_fl\", StringType(), False)\r\n",
+					"    ])\r\n",
+					"logger.debug(\"schema-defination : Defined the schema for central:cit_zone_ctl.\\n {0}\".format(STAGE_CNTRL_ZONE_CTL_SCHEMA))\r\n",
+					""
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**ZONE CTL STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql.functions import current_timestamp, lit\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_CNTRL_ZONE_CTL_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_CNTRL_ZONE_CTL_PATH, recurse = True)\r\n",
+					"    logger.info(\"Purging data from STG container {0}\".format(STAGE_CNTRL_ZONE_CTL_PATH))\r\n",
+					"\r\n",
+					"df_zone_ctl_lake = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"parquet\") \\\r\n",
+					"    .schema(STAGE_CNTRL_ZONE_CTL_SCHEMA) \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_CNTRL_ZONE_CTL_PATH) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_id\", lit('usr-data-integration')) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_id\", lit('usr-data-integration'))\r\n",
+					"\r\n",
+					"df_zone_ctl_lake\\\r\n",
+					"    .sort(KEY_COL) \\\r\n",
+					"    .write \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .mode(\"overwrite\") \\\r\n",
+					"    .save(BASE_ADLS_CONN_STR + STAGE_CNTRL_ZONE_CTL_PATH)\r\n",
+					"\r\n",
+					"logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_CNTRL_ZONE_CTL_PATH, STAGE_CNTRL_ZONE_CTL_PATH, df_zone_ctl_lake.count()))\r\n",
+					""
+				],
+				"execution_count": 11
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .option(\"mergeSchema\", \"True\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .save(path)\r\n",
+					"    logger.info(\"CENTRAL:CIT_ZONE_CTL Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"\r\n",
+					"# main starts here\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"Processing  MDM for CENTRAL:CIT_ZONE_CTL. OPCO={0}\".format(opco))\r\n",
+					"    df_zone_ctl_stage = spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR +  STAGE_CNTRL_ZONE_CTL_PATH)\r\n",
+					"    logger.info(\"CENTRAL:CIT_ZONE_CTL loaded from stage. OPCO = {0}, Count={1}\".format(opco, df_zone_ctl_stage.count()))\r\n",
+					"\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CNTRL_ZONE_CTL_PATH.format(opco = opco))):\r\n",
+					"        df_zone_ctl_master= spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_CNTRL_ZONE_CTL_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"CENTRAL:CIT_ZONE_CTL loaded from master. OPCO = {0}, Count={1}\".format(opco, df_zone_ctl_master.count()))\r\n",
+					"        is_val_success= validate_count(df_zone_ctl_master,df_zone_ctl_stage,VAL_CNT_THRESHOLD)        \r\n",
+					"        if is_val_success :\r\n",
+					"            load_master_data(df_zone_ctl_stage,BASE_ADLS_CONN_STR + TARGET_CNTRL_ZONE_CTL_PATH.format(opco = opco), opco)\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")        \r\n",
+					"    else:\r\n",
+					"        logger.info('First Time Master Load')\r\n",
+					"        load_master_data(df_zone_ctl_stage,BASE_ADLS_CONN_STR + TARGET_CNTRL_ZONE_CTL_PATH.format(opco = opco), opco)\r\n",
+					""
+				],
+				"execution_count": 10
+			}
+		]
+	}
+}

@@ -1,0 +1,28 @@
+{
+	"name": "sch_stsh_domain_order_web",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_build_web_order",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"PARAM_OPCO": "STSH",
+					"PARAM_ADLS_CONN_STR": "abfss://fs-syn-pdladf-dataint-nonprd-dev-e2-01@sasynpdladfdinpdeve201.dfs.core.windows.net/"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Hour",
+				"interval": 3,
+				"startTime": "2023-07-17T19:36:00",
+				"timeZone": "Central Standard Time"
+			}
+		}
+	}
+}

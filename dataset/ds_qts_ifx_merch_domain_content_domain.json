@@ -1,0 +1,21 @@
+{
+	"name": "ds_qts_ifx_merch_domain_content_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_qts_informix_oltp_odbc",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"IFX_DB_NM": "retailer"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/merchandise/content"
+		},
+		"annotations": [],
+		"type": "InformixTable",
+		"schema": [],
+		"typeProperties": {
+			"tableName": "c00dba.pit_cont_ctl"
+		}
+	}
+}

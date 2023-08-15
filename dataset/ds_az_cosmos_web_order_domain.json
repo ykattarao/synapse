@@ -1,0 +1,30 @@
+{
+	"name": "ds_az_cosmos_web_order_domain",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_az_cosmos_order_management",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"PARAM_OPCO": {
+					"value": "@toUpper(dataset().PARAM_OPCO)",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "String",
+				"defaultValue": "FDLN"
+			}
+		},
+		"folder": {
+			"name": "ingestion/domain/order/web-order"
+		},
+		"annotations": [],
+		"type": "CosmosDbSqlApiCollection",
+		"schema": {},
+		"typeProperties": {
+			"collectionName": "order_history"
+		}
+	}
+}
