@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "46959a9a-4b35-4776-bb29-c995bd8ad10c"
+				"spark.autotune.trackingId": "73ca0fde-8277-4d88-a136-518a6fdb519b"
 			}
 		},
 		"metadata": {
@@ -75,7 +75,10 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"tags": [
+						"parameters"
+					]
 				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
@@ -159,7 +162,7 @@
 					"logger.info(\"\\t TARGET_RTL_ZIP_LAT_LONG_PATH : {0}\".format(TARGET_RTL_ZIP_LAT_LONG_PATH))\n",
 					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\n",
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
-					"logger.info(\"**************************************************************************\")"
+					"logger.info(\"*****************************************************************************\")"
 				],
 				"execution_count": 10
 			},

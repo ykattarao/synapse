@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "958d1ef7-46f6-4407-8c48-38ee7d337d76"
+				"spark.autotune.trackingId": "b363817f-97e2-4209-8338-d1626ea1cb63"
 			}
 		},
 		"metadata": {
@@ -136,13 +136,15 @@
 				},
 				"source": [
 					"\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - CUSTOMER - PROFILE - CPT_USR - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
-					"logger.info(\"\\n SOURCE_CUSTOMER_LAKE_PATH : {0}\".format(SOURCE_CUSTOMER_LAKE_PATH))\n",
-					"logger.info(\"\\n STAGE_CUSTOMER_PATH : {0}\".format(STAGE_CUSTOMER_PATH))\n",
-					"logger.info(\"\\n TARGET_CUSTOMER_PATH : {0}\".format(TARGET_CUSTOMER_PATH))\n",
-					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
-					"logger.info(\"\\n PARTITION_COL : {0}\".format(PARTITION_COL))\n",
-					"logger.info(\"**************************************************************************\")"
+					"logger.info(\"******************************************************************************\")\n",
+					"logger.info(\"\\t MDM - CUSTOMER - PROFILE - CPT_USR - Starting with below parameters\")\n",
+					"logger.info(\"******************************************************************************\")\n",
+					"logger.info(\"\\t SOURCE_CUSTOMER_LAKE_PATH : {0}\".format(SOURCE_CUSTOMER_LAKE_PATH))\n",
+					"logger.info(\"\\t STAGE_CUSTOMER_PATH : {0}\".format(STAGE_CUSTOMER_PATH))\n",
+					"logger.info(\"\\t TARGET_CUSTOMER_PATH : {0}\".format(TARGET_CUSTOMER_PATH))\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\t PARTITION_COL : {0}\".format(PARTITION_COL))\n",
+					"logger.info(\"******************************************************************************\")"
 				],
 				"execution_count": null
 			},
@@ -194,6 +196,58 @@
 					"logger.info(\"stage-load : Load customer profile from lake path. Count={0}, Path={1}\".format(df_customer_stage.count(), SOURCE_CUSTOMER_LAKE_PATH))"
 				],
 				"execution_count": 18
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**ENRICH STAGE DATA**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql import functions as F\n",
+					"\n",
+					"#Trimming leading and trailing white spaces\n",
+					"df_customer_stage = df_customer_stage \\\n",
+					"    .withColumn(\"hndl_id\", F.trim(F.col(\"hndl_id\"))) \\\n",
+					"    .withColumn(\"rtlr_card_id\", F.trim(F.col(\"rtlr_card_id\"))) \\\n",
+					"    .withColumn(\"rtlr_card_trk_id\", F.trim(F.col(\"rtlr_card_trk_id\"))) \\\n",
+					"    .withColumn(\"mail_tx\", F.trim(F.col(\"mail_tx\"))) \\\n",
+					"    .withColumn(\"othr_mail_tx\", F.trim(F.col(\"othr_mail_tx\"))) \\\n",
+					"    .withColumn(\"msg_mail_tx\", F.trim(F.col(\"msg_mail_tx\"))) \\\n",
+					"    .withColumn(\"invc_mail_tx\", F.trim(F.col(\"invc_mail_tx\"))) \\\n",
+					"    .withColumn(\"mail_type_cd\", F.trim(F.col(\"mail_type_cd\"))) \\\n",
+					"    .withColumn(\"mail_opt_news_cd\", F.trim(F.col(\"mail_opt_news_cd\"))) \\\n",
+					"    .withColumn(\"mail_opt_spec_cd\", F.trim(F.col(\"mail_opt_spec_cd\"))) \\\n",
+					"    .withColumn(\"gst_cd\", F.trim(F.col(\"gst_cd\"))) \\\n",
+					"    .withColumn(\"stat_cd\", F.trim(F.col(\"stat_cd\"))) \\\n",
+					"    .withColumn(\"omni_acct_fl\", F.trim(F.col(\"omni_acct_fl\"))) \\\n",
+					"    .withColumn(\"opco_id\", F.trim(F.col(\"opco_id\"))) \\\n",
+					"    .withColumn(\"audt_cr_id\", F.trim(F.col(\"audt_cr_id\"))) \\\n",
+					"    .withColumn(\"audt_upd_id\", F.trim(F.col(\"audt_upd_id\")))\n",
+					"logger.info(\"stage-load : Trimmed customer attributes.Count = {1}, Path = {2}\".format(df_customer_stage.count(), SOURCE_CUSTOMER_LAKE_PATH))\n",
+					""
+				],
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",

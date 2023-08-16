@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "102424a0-f6c9-4eef-a2fa-786be21664fa"
+				"spark.autotune.trackingId": "60f6e0a0-ddd8-4fbf-bcd6-deaf4318599d"
 			}
 		},
 		"metadata": {
@@ -156,12 +156,14 @@
 				},
 				"source": [
 					"\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - PRODUCT - RETAILER - CPT-IT-STOR - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
-					"logger.info(\"\\n SOURCE_CPT_IT_STOR_LAKE_PATH : {0}\".format(SOURCE_CPT_IT_STOR_LAKE_PATH))\n",
-					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\n",
-					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
-					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
-					"logger.info(\"\\n PARTITION_COL : {0}\".format(PARTITION_COL))\n",
+					"logger.info(\"******************************************************************************\")\n",
+					"logger.info(\"\\t MDM - PRODUCT - RETAILER - CPT-IT-STOR - Starting with below parameters\")\n",
+					"logger.info(\"******************************************************************************\")\n",
+					"logger.info(\"\\t SOURCE_CPT_IT_STOR_LAKE_PATH : {0}\".format(SOURCE_CPT_IT_STOR_LAKE_PATH))\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\t PARTITION_COL : {0}\".format(PARTITION_COL))\n",
 					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": null

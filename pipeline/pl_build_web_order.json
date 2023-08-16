@@ -14,7 +14,7 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.01:00:00",
+					"timeout": "0.03:00:00",
 					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -65,7 +65,7 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.01:00:00",
+					"timeout": "0.03:00:00",
 					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -119,10 +119,6 @@
 								"type": "Expression"
 							},
 							"type": "string"
-						},
-						"RUN_TEST": {
-							"value": "False",
-							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -152,7 +148,7 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.01:00:00",
+					"timeout": "0.03:00:00",
 					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -192,10 +188,6 @@
 								"type": "Expression"
 							},
 							"type": "string"
-						},
-						"RUN_TEST": {
-							"value": "False",
-							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -265,10 +257,6 @@
 								"type": "Expression"
 							},
 							"type": "string"
-						},
-						"RUN_TEST": {
-							"value": "False",
-							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -465,7 +453,7 @@
 		"variables": {
 			"INGST_FLDR_PATH": {
 				"type": "String",
-				"defaultValue": "domain/order/web-order/lake/"
+				"defaultValue": "opco/fdln/domain/order/web-order/lake/2023-08-15-17-08-30/"
 			}
 		},
 		"folder": {

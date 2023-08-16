@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "acc4c739-90b9-4949-897d-18183253be4c"
+				"spark.autotune.trackingId": "cc5e78cb-0d9e-4e86-b5aa-2d55848dcf7b"
 			}
 		},
 		"metadata": {
@@ -157,14 +157,16 @@
 				},
 				"source": [
 					"\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - PRODUCT - RETAILER - CPT-PAST_PURC-DEL - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
-					"logger.info(\"\\n SOURCE_DELETED_PRODUCTS_LAKE_PATH : {0}\".format(SOURCE_DELETED_PRODUCTS_LAKE_PATH))\n",
-					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\n",
-					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
-					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
-					"logger.info(\"\\n PARTITION_COL : {0}\".format(PARTITION_COL))\n",
-					"logger.info(\"\\n NUM_OF_PARTITION : {0}\".format(NUM_OF_PARTITION))\n",
-					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"************************************************************************************\")\n",
+					"logger.info(\"\\t MDM - PRODUCT - RETAILER - CPT-PAST_PURC-DEL - Starting with below parameters\")\n",
+					"logger.info(\"************************************************************************************\")\n",
+					"logger.info(\"\\t SOURCE_DELETED_PRODUCTS_LAKE_PATH : {0}\".format(SOURCE_DELETED_PRODUCTS_LAKE_PATH))\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\t PARTITION_COL : {0}\".format(PARTITION_COL))\n",
+					"logger.info(\"\\t NUM_OF_PARTITION : {0}\".format(NUM_OF_PARTITION))\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\n",
 					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": null

@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "36c7dfe1-3919-4aa6-a02e-f88aaab22a93"
+				"spark.autotune.trackingId": "89ae286c-aa11-4567-808d-e745db525ada"
 			}
 		},
 		"metadata": {
@@ -75,7 +75,10 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"tags": [
+						"parameters"
+					]
 				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
@@ -154,14 +157,16 @@
 				},
 				"source": [
 					"\r\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\\n *****************************************************************************\\033[0m\")\r\n",
-					"logger.info(\"\\n SOURCE_LAKE_CNTRL_PUP_CTL_PATH : {0}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\n STAGE_CNTRL_PUP_CTL_PATH : {0}\".format(STAGE_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\n TARGET_CNTRL_PUP_CTL_PATH : {0}\".format(TARGET_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\r\n",
-					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\n VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\n VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
+					"logger.info(\"******************************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\")\r\n",
+					"logger.info(\"*****************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_CNTRL_PUP_CTL_PATH : {0}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\t STAGE_CNTRL_PUP_CTL_PATH : {0}\".format(STAGE_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\t TARGET_CNTRL_PUP_CTL_PATH : {0}\".format(TARGET_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
 					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": 16

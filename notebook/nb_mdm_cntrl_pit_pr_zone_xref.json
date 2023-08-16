@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "fef49f6d-8ed0-44c8-9d87-5e740ce59741"
+				"spark.autotune.trackingId": "25ad42d9-5009-4392-9de5-79f04e834f98"
 			}
 		},
 		"metadata": {
@@ -53,6 +53,11 @@
 		"cells": [
 			{
 				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
 					"SOURCE_LAKE_CNTRL_PR_ZONE_XREF_PATH = \"opco/ppod/domain/store/central-pit-pr-zone-xref/lake/2023-08-01-02-16-04/\"\r\n",

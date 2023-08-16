@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f516fc69-09c2-4fa0-83e9-72ad44919428"
+				"spark.autotune.trackingId": "818caca0-15bc-4c81-8cfa-e57152481a3d"
 			}
 		},
 		"metadata": {
@@ -140,14 +140,16 @@
 				},
 				"source": [
 					"\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - ORDER-HEADER - WEB_ORDER - ORDER_HISTORY - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
-					"logger.info(\"\\n STAGE_ORDER_HEADER_PATH : {0}\".format(STAGE_ORDER_HEADER_PATH))\n",
-					"logger.info(\"\\n TARGET_ORDER_PATH : {0}\".format(TARGET_ORDER_PATH))\n",
-					"logger.info(\"\\n TARGET_ORDER_HEADER_PATH : {0}\".format(TARGET_ORDER_HEADER_PATH))\n",
-					"logger.info(\"\\n TARGET_ORDER_HEADER_COLS : {0}\".format(TARGET_ORDER_HEADER_COLS))\n",
-					"logger.info(\"\\n KEY_COLS : {0}\".format(KEY_COLS))\n",
-					"logger.info(\"\\n PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
-					"logger.info(\"**************************************************************************\")"
+					"logger.info(\"********************************************************************************\")\n",
+					"logger.info(\"\\t MDM - ORDER-HEADER - WEB_ORDER - ORDER_HISTORY - Starting with below parameters\")\n",
+					"logger.info(\"********************************************************************************\")\n",
+					"logger.info(\"\\t STAGE_ORDER_HEADER_PATH : {0}\".format(STAGE_ORDER_HEADER_PATH))\n",
+					"logger.info(\"\\t TARGET_ORDER_PATH : {0}\".format(TARGET_ORDER_PATH))\n",
+					"logger.info(\"\\t TARGET_ORDER_HEADER_PATH : {0}\".format(TARGET_ORDER_HEADER_PATH))\n",
+					"logger.info(\"\\t TARGET_ORDER_HEADER_COLS : {0}\".format(TARGET_ORDER_HEADER_COLS))\n",
+					"logger.info(\"\\t KEY_COLS : {0}\".format(KEY_COLS))\n",
+					"logger.info(\"\\t PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
+					"logger.info(\"*********************************************************************************\")"
 				],
 				"execution_count": null
 			},
@@ -331,7 +333,7 @@
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_ORDER_HEADER_PATH)):\n",
 					"    apply_cdc()\n",
 					"else:\n",
-					"    logger.info(\"cdc-load:No delta orders found at path = {0}\".format(STAGE_ORDER_HEADER_PATH))"
+					"    logger.info(\"cdc-load: No delta orders found at path = {0}\".format(STAGE_ORDER_HEADER_PATH))"
 				],
 				"execution_count": 5
 			},
@@ -367,7 +369,7 @@
 					"\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_ORDER_HEADER_PATH)):\n",
 					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_ORDER_HEADER_PATH, recurse = True)\n",
-					"    logger.info(\"cdc-load:Cleaned up delta data container = {0}\".format(STAGE_ORDER_HEADER_PATH))"
+					"    logger.info(\"cdc-load: Cleaned up delta data container = {0}\".format(STAGE_ORDER_HEADER_PATH))"
 				],
 				"execution_count": null
 			}

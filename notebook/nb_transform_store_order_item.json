@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7b3ffd48-6f13-4601-92e5-7bdbdaabc4aa"
+				"spark.autotune.trackingId": "0eaf0bff-2b77-44bb-ab9a-4496e605fd19"
 			}
 		},
 		"metadata": {
@@ -85,7 +85,6 @@
 					"STAGE_STORE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/store-order/stage/order-item/\"\n",
 					"TARGET_STORE_ORDER_PATH = \"opco/fdln/domain/order/store-order/master/order/\"\n",
 					"TARGET_STORE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/store-order/master/order-item/\"\n",
-					"\n",
 					"TARGET_STORE_ORDER_ITEM_COLS = [\"user_id\", \"line_item_id\", \"order_num\", \"transaction_ts\", \"loyalty_id\", \"upc_nbr\", \"pod_id\",\n",
 					"                         \"qty_sld_amt\", \"ext_sell_prc_amt\", \"item_coupon_savings\", \"item_rewardsprogram_savings\",\"item_mvp_savings\", \"year\", \"month\", \"day\"]\n",
 					"KEY_COL = [\"order_num\"]\n",
@@ -139,14 +138,16 @@
 				},
 				"source": [
 					"\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - ORDER-ITEM - STORE_ORDER - ORDER_HISTORY - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
-					"logger.info(\"\\n STAGE_STORE_ORDER_ITEM_PATH : {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))\n",
-					"logger.info(\"\\n TARGET_STORE_ORDER_PATH : {0}\".format(TARGET_STORE_ORDER_PATH))\n",
-					"logger.info(\"\\n TARGET_STORE_ORDER_ITEM_PATH : {0}\".format(TARGET_STORE_ORDER_ITEM_PATH))\n",
-					"logger.info(\"\\n TARGET_STORE_ORDER_ITEM_COLS : {0}\".format(TARGET_STORE_ORDER_ITEM_COLS))\n",
-					"logger.info(\"\\n KEY_COL : {0}\".format(KEY_COL))\n",
-					"logger.info(\"\\n PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
-					"logger.info(\"**************************************************************************\")"
+					"logger.info(\"**************************************************************************************\")\n",
+					"logger.info(\" \\t MDM - ORDER-ITEM - STORE_ORDER - ORDER_HISTORY - Starting with below parameters\")\n",
+					"logger.info(\"**************************************************************************************\")\n",
+					"logger.info(\"\\t STAGE_STORE_ORDER_ITEM_PATH : {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))\n",
+					"logger.info(\"\\t TARGET_STORE_ORDER_PATH : {0}\".format(TARGET_STORE_ORDER_PATH))\n",
+					"logger.info(\"\\t TARGET_STORE_ORDER_ITEM_PATH : {0}\".format(TARGET_STORE_ORDER_ITEM_PATH))\n",
+					"logger.info(\"\\t TARGET_STORE_ORDER_ITEM_COLS : {0}\".format(TARGET_STORE_ORDER_ITEM_COLS))\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\t PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
+					"logger.info(\"**************************************************************************************\")"
 				],
 				"execution_count": null
 			},
@@ -210,7 +211,7 @@
 					"       .partitionBy(PARTITION_COLS) \\\n",
 					"       .save(BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH)\n",
 					"\n",
-					"    logger.info(\"init-load: Created order-item. Count={0}, Path={1}\".format(df_web_order_item.count(),TARGET_ORDER_ITEM_PATH))\n",
+					"    logger.info(\"init-load: Created order-item. Count={0}, Path={1}\".format(df_web_order_item.count(),TARGET_STORE_ORDER_ITEM_PATH))\n",
 					"\n",
 					"##############################\n",
 					"# MAIN STARTS HERE\n",
@@ -322,7 +323,7 @@
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH)):\n",
 					"    apply_cdc()\n",
 					"else:\n",
-					"    logger.info(\"cdc-load:No delta orders found at path = {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))"
+					"    logger.info(\"cdc-load: No delta orders found at path = {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))"
 				],
 				"execution_count": 3
 			},
@@ -358,7 +359,7 @@
 					"\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH)):\n",
 					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH, recurse = True)\n",
-					"    logger.info(\"cdc-load:Cleaned up delta data container = {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))"
+					"    logger.info(\"cdc-load: Cleaned up delta data container = {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))"
 				],
 				"execution_count": 4
 			}

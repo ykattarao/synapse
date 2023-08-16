@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "99211d95-3179-4323-829c-1dde1fd6065b"
+				"spark.autotune.trackingId": "1e61fd6d-8073-47c9-b4a6-b7c964e8db70"
 			}
 		},
 		"metadata": {
@@ -66,6 +66,11 @@
 			},
 			{
 				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
 					"SOURCE_LAKE_RTL_STORE_ZIP_PATH = \"opco/ppod/domain/store/retailer-cpt-store-zip/lake/2023-08-01-01-59-46/\"\r\n",
@@ -143,15 +148,17 @@
 				},
 				"source": [
 					"\r\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\\n *****************************************************************************\\033[0m\")\r\n",
-					"logger.info(\"\\n SOURCE_LAKE_RTL_STORE_ZIP_PATH : {0}\".format(SOURCE_LAKE_RTL_STORE_ZIP_PATH))\r\n",
-					"logger.info(\"\\n STAGE_RTL_STORE_ZIP_PATH : {0}\".format(STAGE_RTL_STORE_ZIP_PATH))\r\n",
-					"logger.info(\"\\n TARGET_RTL_STORE_ZIP_PATH : {0}\".format(TARGET_RTL_STORE_ZIP_PATH))\r\n",
-					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\r\n",
-					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\n VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\n VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
-					"logger.info(\"**************************************************************************\")"
+					"logger.info(\"******************************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\")\r\n",
+					"logger.info(\"******************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_RTL_STORE_ZIP_PATH : {0}\".format(SOURCE_LAKE_RTL_STORE_ZIP_PATH))\r\n",
+					"logger.info(\"\\t STAGE_RTL_STORE_ZIP_PATH : {0}\".format(STAGE_RTL_STORE_ZIP_PATH))\r\n",
+					"logger.info(\"\\t TARGET_RTL_STORE_ZIP_PATH : {0}\".format(TARGET_RTL_STORE_ZIP_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
+					"logger.info(\"*******************************************************************************\")"
 				],
 				"execution_count": 41
 			},

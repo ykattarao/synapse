@@ -11,7 +11,8 @@
 				},
 				"parameters": {
 					"PARAM_OPCO": "GNTC",
-					"PARAM_ADLS_CONN_STR": "abfss://fs-syn-pdladf-dataint-nonprd-dev-e2-01@sasynpdladfdinpdeve201.dfs.core.windows.net/"
+					"PARAM_ADLS_CONN_STR": "abfss://fs-syn-pdladf-dataint-nonprd-dev-e2-01@sasynpdladfdinpdeve201.dfs.core.windows.net/",
+					"PARAM_CDC_CHK_POINT_KEY": "cdc-ord-hstry-chckpnt-ky-gntc"
 				}
 			}
 		],

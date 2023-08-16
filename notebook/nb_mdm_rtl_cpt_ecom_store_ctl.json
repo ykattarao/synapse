@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2b13c127-4a0c-481f-b689-6ea6b2daa359"
+				"spark.autotune.trackingId": "c2e4157e-9738-4cdd-8bed-bc972580d298"
 			}
 		},
 		"metadata": {
@@ -75,7 +75,10 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"tags": [
+						"parameters"
+					]
 				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
@@ -156,16 +159,18 @@
 				},
 				"source": [
 					"\r\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\\n *****************************************************************************\\033[0m\")\r\n",
-					"logger.info(\"\\n SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH : {0}\".format(SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH))\r\n",
-					"logger.info(\"\\n STAGE_RTL_ECOM_STORE_CTL_PATH : {0}\".format(STAGE_RTL_ECOM_STORE_CTL_PATH))\r\n",
-					"logger.info(\"\\n TARGET_RTL_ECOM_STORE_CTL_PATH : {0}\".format(TARGET_RTL_ECOM_STORE_CTL_PATH))\r\n",
-					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\r\n",
-					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\n VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\n VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
-					"logger.info(\"\\n COL_NAME : {0}\".format(COL_NAME))\r\n",
-					"logger.info(\"\\n COL_VAl : {0}\".format(COL_VAl))\r\n",
+					"logger.info(\"******************************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\")\r\n",
+					"logger.info(\"*****************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH : {0}\".format(SOURCE_LAKE_RTL_ECOM_STORE_CTL_PATH))\r\n",
+					"logger.info(\"\\t STAGE_RTL_ECOM_STORE_CTL_PATH : {0}\".format(STAGE_RTL_ECOM_STORE_CTL_PATH))\r\n",
+					"logger.info(\"\\t TARGET_RTL_ECOM_STORE_CTL_PATH : {0}\".format(TARGET_RTL_ECOM_STORE_CTL_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
+					"logger.info(\"\\t COL_NAME : {0}\".format(COL_NAME))\r\n",
+					"logger.info(\"\\t COL_VAl : {0}\".format(COL_VAl))\r\n",
 					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": 4

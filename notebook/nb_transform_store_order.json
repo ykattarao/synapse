@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "9f4b60a4-be1f-4859-8efd-9029a12c739d"
+				"spark.autotune.trackingId": "b502a75f-f41b-41b8-88ae-ac6c1e77b38b"
 			}
 		},
 		"metadata": {
@@ -140,17 +140,19 @@
 				},
 				"source": [
 					"\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - ORDER - STORE_ORDER - SHOPPING_HISTORY - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
-					"logger.info(\"\\n SOURCE_LAKE_STORE_ORDER_PATH : {0}\".format(SOURCE_LAKE_STORE_ORDER_PATH))\n",
-					"logger.info(\"\\n STAGE_STORE_ORDER_PATH : {0}\".format(STAGE_STORE_ORDER_PATH))\n",
-					"logger.info(\"\\n STAGE_STORE_ORDER_HEADER_PATH : {0}\".format(STAGE_STORE_ORDER_HEADER_PATH))\n",
-					"logger.info(\"\\n STAGE_STORE_ORDER_ITEM_PATH : {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))\n",
-					"logger.info(\"\\n TARGET_STORE_ORDER_PATH : {0}\".format(TARGET_STORE_ORDER_PATH))\n",
-					"logger.info(\"\\n STAGE_CUSTOMER_LYLTY_PATH : {0}\".format(STAGE_CUSTOMER_LYLTY_PATH))\n",
-					"logger.info(\"\\n TARGET_CUSTOMER_PATH : {0}\".format(TARGET_CUSTOMER_PATH))\n",
-					"logger.info(\"\\n KEY_COLS : {0}\".format(KEY_COLS))\n",
-					"logger.info(\"\\n PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
-					"logger.info(\"**************************************************************************\")"
+					"logger.info(\"**********************************************************************************\")\n",
+					"logger.info(\"\\t MDM - ORDER - STORE_ORDER - SHOPPING_HISTORY - Starting with below parameters\")\n",
+					"logger.info(\"**********************************************************************************\")\n",
+					"logger.info(\"\\t SOURCE_LAKE_STORE_ORDER_PATH : {0}\".format(SOURCE_LAKE_STORE_ORDER_PATH))\n",
+					"logger.info(\"\\t STAGE_STORE_ORDER_PATH : {0}\".format(STAGE_STORE_ORDER_PATH))\n",
+					"logger.info(\"\\t STAGE_STORE_ORDER_HEADER_PATH : {0}\".format(STAGE_STORE_ORDER_HEADER_PATH))\n",
+					"logger.info(\"\\t STAGE_STORE_ORDER_ITEM_PATH : {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))\n",
+					"logger.info(\"\\t TARGET_STORE_ORDER_PATH : {0}\".format(TARGET_STORE_ORDER_PATH))\n",
+					"logger.info(\"\\t STAGE_CUSTOMER_LYLTY_PATH : {0}\".format(STAGE_CUSTOMER_LYLTY_PATH))\n",
+					"logger.info(\"\\t TARGET_CUSTOMER_PATH : {0}\".format(TARGET_CUSTOMER_PATH))\n",
+					"logger.info(\"\\t KEY_COLS : {0}\".format(KEY_COL))\n",
+					"logger.info(\"\\t PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
+					"logger.info(\"**********************************************************************************\")"
 				],
 				"execution_count": null
 			},
@@ -280,7 +282,7 @@
 					"        \"\"\") \\\n",
 					"        .drop(\"hash\")\n",
 					"    \n",
-					"    logger.info(\"user-lookup: looked up user-id. Lake={0}, Match={1}\".format(df_store_order_lake_with_lylty.count(), df_store_order_with_usrid.count()))\n",
+					"    logger.info(\"user-lookup: Looked up user-id. Lake={0}, Match={1}\".format(df_store_order_lake_with_lylty.count(), df_store_order_with_usrid.count()))\n",
 					"\n",
 					"    df_store_order_no_usrid = df_store_order_lake \\\n",
 					"    .filter(\"loyalty_id IS NULL\") \\\n",
@@ -335,7 +337,7 @@
 					"\n",
 					"df_store_order_stage = df_store_order_stage.withColumn(\"transaction_lines\", f.from_json(f.col(\"transaction_lines\"), trans_lines_schema))\n",
 					"\n",
-					"logger.info(\"to_json : converting transaction_line from string to json. Count={0}\".format(df_store_order_stage.count())"
+					"logger.info(\"to_json : Converting transaction_line from string to json. Count={0}\".format(df_store_order_stage.count()))"
 				],
 				"execution_count": 4
 			},
@@ -379,7 +381,7 @@
 					"        .format(\"delta\") \\\n",
 					"        .partitionBy(PARTITION_COLS) \\\n",
 					"        .save(BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_PATH)\n",
-					"    logger.info(\"init-load : shopping history loaded into master. Count={0}, Path={1}\".format(df_store_order_stage.count(), TARGET_STORE_ORDER_PATH))\n",
+					"    logger.info(\"init-load : Shopping history loaded into master. Count={0}, Path={1}\".format(df_store_order_stage.count(), TARGET_STORE_ORDER_PATH))\n",
 					"\n",
 					"\n",
 					"def apply_cdc():\n",
@@ -419,7 +421,7 @@
 					"            INSERT *\n",
 					"        \"\"\"\n",
 					"    )\n",
-					"    logger.info(\"cdc-load : shopping history loaded into master. Master_Count={0}, Delta_Count={1}, Path={2}\".format(df_store_order_master.count(), df_store_order_delta.count(), TARGET_STORE_ORDER_PATH))\n",
+					"    logger.info(\"cdc-load : Shopping history loaded into master. Master_Count={0}, Delta_Count={1}, Path={2}\".format(df_store_order_master.count(), df_store_order_delta.count(), TARGET_STORE_ORDER_PATH))\n",
 					"\n",
 					"##############################\n",
 					"# FULL LOAD / DELTA LOAD\n",
@@ -492,7 +494,7 @@
 					"\n",
 					"def purge_stage():\n",
 					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH, recurse = True)\n",
-					"    logger.info(\"purge: stage data has been cleaned at path={0}\".format(STAGE_STORE_ORDER_PATH))\n",
+					"    logger.info(\"purge: Stage data has been cleaned at path={0}\".format(STAGE_STORE_ORDER_PATH))\n",
 					"\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH)):\n",
 					"    emit_events()\n",

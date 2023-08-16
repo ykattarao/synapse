@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "e440f797-d816-4f0e-860b-3fc45e22d00c"
+				"spark.autotune.trackingId": "44e7fe27-27d3-4ea5-9598-d93a3e6643af"
 			}
 		},
 		"metadata": {
@@ -121,7 +121,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_web_order\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -138,17 +138,19 @@
 				},
 				"source": [
 					"\n",
-					"logger.info(\" \\033[1m****************************************************************************** \\n MDM - ORDER - WEB_ORDER - ORDER_HISTORY - Starting with below parameters\\n *****************************************************************************\\033[0m\")\n",
-					"logger.info(\"\\n SOURCE_LAKE_PATH : {0}\".format(SOURCE_LAKE_PATH))\n",
-					"logger.info(\"\\n STAGE_ORDER_PATH : {0}\".format(STAGE_ORDER_PATH))\n",
-					"logger.info(\"\\n STAGE_ORDER_HEADER_PATH : {0}\".format(STAGE_ORDER_HEADER_PATH))\n",
-					"logger.info(\"\\n STAGE_ORDER_ITEM_PATH : {0}\".format(STAGE_ORDER_ITEM_PATH))\n",
-					"logger.info(\"\\n TARGET_ORDER_PATH : {0}\".format(TARGET_ORDER_PATH))\n",
-					"logger.info(\"\\n KEY_COLS : {0}\".format(KEY_COLS))\n",
-					"logger.info(\"\\n PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
-					"logger.info(\"**************************************************************************\")"
+					"logger.info(\"******************************************************************************\")\n",
+					"logger.info(\"\\t MDM - ORDER - WEB_ORDER - ORDER_HISTORY - Starting with below parameters\")\n",
+					"logger.info(\"******************************************************************************\")\n",
+					"logger.info(\"\\t SOURCE_LAKE_PATH : {0}\".format(SOURCE_LAKE_PATH))\n",
+					"logger.info(\"\\t STAGE_ORDER_PATH : {0}\".format(STAGE_ORDER_PATH))\n",
+					"logger.info(\"\\t STAGE_ORDER_HEADER_PATH : {0}\".format(STAGE_ORDER_HEADER_PATH))\n",
+					"logger.info(\"\\t STAGE_ORDER_ITEM_PATH : {0}\".format(STAGE_ORDER_ITEM_PATH))\n",
+					"logger.info(\"\\t TARGET_ORDER_PATH : {0}\".format(TARGET_ORDER_PATH))\n",
+					"logger.info(\"\\t KEY_COLS : {0}\".format(KEY_COLS))\n",
+					"logger.info(\"\\t PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
+					"logger.info(\"*******************************************************************************\")"
 				],
-				"execution_count": null
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -235,7 +237,7 @@
 					"        .mode(\"overwrite\") \\\n",
 					"        .option(\"mergeSchema\", \"true\") \\\n",
 					"        .format(\"delta\") \\\n",
-					"        .partitionBy(PARTITION_COLS)\n",
+					"        .partitionBy(PARTITION_COLS) \\\n",
 					"        .save(BASE_ADLS_CONN_STR + TARGET_ORDER_PATH)\n",
 					"    logger.info(\"init-load : web order loaded into master. Count={0}, Path={1}\".format(df_web_order_lake.count(), TARGET_ORDER_PATH))\n",
 					"    \n",

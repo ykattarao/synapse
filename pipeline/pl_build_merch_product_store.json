@@ -347,7 +347,7 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.1:00:00",
+					"timeout": "0.2:00:00",
 					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -380,13 +380,6 @@
 								"type": "Expression"
 							},
 							"type": "int"
-						},
-						"LOGGING_LEVEL": {
-							"value": {
-								"value": "@pipeline().parameters.PARAM_LOGGING_LEVEL",
-								"type": "Expression"
-							},
-							"type": "string"
 						}
 					},
 					"snapshot": true,
@@ -421,10 +414,6 @@
 			"PARAM_IFX_TBL_NM": {
 				"type": "string",
 				"defaultValue": "cpt_it_stor"
-			},
-			"PARAM_LOGGING_LEVEL": {
-				"type": "string",
-				"defaultValue": "INFO"
 			},
 			"PARM_VAL_CNT_THRESHOLD": {
 				"type": "int",

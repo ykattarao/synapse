@@ -14,7 +14,7 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.01:00:00",
+					"timeout": "0.03:00:00",
 					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -281,8 +281,8 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.01:00:00",
-					"retry": 0,
+					"timeout": "0.03:00:00",
+					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
 					"secureInput": false
@@ -349,10 +349,6 @@
 								"type": "Expression"
 							},
 							"type": "string"
-						},
-						"RUN_TEST": {
-							"value": "False",
-							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -382,8 +378,8 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
+					"timeout": "0.3:00:00",
+					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
 					"secureInput": false
@@ -422,10 +418,6 @@
 								"type": "Expression"
 							},
 							"type": "string"
-						},
-						"RUN_TEST": {
-							"value": "False",
-							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -455,8 +447,8 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
+					"timeout": "0.3:00:00",
+					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
 					"secureInput": false
@@ -495,10 +487,6 @@
 								"type": "Expression"
 							},
 							"type": "string"
-						},
-						"RUN_TEST": {
-							"value": "False",
-							"type": "bool"
 						}
 					},
 					"snapshot": true,

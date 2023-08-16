@@ -181,13 +181,6 @@
 								"type": "Expression"
 							},
 							"type": "int"
-						},
-						"LOGGING_LEVEL": {
-							"value": {
-								"value": "@pipeline().parameters.PARAM_LOGGING_LEVEL",
-								"type": "Expression"
-							},
-							"type": "string"
 						}
 					},
 					"snapshot": true,

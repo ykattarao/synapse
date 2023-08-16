@@ -422,10 +422,6 @@
 											"type": "Expression"
 										},
 										"type": "string"
-									},
-									"RUN_TEST": {
-										"value": "False",
-										"type": "bool"
 									}
 								},
 								"snapshot": true,
