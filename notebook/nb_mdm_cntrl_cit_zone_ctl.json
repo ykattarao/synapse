@@ -1,5 +1,5 @@
 {
-	"name": "nb_mbm_cntrl_cit_zone_ctl",
+	"name": "nb_mdm_cntrl_cit_zone_ctl",
 	"properties": {
 		"folder": {
 			"name": "mdm/domain/store"
@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "1382a729-8f5b-4fe9-bab4-327bb0bcde0d"
+				"spark.autotune.trackingId": "73fee84d-e460-476f-ae40-0dddd3782979"
 			}
 		},
 		"metadata": {
@@ -96,7 +96,7 @@
 					}
 				},
 				"source": [
-					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mbm_cntrl_cit_zone_ctl\", LOGGING_LEVEL: \"INFO\" }"
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_cntrl_cit_zone_ctl\", LOGGING_LEVEL: \"INFO\" }"
 				],
 				"execution_count": 3
 			},
@@ -322,6 +322,7 @@
 					"    StructField(\"cpnt_invc_cd\", StringType(), True),\r\n",
 					"    StructField(\"cart_rwrd_cd\", StringType(), True),\r\n",
 					"    StructField(\"buyr_regn_cd\",IntegerType(),True),\r\n",
+					"    StructField(\"gd_pgm_id\",IntegerType(),True),\r\n",
 					"    StructField(\"gd_rwrd_id\", IntegerType(), True),\r\n",
 					"    StructField(\"gd_rwrd_desc_tx\", StringType(),True), \r\n",
 					"    StructField(\"ignr_papr_less_fl\",StringType(), True),\r\n",

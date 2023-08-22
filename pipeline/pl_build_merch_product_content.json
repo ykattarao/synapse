@@ -353,7 +353,7 @@
 							},
 							"type": "string"
 						},
-						"SOURCE_CONTENT_CTL_LAKE_PATH": {
+						"SOURCE_MERCH_CONTENT_LAKE_PATH": {
 							"value": {
 								"value": "@variables('VAR_INGST_FLDR_PATH_CTLG_CONT')",
 								"type": "Expression"

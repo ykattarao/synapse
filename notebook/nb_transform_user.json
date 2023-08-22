@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b363817f-97e2-4209-8338-d1626ea1cb63"
+				"spark.autotune.trackingId": "858f4fef-591c-45fd-be02-083e21f9d41f"
 			}
 		},
 		"metadata": {
@@ -244,7 +244,7 @@
 					"    .withColumn(\"opco_id\", F.trim(F.col(\"opco_id\"))) \\\n",
 					"    .withColumn(\"audt_cr_id\", F.trim(F.col(\"audt_cr_id\"))) \\\n",
 					"    .withColumn(\"audt_upd_id\", F.trim(F.col(\"audt_upd_id\")))\n",
-					"logger.info(\"stage-load : Trimmed customer attributes.Count = {1}, Path = {2}\".format(df_customer_stage.count(), SOURCE_CUSTOMER_LAKE_PATH))\n",
+					"logger.info(\"stage-load : Trimmed customer attributes.Count = {0}, Path = {1}\".format(df_customer_stage.count(), SOURCE_CUSTOMER_LAKE_PATH))\n",
 					""
 				],
 				"execution_count": null

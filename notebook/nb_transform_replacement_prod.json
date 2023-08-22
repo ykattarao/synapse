@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f9a4f978-966d-4402-8351-8fd0121ff6b8"
+				"spark.autotune.trackingId": "0a74d93a-74b4-45bc-8b86-71d4b731d940"
 			}
 		},
 		"metadata": {
@@ -94,7 +94,7 @@
 					"KEY_COL_PROD_ID = \"prod_id\"\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
 				],
-				"execution_count": 3
+				"execution_count": 1
 			},
 			{
 				"cell_type": "markdown",
@@ -279,7 +279,7 @@
 					"def init():\n",
 					"    logger.info(\"MDM started for replaement_products\")\n",
 					"    \n",
-					"    for opco in OPOC_LST:\n",
+					"    for opco in OPCO_LST:\n",
 					"        logger.info(\"Processing OPCO={0}\".format(opco))\n",
 					"\n",
 					"        if (DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PATH.format(opco = opco))):\n",

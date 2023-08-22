@@ -330,7 +330,7 @@
 							},
 							"type": "string"
 						},
-						"SOURCE_CTR_TREE_LAKE_PATH": {
+						"SOURCE_MERCH_CATEGORY_TREE_LAKE_PATH": {
 							"value": {
 								"value": "@variables('VAR_INGST_FLDR_PATH_CTR_TREE')",
 								"type": "Expression"

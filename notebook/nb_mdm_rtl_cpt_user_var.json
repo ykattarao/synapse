@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "6a7cd0bb-a246-4e05-80e1-eb3976f488e2"
+				"spark.autotune.trackingId": "863fdee9-7541-4fe5-aec0-abffc43dd0ad"
 			}
 		},
 		"metadata": {
@@ -88,7 +88,7 @@
 					"KEY_COL=\"ecom_stor_id\"\r\n",
 					"VAL_CNT_THRESHOLD = 2\r\n",
 					"VAL_COL_NAME=\"user_type_cd\"\r\n",
-					"VAL_COL_VL= [ 'C','G','M']\r\n",
+					"VAL_COL_VLS= \"[ 'C','G','M']\"\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
 				],
 				"execution_count": 2
@@ -165,7 +165,7 @@
 					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\n",
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
 					"logger.info(\"\\t VAL_COL_NAME : {0}\".format(VAL_COL_NAME))\n",
-					"logger.info(\"\\t VAL_COL_VL : {0}\".format(VAL_COL_VL))\n",
+					"logger.info(\"\\t VAL_COL_VLS : {0}\".format(VAL_COL_VLS))\n",
 					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": 5
@@ -308,6 +308,7 @@
 					"    logger.info(\"RETAILER:CPT_USER_VAR Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
 					"\r\n",
 					"# main starts here\r\n",
+					"VAL_COL_VLS_LST=eval(VAL_COL_VLS)\r\n",
 					"for opco in OPCO_LST:\r\n",
 					"    logger.info(\"_________________________________________________________________\")\r\n",
 					"    logger.info(\"Processing  MDM for RETAILER:CPT_USER_VAR. OPCO={0}\".format(opco))\r\n",
@@ -323,9 +324,9 @@
 					"            .load(BASE_ADLS_CONN_STR + TARGET_RTL_USER_VAR_PATH.format(opco = opco)) \r\n",
 					"        logger.info(\"RETAILER:CPT_USER_VAR loaded from master. OPCO = {0}, Count={1}\".format(opco, df_user_var_master.count()))\r\n",
 					"        is_val_success= validate_count(df_user_var_master,df_user_var_stage,VAL_CNT_THRESHOLD)\r\n",
-					"        is_values_in_list= check_val_list(df_user_var_stage, VAL_COL_NAME, VAL_COL_VL)\r\n",
+					"        is_values_in_list= check_val_list(df_user_var_stage, VAL_COL_NAME, VAL_COL_VLS_LST)\r\n",
 					"        \r\n",
-					"        if is_val_success & is_values_in_list :\r\n",
+					"        if (is_val_success & is_values_in_list)== True:\r\n",
 					"            load_master_data(df_user_var_stage,BASE_ADLS_CONN_STR + TARGET_RTL_USER_VAR_PATH.format(opco = opco), opco )\r\n",
 					"        else:\r\n",
 					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",

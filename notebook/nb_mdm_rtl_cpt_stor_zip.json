@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "1e61fd6d-8073-47c9-b4a6-b7c964e8db70"
+				"spark.autotune.trackingId": "88f731b9-6ea9-4be0-b41c-bb206991cd5d"
 			}
 		},
 		"metadata": {
@@ -79,7 +79,7 @@
 					"KEY_COL=\"ecom_stor_id\"\r\n",
 					"VAL_CNT_THRESHOLD = 2\r\n",
 					"VAL_COL_CNT_THRESHOLD= 1\r\n",
-					"VAL_COL_LST = [\"zip_cd\",\"ecom_stor_id\",\"pr_zone_cd\"]\r\n",
+					"VAL_COLS = \"['ecom_stor_id','zip_cd']\"\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
 				],
 				"execution_count": 38
@@ -157,7 +157,7 @@
 					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
 					"logger.info(\"\\t VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\t VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
+					"logger.info(\"\\t VAL_COLS : {0}\".format(VAL_COLS))\r\n",
 					"logger.info(\"*******************************************************************************\")"
 				],
 				"execution_count": 41
@@ -319,6 +319,7 @@
 					"    logger.info(\"\\tRETAILER:CPT_STOR_ZIP Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
 					"\r\n",
 					"# main starts here\r\n",
+					"VAL_COL_LST=eval(VAL_COLS)\r\n",
 					"for opco in OPCO_LST:\r\n",
 					"    \r\n",
 					"    logger.info(\"\\n\\033[1mProcessing  MDM for RETAILER:CPT_STOR_ZIP. OPCO={0}\\033[0m\\n\".format(opco))\r\n",
@@ -339,7 +340,7 @@
 					"                            .load(BASE_ADLS_CONN_STR + TARGET_RTL_STORE_ZIP_PATH.format(opco = opco))\r\n",
 					"        logger.info(\"\\tRETAILER:CPT_STOR_ZIP loaded from master. OPCO = {0}, Count={1}\".format(opco,df_stor_zip_master.count()))\r\n",
 					"        is_val_success= validate_count(df_stor_zip_master,df_stor_zip_stage, VAL_CNT_THRESHOLD )\r\n",
-					"        is_col_data_valid = unique_column_dataValidation(df_stor_zip_master,df_stor_zip_stage,VAL_COL_CNT_THRESHOLD,VAL_COl_LST)\r\n",
+					"        is_col_data_valid = unique_column_dataValidation(df_stor_zip_master,df_stor_zip_stage,VAL_COL_CNT_THRESHOLD,VAL_COL_LST)\r\n",
 					"        if (is_val_success & is_col_data_valid)== True:            \r\n",
 					"            load_master_data(df_stor_zip_stage,BASE_ADLS_CONN_STR + TARGET_RTL_STORE_ZIP_PATH.format(opco = opco), opco)\r\n",
 					"            \r\n",

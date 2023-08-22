@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "89ae286c-aa11-4567-808d-e745db525ada"
+				"spark.autotune.trackingId": "cf5e63a9-af1c-4e1d-ae81-3905b58dfde1"
 			}
 		},
 		"metadata": {
@@ -88,10 +88,10 @@
 					"KEY_COL=\"pup_guid_cd\"\r\n",
 					"VAL_CNT_THRESHOLD= 2\r\n",
 					"VAL_COL_CNT_THRESHOLD= 1\r\n",
-					"VAL_COL_LST=[\"zip_cd\"]\r\n",
+					"VAL_COLS=\"['zip_cd']\"\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
 				],
-				"execution_count": 13
+				"execution_count": 1
 			},
 			{
 				"cell_type": "markdown",
@@ -159,14 +159,14 @@
 					"\r\n",
 					"logger.info(\"******************************************************************************\")\r\n",
 					"logger.info(\"\\t MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\")\r\n",
-					"logger.info(\"*****************************************************************************\")\r\n",
-					"logger.info(\"\\t SOURCE_LAKE_CNTRL_PUP_CTL_PATH : {0}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\t STAGE_CNTRL_PUP_CTL_PATH : {0}\".format(STAGE_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\t TARGET_CNTRL_PUP_CTL_PATH : {0}\".format(TARGET_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
-					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\t VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\t VAL_COL_LST : {0}\".format(VAL_COL_LST))\r\n",
+					"logger.info(\"******************************************************************************\")\r\n",
+					"logger.info(\"\\n SOURCE_LAKE_CNTRL_PUP_CTL_PATH : {0}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\n STAGE_CNTRL_PUP_CTL_PATH : {0}\".format(STAGE_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\n TARGET_CNTRL_PUP_CTL_PATH : {0}\".format(TARGET_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\n VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\n VAL_COLS : {0}\".format(VAL_COLS))\r\n",
 					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": 16
@@ -223,8 +223,8 @@
 					"        StructField(\"pad_min_qy\", IntegerType(), True),\r\n",
 					"        StructField(\"tote_per_cart_qy\", IntegerType(),True),\r\n",
 					"        StructField(\"cart_off_truk_min_qy\", IntegerType(),True),\r\n",
-					"        StructField(\"pup_open_tm\", TimestampType(), True),\r\n",
-					"        StructField(\"pup_pm_open_tm\", TimestampType(),True),\r\n",
+					"        StructField(\"pup_open_tm\", StringType(), True),\r\n",
+					"        StructField(\"pup_pm_open_tm\", StringType(),True),\r\n",
 					"        StructField(\"alt_rte_sys_cd\", StringType(), True),\r\n",
 					"        StructField(\"hypr_loc_cd\", IntegerType(),True),\r\n",
 					"        StructField(\"pup_svc_dur_mult_qy\", DecimalType(), False),\r\n",
@@ -359,6 +359,7 @@
 					"    logger.info(\"\\tCENTRAL:CIP_PUP_CTL Master data overwritten. OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
 					"\r\n",
 					"# main starts here\r\n",
+					"VAL_COL_LST=eval(VAL_COLS)\r\n",
 					"for opco in OPCO_LST:\r\n",
 					"    logger.info(\"\\n\\033[1m Processing MDM for CENTRAL:CIT_PUP_CTL - OPCO={0}\\033[0m\\n\".format(opco))\r\n",
 					"\r\n",

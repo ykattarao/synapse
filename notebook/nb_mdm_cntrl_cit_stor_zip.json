@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "4fbd9b67-fa61-4dae-b3e6-12ce59334c85"
+				"spark.autotune.trackingId": "6287e7fb-e7dc-4233-b3e3-f9aaaa5a034a"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"KEY_COL=\"zip_cd\"\r\n",
 					"VAL_CNT_THRESHOLD = 2\r\n",
 					"VAL_COL_CNT_THRESHOLD= 1\r\n",
-					"VAL_COL_LST = [\"zip_cd\",\"base_pr_zone_cd\"]\r\n",
+					"VAL_COLS = \"['zip_cd']\"\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
 				],
 				"execution_count": 9
@@ -143,7 +143,7 @@
 					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\n",
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
 					"logger.info(\"\\t VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\n",
-					"logger.info(\"\\t VAL_COL_LST : {0}\".format(VAL_COL_LST))\n",
+					"logger.info(\"\\t VAL_COLS : {0}\".format(VAL_COLS))\n",
 					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": 3
@@ -302,6 +302,7 @@
 					"    logger.info(\"CENTRAL:CIT_STOR_ZIP Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
 					"\r\n",
 					"# main starts here\r\n",
+					"VAL_COL_LST=eval(VAL_COLS)\r\n",
 					"for opco in OPCO_LST:\r\n",
 					"    logger.info(\"_________________________________________________________________\")\r\n",
 					"    logger.info(\"Processing  MDM for CENTRAL:CIT_STOR_ZIP. OPCO={0}\".format(opco))\r\n",

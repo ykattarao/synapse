@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "73ca0fde-8277-4d88-a136-518a6fdb519b"
+				"spark.autotune.trackingId": "fd8c09be-ff49-4547-b3a0-b4afb091a60e"
 			}
 		},
 		"metadata": {
@@ -162,7 +162,7 @@
 					"logger.info(\"\\t TARGET_RTL_ZIP_LAT_LONG_PATH : {0}\".format(TARGET_RTL_ZIP_LAT_LONG_PATH))\n",
 					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\n",
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\n",
-					"logger.info(\"*****************************************************************************\")"
+					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": 10
 			},

@@ -41,7 +41,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "InformixSource",
-						"query": "SELECT pup_ctl.pup_id,\n  pup_ctl.pup_guid_cd,\n  pup_ctl.pup_type_cd,\n  pup_ctl.pup_grp_id,\n  pup_ctl.adr_1_tx,\n  pup_ctl.adr_2_tx,\n  pup_ctl.city_tx,\n  pup_ctl.st_cd,\n  pup_ctl.zip_cd,\n  pup_ctl.pup_voic_phon_cd,\n  pup_ctl.pup_alt_phon_cd,\n  pup_ctl.pup_mail_tx,\n  pup_ctl.loc_istr_tx,\n  pup_ctl.stor_id,\n  pup_ctl.p3_stor_id,\n  pup_ctl.ahld_stor_nbr_cd,\n  pup_ctl.lat_qy,\n  pup_ctl.long_qy,\n  pup_ctl.stor_to_pup_min_qy,\n  pup_ctl.pad_min_qy,\n  pup_ctl.tote_per_cart_qy,\n  pup_ctl.cart_off_truk_min_qy,\n  pup_ctl.pup_open_tm,\n  pup_ctl.pup_pm_open_tm,\n  pup_ctl.alt_rte_sys_cd,\n  pup_ctl.hypr_loc_cd,\n  pup_ctl.pup_svc_dur_mult_qy,\n  pup_ctl.pup_frmt_type_cd,\n  pup_ctl.live_dt,\n  pup_ctl.open_dt,\n  pup_ctl.clos_dt,\n  pup_ctl.map_web_link_tx,\n  pup_ctl.dlv_area_id,\n  pup_ctl.tax_grp_cd,\n  pup_ctl.sns_mkt_area_tx,\n  pup_ctl.stor_ttl_tx,\n  pup_ctl.web_actv_cd,\n  pup_ctl.pmtt_div_cd,\n  pup_ctl.cnc_ord_id_qy,\n  pup_ctl.stag_only_fl,\n  pup_ctl.achl_wine_cd,\n  pup_ctl.achl_beer_cd,\n  pup_ctl.achl_lqr_cd,\n  pup_ctl.bag_fee_cd,\n  pup_ctl.dlv_ptnr_tx,\n  pup_ctl.pckp_notf_ptnr_site_id,\n  pup_ctl.rtrn_allow_cd,\n  pup_ctl.ok_to_edit_ord_fl,\n  pup_ctl.sub_rej_cut_wnd,\n  pup_ctl.sub_rej_ntfy_cut_wnd,\n  pup_ctl.ortc_stor_fl,\n  pup_ctl.drop_loc_adr_1_tx,\n  pup_ctl.drop_loc_adr_2_tx,\n  pup_ctl.drop_loc_city_tx,\n  pup_ctl.drop_loc_st_cd,\n  pup_ctl.drop_loc_zip_cd\nFROM central:cit_pup_ctl pup_ctl"
+						"query": "SELECT pup_ctl.pup_id,\n  pup_ctl.pup_guid_cd,\n  pup_ctl.pup_type_cd,\n  pup_ctl.pup_grp_id,\n  pup_ctl.adr_1_tx,\n  pup_ctl.adr_2_tx,\n  pup_ctl.city_tx,\n  pup_ctl.st_cd,\n  pup_ctl.zip_cd,\n  pup_ctl.pup_voic_phon_cd,\n  pup_ctl.pup_alt_phon_cd,\n  pup_ctl.pup_mail_tx,\n  pup_ctl.loc_istr_tx,\n  pup_ctl.stor_id,\n  pup_ctl.p3_stor_id,\n  pup_ctl.ahld_stor_nbr_cd,\n  pup_ctl.lat_qy,\n  pup_ctl.long_qy,\n  pup_ctl.stor_to_pup_min_qy,\n  pup_ctl.pad_min_qy,\n  pup_ctl.tote_per_cart_qy,\n  pup_ctl.cart_off_truk_min_qy,\n  cast(pup_ctl.pup_open_tm as varchar(25)) as pup_open_tm,\n  cast(pup_ctl.pup_pm_open_tm as varchar(25)) as pup_pm_open_tm,\n  pup_ctl.alt_rte_sys_cd,\n  pup_ctl.hypr_loc_cd,\n  pup_ctl.pup_svc_dur_mult_qy,\n  pup_ctl.pup_frmt_type_cd,\n  pup_ctl.live_dt,\n  pup_ctl.open_dt,\n  pup_ctl.clos_dt,\n  pup_ctl.map_web_link_tx,\n  pup_ctl.dlv_area_id,\n  pup_ctl.tax_grp_cd,\n  pup_ctl.sns_mkt_area_tx,\n  pup_ctl.stor_ttl_tx,\n  pup_ctl.web_actv_cd,\n  pup_ctl.pmtt_div_cd,\n  pup_ctl.cnc_ord_id_qy,\n  pup_ctl.stag_only_fl,\n  pup_ctl.achl_wine_cd,\n  pup_ctl.achl_beer_cd,\n  pup_ctl.achl_lqr_cd,\n  pup_ctl.bag_fee_cd,\n  pup_ctl.dlv_ptnr_tx,\n  pup_ctl.pckp_notf_ptnr_site_id,\n  pup_ctl.rtrn_allow_cd,\n  pup_ctl.ok_to_edit_ord_fl,\n  pup_ctl.sub_rej_cut_wnd,\n  pup_ctl.sub_rej_ntfy_cut_wnd,\n  pup_ctl.ortc_stor_fl,\n  pup_ctl.drop_loc_adr_1_tx,\n  pup_ctl.drop_loc_adr_2_tx,\n  pup_ctl.drop_loc_city_tx,\n  pup_ctl.drop_loc_st_cd,\n  pup_ctl.drop_loc_zip_cd\nFROM central:cit_pup_ctl pup_ctl"
 					},
 					"sink": {
 						"type": "ParquetSink",
@@ -301,23 +301,23 @@
 							{
 								"source": {
 									"name": "pup_open_tm",
-									"type": "TimeSpan"
+									"type": "String"
 								},
 								"sink": {
 									"name": "pup_open_tm",
-									"type": "TimeSpan",
-									"physicalType": "INT_96"
+									"type": "String",
+									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
 									"name": "pup_pm_open_tm",
-									"type": "TimeSpan"
+									"type": "String"
 								},
 								"sink": {
 									"name": "pup_pm_open_tm",
-									"type": "TimeSpan",
-									"physicalType": "INT_96"
+									"type": "String",
+									"physicalType": "UTF8"
 								}
 							},
 							{
@@ -708,6 +708,89 @@
 						}
 					}
 				]
+			},
+			{
+				"name": "mdm-stor-cntrl-cit-pup-ctl",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "ingest-cntrl-cit-pup-ctl",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_mdm_cntrl_cit_pup_ctl",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"SOURCE_LAKE_CNTRL_PUP_CTL_PATH": {
+							"value": {
+								"value": "@variables('VAR_INGST_STOR_PATH')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"KEY_COL": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_KEY_COL",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"VAL_CNT_THRESHOLD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+								"type": "Expression"
+							},
+							"type": "int"
+						},
+						"VAL_COL_CNT_THRESHOLD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_VAL_COL_CNT_THRESHOLD",
+								"type": "Expression"
+							},
+							"type": "int"
+						},
+						"VAL_COLS": {
+							"value": {
+								"value": "@string(pipeline().parameters.PARAM_VAL_COLS)",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": false,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				}
 			}
 		],
 		"parameters": {
@@ -730,6 +813,24 @@
 			"PARAM_BASE_ADLS_CONN_STR": {
 				"type": "string",
 				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_VAL_COL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 1
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "pup_guid_cd"
+			},
+			"PARAM_VAL_COLS": {
+				"type": "string",
+				"defaultValue": [
+					"zip_cd"
+				]
 			}
 		},
 		"variables": {
