@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f1f7de01-c409-46e5-acb1-80fb02dbfe4e"
+				"spark.autotune.trackingId": "061c8e91-0502-46fc-979d-e8b912ae8ac0"
 			}
 		},
 		"metadata": {
@@ -85,13 +85,15 @@
 					"STAGE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/web-order/stage/order-item/\"\n",
 					"TARGET_ORDER_PATH = \"opco/fdln/domain/order/web-order/master/order/\"\n",
 					"TARGET_ORDER_ITEM_PATH = \"opco/fdln/domain/order/web-order/master/order-item/\"\n",
+					"OUTGOING_WEB_ORDER_PATH = \"opco/fdln/domain/order/web-order/outgoing/\"\n",
+					"OUTGOING_WEB_ORDER_FL = \"cdc_event_web_order_{curr_tmstmp}.csv\"\n",
 					"\n",
 					"TARGET_ORDER_ITEM_COLS = [\"orderId\", \"orderDate\", \"orderTime\", \"deliveryDate\", \"deliverySlotStart\", \"deliverySlotEnd\", \"orderDescription\", \"orderStatus\", \"userId\", \"col.podId\", \"upc\", \n",
 					"                        \"uom\", \"rqstQy\", \"ordQy\", \"shipQy\", \"unitPrice\", \"regPrice\", \"categoryId\", \"categoryDesc\", \"year\", \"month\", \"day\"]\n",
 					"KEY_COLS = [\"userId\",\"orderId\"]\n",
 					"PARTITION_COLS = [\"year\", \"month\", \"day\"]"
 				],
-				"execution_count": 1
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -122,7 +124,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_web_order_item\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": null
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -150,7 +152,7 @@
 					"logger.info(\"\\t PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
 					"logger.info(\"*******************************************************************************\")"
 				],
-				"execution_count": null
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -222,7 +224,7 @@
 					"    init()\n",
 					""
 				],
-				"execution_count": 2
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -254,6 +256,9 @@
 				"source": [
 					"from pyspark.sql import functions as f\n",
 					"from delta.tables import DeltaTable\n",
+					"from datetime import datetime\n",
+					"import re\n",
+					"from pytz import timezone\n",
 					"\n",
 					"def apply_cdc():\n",
 					"    df_web_order_master = spark \\\n",
@@ -335,13 +340,29 @@
 					"\n",
 					"    logger.info(\"cdc-load: Merged order-item-stg -> order-item-mstr. Stage={0}, Master={1}\".format(df_web_order_item_stage.count(),df_web_order_item_master.count()))\n",
 					"\n",
+					"def emit_events():\n",
+					"    df_web_order_delta = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + STAGE_ORDER_ITEM_PATH).toDF()\n",
+					"    if df_web_order_delta.count() > 0 :\n",
+					"        curr_tmstmp = datetime.now(timezone('America/Chicago')).strftime(\"%Y-%m-%d-%H-%M-%S\")\n",
+					"        df_web_order_delta \\\n",
+					"            .repartition(1) \\\n",
+					"            .write \\\n",
+					"            .mode(\"overwrite\") \\\n",
+					"            .option(\"header\", \"true\") \\\n",
+					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH + curr_tmstmp)\n",
+					"        cdc_event_fl_path=[c.path for c in mssparkutils.fs.ls(BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH + curr_tmstmp) if re.search(\"\\.csv$\",c.name) is not None]\n",
+					"        logger.info(\"emit_events: List of cdc_event_web_order files geenrated. Files={0}\".format(cdc_event_fl_path))\n",
+					"        mssparkutils.fs.cp(src=cdc_event_fl_path[0], dest=BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH + OUTGOING_WEB_ORDER_FL.format(curr_tmstmp = curr_tmstmp))\n",
+					"        mssparkutils.fs.rm(dir=BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH + curr_tmstmp, recurse=True)\n",
+					"        logger.info(\"emit_events: Web Order data emitted to downstream. Count={0}, Path={1} \".format(df_web_order_delta.count(), OUTGOING_WEB_ORDER_PATH + OUTGOING_WEB_ORDER_FL.format(curr_tmstmp = curr_tmstmp)))\n",
 					"\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_ORDER_ITEM_PATH)):\n",
 					"    apply_cdc()\n",
+					"    emit_events()\n",
 					"else:\n",
 					"    logger.info(\"cdc-load: No delta orders found at path = {0}\".format(STAGE_ORDER_ITEM_PATH))"
 				],
-				"execution_count": 5
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",

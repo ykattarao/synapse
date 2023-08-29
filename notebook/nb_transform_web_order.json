@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "44e7fe27-27d3-4ea5-9598-d93a3e6643af"
+				"spark.autotune.trackingId": "82dc13b3-1aaa-4975-8169-6fa2d8928fe4"
 			}
 		},
 		"metadata": {
@@ -194,6 +194,20 @@
 					"    .withColumn(\"year\", f.year(f.col(\"orderDate\"))) \\\n",
 					"    .withColumn(\"month\", f.month(f.col(\"orderDate\"))) \\\n",
 					"    .withColumn(\"day\", f.dayofmonth(f.col(\"orderDate\")))   \n",
+					"\n",
+					"df_web_order_lake_dup = df_web_order_lake \\\n",
+					"    .groupBy(\"orderId\") \\\n",
+					"    .agg(f.count(\"originalOrderId\").alias(\"cnt\")) \\\n",
+					"    .where(\"cnt > 1\")\n",
+					"\n",
+					"logger.info(\"stage-load : finding duplicate orders. Lake={0}, Duplicate={1}\".format(df_web_order_lake.count(), df_web_order_lake_dup.count()))\n",
+					"logger.info(\"stage-load : Displaying sample 10 duplicate orders\")\n",
+					"logger.info(\"----------------------------------------------------\")\n",
+					"df_web_order_lake_dup.show(10)\n",
+					"\n",
+					"if df_web_order_lake_dup.count() > 0:\n",
+					"    df_web_order_lake = df_web_order_lake.dropDuplicates([\"orderId\"])\n",
+					"    logger.info(\"stage-load : removed duplcate orders from lake\")\n",
 					"\n",
 					"logger.info(\"stage-load : Load web order history from lake path. Count={0}, Path={1}\".format(df_web_order_lake.count(), SOURCE_LAKE_PATH))"
 				],

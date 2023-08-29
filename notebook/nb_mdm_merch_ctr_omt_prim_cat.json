@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "1fec16c8-4f85-4b6e-8779-c3f69bb24cae"
+				"spark.autotune.trackingId": "a7db037a-23e5-45cb-ba8a-c3371b1892b6"
 			}
 		},
 		"metadata": {
@@ -83,7 +83,7 @@
 				"source": [
 					"\r\n",
 					"BASE_ADLS_CONN_STR= \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
-					"SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH = \"opco/ppod/domain/merch/category/omt-prim-cat/lake/2023-08-01-12-52-19/\"\r\n",
+					"SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH = \"opco/ppod/domain/merch/category/omt-prim-cat/lake/2023-08-23-10-11-00\"\r\n",
 					"STAGE_MERCH_CATEGORY_NAME_PATH=\"opco/ppod/domain/merch/category/omt-prim-cat/stage/\"\r\n",
 					"TARGET_MERCH_CATEGORY_NAME_PATH=\"opco/{opco}/domain/merch/category/omt-prim-cat/master/\"\r\n",
 					"KEY_COL = \"prim_cat_id\"\r\n",
@@ -168,7 +168,7 @@
 					"\r\n",
 					""
 				],
-				"execution_count": 4
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -200,8 +200,9 @@
 					"from pyspark.sql.types import StructType, StructField, ShortType, StringType,TimestampType, IntegerType, LongType, DecimalType, BooleanType, DateType, ArrayType\r\n",
 					"\r\n",
 					"STAGE_MERCH_CATEGORY_NAME_SCHEMA = StructType([\r\n",
-					"    StructField(\"prim_cat_id\", LongType(), True),\r\n",
+					"    StructField(\"prim_cat_id\", LongType(), False),\r\n",
 					"    StructField(\"cat_name_tx\", StringType(), False),\r\n",
+					"    StructField(\"cat_srch_name_tx\", StringType(), True),\r\n",
 					"    StructField(\"type_cd\", StringType(), False),\r\n",
 					"    StructField(\"actv_cd\", StringType(), False),\r\n",
 					"    StructField(\"audt_cr_dt_tm\", TimestampType(), False),\r\n",
@@ -210,9 +211,10 @@
 					"    StructField(\"audt_upd_user_cd\", StringType(), False)\r\n",
 					"    ])\r\n",
 					"\r\n",
-					"logger.debug(\"\\t schema-defination : Defined the schema for catalog_prod:omt_prim_cat.\\n {0}\".format(STAGE_MERCH_CATEGORY_NAME_SCHEMA))"
+					"logger.debug(\"\\t schema-defination : Defined the schema for catalog_prod:omt_prim_cat.\\n {0}\".format(STAGE_MERCH_CATEGORY_NAME_SCHEMA))\r\n",
+					""
 				],
-				"execution_count": 5
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -274,9 +276,9 @@
 					"    .mode(\"overwrite\") \\\r\n",
 					"    .save(BASE_ADLS_CONN_STR + STAGE_MERCH_CATEGORY_NAME_PATH)  \r\n",
 					"\r\n",
-					"logger.info(\"\\t stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH, STAGE_MERCH_CATEGORY_NAME_PATH, df_prod_ctr_name_stage.count()))  "
+					"logger.info(\"\\t stg-load: Created STG data from lake source. LAKE = {0} , STG = {1} , CNT = {2}\".format(SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH, STAGE_MERCH_CATEGORY_NAME_PATH, df_prod_ctr_name_stage.count()))  "
 				],
-				"execution_count": 6
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -317,28 +319,19 @@
 					"           .save(path)\r\n",
 					"    logger.info(\"\\t CATALOG_PROD:OMT_PRIM_CAT Master data overwrite.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
 					"    \r\n",
-					"def apply_cdc():\r\n",
+					"def apply_cdc(opco):\r\n",
 					"    logger.info(\"\\t Delta master load\")\r\n",
-					"    df_prod_ctr_name_master= spark \\\r\n",
-					"                        .read \\\r\n",
-					"                        .format(\"delta\") \\\r\n",
-					"                        .load(BASE_ADLS_CONN_STR + TARGET_MERCH_CATEGORY_NAME_PATH.format(opco = opco)) \r\n",
-					"    logger.info(\"\\t CATALOG_PROD:OMT_PRIM_CAT loaded from master. OPCO = {0}, Count={1}\".format(opco, df_prod_ctr_name_master.count()))\r\n",
-					"    df_prod_ctr_name_master.createOrReplaceTempView('tbl_prod_ctr_name_mstr')\r\n",
-					"    df_prod_ctr_name_stage.createOrReplaceTempView('tbl_prod_ctr_name_stage')\r\n",
-					"    spark.sql(\r\n",
-					"        \"\"\"\r\n",
-					"        MERGE INTO tbl_prod_ctr_name_mstr\r\n",
-					"        USING tbl_prod_ctr_name_stage\r\n",
-					"        ON tbl_prod_ctr_name_mstr.prim_cat_id = tbl_prod_ctr_name_stage.prim_cat_id\r\n",
-					"        WHEN MATCHED THEN\r\n",
-					"            UPDATE SET *\r\n",
-					"        WHEN NOT MATCHED THEN\r\n",
-					"            INSERT *\r\n",
-					"        \"\"\"\r\n",
-					"        )\r\n",
+					"    dt_prod_ctr_name_mstr = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_MERCH_CATEGORY_NAME_PATH.format(opco = opco))\r\n",
+					"    logger.info(\"\\t CATALOG_PROD:OMT_PRIM_CAT loaded from master. OPCO = {0}, Count={1}\".format(opco, dt_prod_ctr_name_mstr.toDF().count()))\r\n",
+					"\r\n",
+					"    dt_prod_ctr_name_mstr.alias(\"mstr\") \\\r\n",
+					"    .merge(df_prod_ctr_name_stage.alias(\"stg\"), \"mstr.prim_cat_id = stg.prim_cat_id\") \\\r\n",
+					"    .whenMatchedUpdateAll() \\\r\n",
+					"    .whenNotMatchedInsertAll() \\\r\n",
+					"    .execute() \r\n",
+					"\r\n",
 					"    logger.info(\"\\t CATALOG_PROD:OMT_PRIM_CAT merged delta records to main file. OPCO = {0}, Count={1}\".format(opco, df_prod_ctr_name_stage.count()))\r\n",
-					"def init():\r\n",
+					"def init(opco):\r\n",
 					"        logger.info('\\t First Time Master Load')\r\n",
 					"        load_master_data(df_prod_ctr_name_stage,BASE_ADLS_CONN_STR + TARGET_MERCH_CATEGORY_NAME_PATH.format(opco = opco),opco)\r\n",
 					"\r\n",
@@ -350,11 +343,11 @@
 					"for opco in OPCO_LST:\r\n",
 					"    logger.info(\"\\t Processing MASTER for CTR OMT_PRIM_CAT - OPCO={0}\".format(opco))\r\n",
 					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_MERCH_CATEGORY_NAME_PATH.format(opco = opco)) == False):\r\n",
-					"        init()\r\n",
+					"        init(opco)\r\n",
 					"    else:\r\n",
-					"        apply_cdc()    "
+					"        apply_cdc(opco)    "
 				],
-				"execution_count": 7
+				"execution_count": 14
 			}
 		]
 	}

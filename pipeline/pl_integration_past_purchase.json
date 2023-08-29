@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "ppm",
+				"name": "past-purchase",
 				"type": "SynapseNotebook",
 				"dependsOn": [],
 				"policy": {
@@ -27,54 +27,33 @@
 							},
 							"type": "string"
 						},
-						"TARGET_STORE_ORDER_ITEM_PATH": {
+						"OUTGOING_CUSTOMER_FL": {
 							"value": {
-								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/order/store-order/master/order-item/')",
+								"value": "@pipeline().parameters.PARAM_OUTGOING_CUSTOMER_FL",
 								"type": "Expression"
 							},
 							"type": "string"
 						},
-						"TARGET_WEB_ORDER_ITEM_PATH": {
+						"OUTGOING_WEB_ORDER_FL": {
 							"value": {
-								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/order/web-order/master/order-item/')",
+								"value": "@pipeline().parameters.PARAM_OUTGOING_WEB_ORDER_FL",
 								"type": "Expression"
 							},
 							"type": "string"
 						},
-						"TARGET_USER_PATH": {
+						"OPCO": {
 							"value": {
-								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/customer/user/master/')",
+								"value": "@pipeline().parameters.PARAM_OPCO",
 								"type": "Expression"
 							},
 							"type": "string"
 						},
-						"TARGET_REPL_PROD_PATH": {
+						"IS_DELTA_LOAD": {
 							"value": {
-								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/merch/product/replacement/master/product-id/')",
+								"value": "@pipeline().parameters.PARAM_IS_DELTA_LOAD",
 								"type": "Expression"
 							},
-							"type": "string"
-						},
-						"TARGET_DEL_PROD_PATH": {
-							"value": {
-								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/domain/merch/product/user-deleted-products/master/')\n",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
-						"YRS_DATA": {
-							"value": {
-								"value": "@pipeline().parameters.YRS_DATA",
-								"type": "Expression"
-							},
-							"type": "int"
-						},
-						"NO_OF_PARTITIONS": {
-							"value": {
-								"value": "@pipeline().parameters.NO_OF_PARTITIONS",
-								"type": "Expression"
-							},
-							"type": "int"
+							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -98,37 +77,21 @@
 				"type": "string",
 				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
 			},
-			"PARAM_TARGET_STORE_ORDER_ITEM_PATH": {
-				"type": "string",
-				"defaultValue": "opco/fdln/domain/order/store-order/master/order-item/"
-			},
-			"PARAM_TARGET_WEB_ORDER_ITEM_PATH": {
-				"type": "string",
-				"defaultValue": "opco/fdln/domain/order/web-order/master/order-item/"
-			},
-			"PARAM_TARGET_USER_PATH": {
-				"type": "string",
-				"defaultValue": "opco/fdln/domain/customer/user/master/"
-			},
-			"PARAM_TARGET_REPL_PROD_PATH": {
-				"type": "string",
-				"defaultValue": "opco/fdln/domain/merch/product/replacement/master/product-id/"
-			},
-			"PARAM_DEL_PROD_PATH": {
-				"type": "string",
-				"defaultValue": "opco/fdln/domain/merch/product/user-deleted-products/master"
-			},
 			"PARAM_OPCO": {
 				"type": "string",
 				"defaultValue": "fdln"
 			},
-			"YRS_DATA": {
+			"PARAM_OUTGOING_CUSTOMER_FL": {
 				"type": "string",
-				"defaultValue": "3"
+				"defaultValue": "cdc_event_user_2023-08-29-12-38-21.csv"
 			},
-			"NO_OF_PARTITIONS": {
+			"PARAM_OUTGOING_WEB_ORDER_FL": {
 				"type": "string",
-				"defaultValue": "25"
+				"defaultValue": "cdc_event_web_order_2023-08-29-12-38-21.csv"
+			},
+			"PARAM_IS_DELTA_LOAD": {
+				"type": "bool",
+				"defaultValue": false
 			}
 		},
 		"folder": {

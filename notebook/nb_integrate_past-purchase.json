@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "a1cca34d-e3d6-4f33-aad4-194d3f6bc30c"
+				"spark.autotune.trackingId": "2dbf05c4-4dc4-4861-a09b-7bdc008dbdff"
 			}
 		},
 		"metadata": {
@@ -81,34 +81,33 @@
 					]
 				},
 				"source": [
-					"BASE_ADLS_CONN_STR = \"abfss://fs-syn-pdladf-dataint-nonprd-dev-e2-01@sasynpdladfdinpdeve201.dfs.core.windows.net/\"\r\n",
-					"TARGET_STORE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/store-order/master/order-item/\"\r\n",
-					"TARGET_WEB_ORDER_ITEM_PATH=\"opco/fdln/domain/order/web-order/master/order-item/\"\r\n",
-					"TARGET_USER_PATH = \"opco/fdln/domain/customer/user/master/\"\r\n",
-					"TARGET_REPL_PROD_PATH =\"opco/fdln/domain/merch/product/retailer-cpt-it-rtlr-repl/master/product-id/\"\r\n",
-					"TARGET_DEL_PROD_PATH =\"opco/fdln/domain/merch/product/retailer-cpt-past-purc-del/master/\"\r\n",
-					"STAGE_STORE_ORDER_PATH= \"opco/fdln/domain/integration/past-purchase/stage/store-order/\"\r\n",
-					"STAGE_WEB_ORDER_PATH=\"opco/fdln/domain/integration/past-purchase/stage/web-order\"\r\n",
-					"STAGE_USER_PATH = \"opco/fdln/domain/integration/past-purchase/stage/user\"\r\n",
-					"STAGE_REPL_PROD_PATH=\"opco/fdln/domain/integration/past-purchase/stage/replacement-products\"\r\n",
-					"STAGE_DEL_PROD_PATH =\"opco/fdln/domain/integration/past-purchase/stage/deleted-products\"\r\n",
-					"OUTGOING_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/outgoing/2023-07-31-17-36-24/\"\r\n",
-					"OUTGOING_STORE_ORDER_PATH = \"opco/fdln/domain/customer/user/outgoing/2023-07-31-17-36-24/\"\r\n",
-					"OUTGOING_WEB_ORDER_PATH = \"opco/fdln/domain/customer/user/outgoing/2023-07-31-17-36-24/\"\r\n",
-					"TARGET_PAST_PURC_PATH=\"opco/fdln/domain/integration/past-purchase/master\"\r\n",
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"TARGET_STORE_ORDER_ITEM_PATH = \"opco/{opco}/domain/order/store-order/master/order-item/\"\r\n",
+					"TARGET_WEB_ORDER_ITEM_PATH=\"opco/{opco}/domain/order/web-order/master/order-item/\"\r\n",
+					"TARGET_USER_PATH = \"opco/{opco}/domain/customer/user/master/\"\r\n",
+					"TARGET_REPL_PROD_PATH =\"opco/{opco}/domain/merch/product/retailer-cpt-it-rtlr-repl/master/product-id/\"\r\n",
+					"TARGET_DEL_PROD_PATH =\"opco/{opco}/domain/merch/product/retailer-cpt-past-purc-del/master/\"\r\n",
+					"STAGE_STORE_ORDER_PATH= \"opco/{opco}/domain/integration/past-purchase/stage/store-order/\"\r\n",
+					"STAGE_WEB_ORDER_PATH=\"opco/{opco}/domain/integration/past-purchase/stage/web-order\"\r\n",
+					"STAGE_USER_PATH = \"opco/{opco}/domain/integration/past-purchase/stage/user\"\r\n",
+					"STAGE_REPL_PROD_PATH=\"opco/{opco}/domain/integration/past-purchase/stage/replacement-products\"\r\n",
+					"STAGE_DEL_PROD_PATH =\"opco/{opco}/domain/integration/past-purchase/stage/deleted-products\"\r\n",
+					"OUTGOING_CUSTOMER_PATH = \"opco/{opco}/domain/customer/user/outgoing/\"\r\n",
+					"OUTGOING_CUSTOMER_FL = \"cdc_event_user_2023-08-29-12-38-21.csv\"\r\n",
+					"OUTGOING_WEB_ORDER_PATH = \"opco/{opco}/domain/order/web-order/outgoing/\"\r\n",
+					"OUTGOING_WEB_ORDER_FL = \"cdc_event_web_order_2023-08-29-13-57-05.csv\"\r\n",
+					"TARGET_PAST_PURC_PATH=\"opco/{opco}/domain/integration/past-purchase/master\"\r\n",
 					"NO_OF_PARTITIONS = 25\r\n",
 					"YRS_DATA= 3\r\n",
-					"IS_DELTA_LOAD = False\r\n",
+					"IS_DELTA_LOAD = True\r\n",
 					"OPCO = \"fdln\"\r\n",
 					"USR_PAST_PURCHASE = \"past-purchase-integration-pipeline\"\r\n",
 					"COSMOS_LINKED_SERVICE_NM = \"ls_az_cosmos_core_services_purchase_history_fdln\"\r\n",
 					"COSMOS_CONTAINER_NM = \"past-purchase-test\"\r\n",
 					"COSMOS_DB_NM = \"purchase_history\"\r\n",
-					"\r\n",
-					"is_stage_fl_exist= False\r\n",
 					""
 				],
-				"execution_count": 63
+				"execution_count": 25
 			},
 			{
 				"cell_type": "markdown",
@@ -139,7 +138,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_past-purchase\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": null
+				"execution_count": 27
 			},
 			{
 				"cell_type": "code",
@@ -164,12 +163,79 @@
 					"logger.info(\"\\t\\t TARGET_STORE_ORDER_ITEM_PATH = {0}\".format(TARGET_STORE_ORDER_ITEM_PATH))\n",
 					"logger.info(\"\\t\\t TARGET_DEL_PROD_PATH = {0}\".format(TARGET_DEL_PROD_PATH))\n",
 					"logger.info(\"\\t\\t OUTGOING_CUSTOMER_PATH = {0}\".format(OUTGOING_CUSTOMER_PATH))\n",
+					"logger.info(\"\\t\\t OUTGOING_CUSTOMER_FL = {0}\".format(OUTGOING_CUSTOMER_FL))\n",
+					"logger.info(\"\\t\\t OUTGOING_WEB_ORDER_PATH = {0}\".format(OUTGOING_WEB_ORDER_PATH))\n",
+					"logger.info(\"\\t\\t OUTGOING_WEB_ORDER_FL = {0}\".format(OUTGOING_WEB_ORDER_FL))\n",
 					"logger.info(\"\\t\\t TARGET_PAST_PURC_PATH = {0}\".format(TARGET_PAST_PURC_PATH))\n",
 					"logger.info(\"\\t\\t NO_OF_PARTITIONS = {0}\".format(NO_OF_PARTITIONS))\n",
 					"logger.info(\"\\t\\t YRS_DATA = {0}\".format(YRS_DATA))\n",
 					"logger.info(\"**********************************************************************************\")"
 				],
-				"execution_count": null
+				"execution_count": 28
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**GETTING DELTA CUSTOMERS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\n",
+					"from pyspark.sql.types import StructType, StructField, IntegerType\n",
+					"\n",
+					"if IS_DELTA_LOAD:\n",
+					"    logger.info('delta-users: Started loading Delta Users from Customer and Web Order Domain')\n",
+					"    # Create empty datafrmae for delta user\n",
+					"    df_delta_usr = spark.createDataFrame([], StructType([StructField(\"user_id\", IntegerType(), False)]))\n",
+					"\n",
+					"    # Append delta users from customer domain\n",
+					"    if OUTGOING_CUSTOMER_FL.strip():\n",
+					"        df_customer_usr = spark \\\n",
+					"            .read \\\n",
+					"            .option(\"inferSchema\", \"true\") \\\n",
+					"            .option(\"header\", \"true\") \\\n",
+					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH.format(opco = OPCO) + OUTGOING_CUSTOMER_FL) \\\n",
+					"            .select(\"user_id\")        \n",
+					"        df_delta_usr = df_delta_usr.unionByName(df_customer_usr)\n",
+					"        logger.info(\"delta-users: Loaded Delta Users from Customer. OPCO={0}, Count={1}, Path={2}\".format(OPCO, df_customer_usr.count(), OUTGOING_CUSTOMER_PATH.format(opco = OPCO)))\n",
+					"\n",
+					"    # Append delta users from web order domain\n",
+					"    if OUTGOING_WEB_ORDER_FL.strip():\n",
+					"        df_web_ord_usr = spark \\\n",
+					"            .read \\\n",
+					"            .option(\"inferSchema\", \"true\") \\\n",
+					"            .option(\"header\", \"true\") \\\n",
+					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH.format(opco = OPCO) + OUTGOING_WEB_ORDER_FL) \\\n",
+					"            .withColumnRenamed(\"userId\", \"user_id\") \\\n",
+					"            .select(\"user_id\") \\\n",
+					"            .distinct()\n",
+					"        df_delta_usr = df_delta_usr.unionByName(df_web_ord_usr)\n",
+					"        logger.info(\"delta-users: Loaded Delta Users from Web Order Domain. OPCO={0}, Count={1}, Path={2}\".format(OPCO, df_web_ord_usr.count(), OUTGOING_WEB_ORDER_PATH.format(opco = OPCO)))\n",
+					"    \n",
+					"    df_delta_usr = df_delta_usr.dropDuplicates()\n",
+					"    logger.info(\"delta-users: Loaded unique Delta Users from Customer and Web Order Domain. OPCO={0}, Count={1}\".format(OPCO, df_delta_usr.count()))"
+				],
+				"execution_count": 34
 			},
 			{
 				"cell_type": "markdown",
@@ -208,7 +274,7 @@
 					"    df_store_order_mstr = spark \\\r\n",
 					"        .read \\\r\n",
 					"        .format(\"delta\") \\\r\n",
-					"        .load( BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH) \r\n",
+					"        .load( BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH.format(opco = OPCO)) \r\n",
 					"    df_store_order_mstr=df_store_order_mstr \\\r\n",
 					"        .filter((df_store_order_mstr.transaction_ts >= from_date) & (df_store_order_mstr.transaction_ts <= curr_date)) \\\r\n",
 					"        .filter(\"user_id IS NOT NULL\") \\\r\n",
@@ -216,20 +282,6 @@
 					"        .select(\"order_num\", \"loyalty_id\", \"transaction_ts\", \"user_id\", \"pod_id\", \"hash\")\r\n",
 					"    logger.info(\"get_all_stor_ord : Extract ALL store orders between {0} and {1}. OPCO = {2}, Count = {3}\".format(from_date, curr_date, OPCO, df_store_order_mstr.count()))\r\n",
 					"    return df_store_order_mstr\r\n",
-					"\r\n",
-					"def get_delta_stor_ord(df_mstr):\r\n",
-					"    df_delta = spark \\\r\n",
-					"        .read \\\r\n",
-					"        .format(\"delta\") \\\r\n",
-					"        .option(\"inferSchema\", \"true\") \\\r\n",
-					"        .load(BASE_ADLS_CONN_STR + OUTGOING_STORE_ORDER_PATH) \\\r\n",
-					"        .select(\"user_id\") \\\r\n",
-					"        .distinct()\r\n",
-					"    df_delta_stor_ord = df_mstr \\\r\n",
-					"        .join(df_delta, df_mstr[\"user_id\"] == df_delta[\"user_id\"], \"inner\") \\\r\n",
-					"        .select(df_mstr[\"*\"])\r\n",
-					"    logger.info(\"get_delta_stor_ord : Filter DELTA store orders. OPCO = {0}, Count = {1}\".format(OPCO, df_delta_stor_ord.count()))\r\n",
-					"    return df_delta_stor_ord\r\n",
 					"\r\n",
 					"def write_stage_stor_ord(df_stg):\r\n",
 					"    df_stg \\\r\n",
@@ -239,23 +291,31 @@
 					"        .format(\"delta\") \\\r\n",
 					"        .mode(\"overwrite\") \\\r\n",
 					"        .partitionBy(\"hash\") \\\r\n",
-					"        .save(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH)\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH.format(opco = OPCO))\r\n",
 					"    logger.info(\"write_stage_stor_ord : Write store orders into STG container. OPCO = {0}, Count = {1}, Path = {2}\".format(OPCO, df_stg.count(), STAGE_STORE_ORDER_PATH))\r\n",
 					"\r\n",
+					"def get_delta_stor_ord(df_mstr, df_delta):\r\n",
+					"    df_delta_stor_ord = df_mstr \\\r\n",
+					"        .join(df_delta, df_mstr[\"user_id\"] == df_delta[\"user_id\"], \"inner\") \\\r\n",
+					"        .select(df_mstr[\"*\"])\r\n",
+					"    logger.info(\"get_delta_stor_ord : Filter DELTA store orders. OPCO = {0}, Count = {1}\".format(OPCO, df_delta_stor_ord.count()))\r\n",
+					"    return df_delta_stor_ord\r\n",
+					"\r\n",
 					"#main starts here \r\n",
-					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH)):\r\n",
-					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH, recurse = True)\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH.format(opco = OPCO))):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH.format(opco = OPCO), recurse = True)\r\n",
 					"    logger.info('Purging existing stage store order data')\r\n",
 					"\r\n",
 					"df_stor_ord_master = get_all_stor_ord()\r\n",
 					"\r\n",
 					"if IS_DELTA_LOAD:\r\n",
-					"    df_stor_ord_tobe_processed = get_delta_stor_ord(df_stor_ord_master)\r\n",
+					"    df_stor_ord_tobe_processed = get_delta_stor_ord(df_stor_ord_master, df_delta_usr)\r\n",
 					"    write_stage_stor_ord(df_stor_ord_tobe_processed)\r\n",
 					"else:\r\n",
-					"    write_stage_stor_ord(df_stor_ord_master)"
+					"    write_stage_stor_ord(df_stor_ord_master)\r\n",
+					""
 				],
-				"execution_count": 64
+				"execution_count": 72
 			},
 			{
 				"cell_type": "markdown",
@@ -294,7 +354,7 @@
 					"    df_web_order_mstr = spark \\\r\n",
 					"        .read \\\r\n",
 					"        .format(\"delta\") \\\r\n",
-					"        .load(BASE_ADLS_CONN_STR + TARGET_WEB_ORDER_ITEM_PATH) \r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_WEB_ORDER_ITEM_PATH.format(opco = OPCO)) \r\n",
 					"    df_web_order_mstr=df_web_order_mstr.filter((df_web_order_mstr.orderDate >= from_date) & (df_web_order_mstr.orderDate<= curr_date) ) \\\r\n",
 					"        .filter(\"userId IS NOT NULL\") \\\r\n",
 					"        .withColumn(\"hash\", f.abs(f.hash(f.col(\"userId\"))%NO_OF_PARTITIONS)) \\\r\n",
@@ -308,18 +368,11 @@
 					"    logger.info(\"get_all_web_ord : Extract ALL web orders between {0} and {1}. OPCO = {2}, Count = {3}\".format(from_date, curr_date, OPCO, df_web_order_mstr.count()))\r\n",
 					"    return df_web_order_mstr\r\n",
 					"\r\n",
-					"def get_delta_web_ord(df_mstr):\r\n",
-					"    df_delta = spark \\\r\n",
-					"        .read \\\r\n",
-					"        .format(\"delta\") \\\r\n",
-					"        .option(\"inferSchema\", \"true\") \\\r\n",
-					"        .load(BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH) \\\r\n",
-					"        .select(\"user_id\") \\\r\n",
-					"        .distinct()\r\n",
+					"def get_delta_web_ord(df_mstr, df_delta):\r\n",
 					"    df_delta_web_ord = df_mstr \\\r\n",
 					"        .join(df_delta, df_mstr[\"user_id\"] == df_delta[\"user_id\"], \"inner\") \\\r\n",
 					"        .select(df_mstr[\"*\"])\r\n",
-					"    logger.info(\"get_delta_web_ord : Filter DELTA store orders. OPCO = {0}, Count = {1}\".format(OPCO, df_delta_web_ord.count()))\r\n",
+					"    logger.info(\"get_delta_web_ord : Filter DELTA web orders. OPCO = {0}, Count = {1}\".format(OPCO, df_delta_web_ord.count()))\r\n",
 					"    return df_delta_web_ord\r\n",
 					"\r\n",
 					"def write_stage_web_ord(df_stg):\r\n",
@@ -330,24 +383,24 @@
 					"        .format(\"delta\") \\\r\n",
 					"        .mode(\"overwrite\") \\\r\n",
 					"        .partitionBy(\"hash\") \\\r\n",
-					"        .save(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH)\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH.format(opco = OPCO))\r\n",
 					"    logger.info(\"write_stage_web_ord : Write web orders into STG container. OPCO = {0}, Count = {1}, Path = {2}\".format(OPCO, df_stg.count(), STAGE_WEB_ORDER_PATH))\r\n",
 					"\r\n",
 					"# main starts here\r\n",
-					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH)):\r\n",
-					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH, recurse = True)\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH.format(opco = OPCO))):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH.format(opco = OPCO), recurse = True)\r\n",
 					"    logger.info(\"Purging staging data\")\r\n",
 					"\r\n",
 					"df_web_ord_master = get_all_web_ord()\r\n",
 					"\r\n",
 					"if IS_DELTA_LOAD:\r\n",
-					"    df_web_ord_tobe_processed = get_delta_web_ord(df_web_ord_master)\r\n",
+					"    df_web_ord_tobe_processed = get_delta_web_ord(df_web_ord_master, df_delta_usr)\r\n",
 					"    write_stage_web_ord(df_web_ord_tobe_processed)\r\n",
 					"else:\r\n",
 					"    write_stage_web_ord(df_web_ord_master)\r\n",
 					""
 				],
-				"execution_count": 65
+				"execution_count": 73
 			},
 			{
 				"cell_type": "markdown",
@@ -383,21 +436,17 @@
 					"    df_usr_mstr = spark \\\r\n",
 					"        .read \\\r\n",
 					"        .format(\"delta\") \\\r\n",
-					"        .load(BASE_ADLS_CONN_STR + TARGET_USER_PATH) \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_USER_PATH.format(opco = OPCO)) \\\r\n",
 					"        .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
 					"    logger.info(\"get_all_users : Extract ALL customers. OPCO = {0}, Count = {1}\".format(OPCO, df_usr_mstr.count()))\r\n",
 					"    return df_usr_mstr\r\n",
 					"\r\n",
-					"def get_delta_users(df_mstr):\r\n",
-					"    df_delta = spark \\\r\n",
-					"    .read \\\r\n",
-					"    .format(\"delta\") \\\r\n",
-					"    .option(\"inferSchema\", \"true\") \\\r\n",
-					"    .load(BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH) \\\r\n",
-					"    .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
+					"def get_delta_users(df_mstr, df_delta):\r\n",
+					"    df_delta = df_delta \\\r\n",
+					"        .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
 					"    df_user_tobe_processed = df_mstr \\\r\n",
 					"        .join(df_delta, (df_mstr.user_id == df_delta.user_id) & (df_mstr.hash == df_delta.hash), \"inner\") \\\r\n",
-					"        .select(df_mstr[\"user_id\"],df_mstr[\"hndl_id\"], df_mstr[\"rtlr_card_id\"], df_mstr[\"mail_tx\"], df_mstr[\"stat_cd\"], df_mstr[\"opco_id\"], df_mstr[\"hash\"])\r\n",
+					"        .select(df_mstr[\"*\"])\r\n",
 					"    logger.info(\"get_delta_users : Filter DELTA customers. OPCO = {0}, Count = {1}\".format(OPCO, df_user_tobe_processed.count()))\r\n",
 					"    return df_user_tobe_processed\r\n",
 					"\r\n",
@@ -409,23 +458,23 @@
 					"        .format(\"delta\") \\\r\n",
 					"        .mode(\"overwrite\") \\\r\n",
 					"        .partitionBy(\"hash\") \\\r\n",
-					"        .save(BASE_ADLS_CONN_STR + STAGE_USER_PATH)\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_USER_PATH.format(opco = OPCO))\r\n",
 					"    logger.info(\"write_stage_user : Write customers into STG container. OPCO = {0}, Count = {1}, Path = {2}\".format(OPCO, df_stg.count(), STAGE_USER_PATH))\r\n",
 					"\r\n",
 					"#main starts here\r\n",
-					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_USER_PATH)):\r\n",
-					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_USER_PATH, recurse = True)\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_USER_PATH.format(opco = OPCO))):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_USER_PATH.format(opco = OPCO), recurse = True)\r\n",
 					"    logger.info('Purging customer staging data')\r\n",
 					"\r\n",
 					"df_users_master = get_all_users()\r\n",
 					"\r\n",
 					"if IS_DELTA_LOAD:\r\n",
-					"    df_users_tobe_processed = get_delta_users(df_users_master)\r\n",
+					"    df_users_tobe_processed = get_delta_users(df_users_master, df_delta_usr)\r\n",
 					"    write_stage_user(df_users_tobe_processed)\r\n",
 					"else:\r\n",
 					"    write_stage_user(df_users_master)"
 				],
-				"execution_count": 66
+				"execution_count": 74
 			},
 			{
 				"cell_type": "markdown",
@@ -457,14 +506,14 @@
 					"from pyspark.sql.functions import *\r\n",
 					"from delta.tables import DeltaTable\r\n",
 					"\r\n",
-					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH)):\r\n",
-					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH, recurse = True)\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO))):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO), recurse = True)\r\n",
 					"    logger.info(\"replcamen-product: Purging repalcement products from STG container. OPCO={0}\".format(OPCO))\r\n",
 					"\r\n",
 					"df_repl_prod = spark \\\r\n",
 					"    .read \\\r\n",
 					"    .format(\"delta\") \\\r\n",
-					"    .load(BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PATH) \r\n",
+					"    .load(BASE_ADLS_CONN_STR + TARGET_REPL_PROD_PATH.format(opco = OPCO)) \r\n",
 					"\r\n",
 					"df_repl_prod=df_repl_prod.filter(\"prod_id IS NOT NULL\") \\\r\n",
 					"    .filter(size(df_repl_prod.replacement_prod_ids) >0)\r\n",
@@ -475,10 +524,10 @@
 					"        .format(\"delta\") \\\r\n",
 					"        .mode(\"overwrite\") \\\r\n",
 					"        .partitionBy(\"ecom_stor_id\") \\\r\n",
-					"        .save(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH)\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"replcamen-product: Write repalcement-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_repl_prod.count()))"
 				],
-				"execution_count": 67
+				"execution_count": 75
 			},
 			{
 				"cell_type": "markdown",
@@ -510,14 +559,14 @@
 					"from pyspark.sql import functions as f\r\n",
 					"from delta.tables import DeltaTable\r\n",
 					"\r\n",
-					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH)):\r\n",
-					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH, recurse = True)\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO))):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO), recurse = True)\r\n",
 					"    logger.info(\"deleted-product: Purging deleted products from STG container. OPCO = {0}\".format(OPCO))\r\n",
 					"\r\n",
 					"df_del_prod = spark \\\r\n",
 					"    .read \\\r\n",
 					"    .format(\"delta\") \\\r\n",
-					"    .load(BASE_ADLS_CONN_STR + TARGET_DEL_PROD_PATH) \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + TARGET_DEL_PROD_PATH.format(opco = OPCO)) \\\r\n",
 					"    .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
 					"                            \r\n",
 					"df_del_prod\\\r\n",
@@ -527,10 +576,10 @@
 					"    .format(\"delta\") \\\r\n",
 					"    .mode(\"overwrite\") \\\r\n",
 					"    .partitionBy(\"hash\") \\\r\n",
-					"    .save(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH)\r\n",
+					"    .save(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"deleted-product: Write deleted-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_del_prod.count()))"
 				],
-				"execution_count": 68
+				"execution_count": 76
 			},
 			{
 				"cell_type": "markdown",
@@ -566,16 +615,17 @@
 					"from pyspark.sql.types import StringType, ArrayType, DecimalType, IntegerType\r\n",
 					"\r\n",
 					"def check_if_stage_file_exists():\r\n",
-					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH) & \\\r\n",
-					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH) & \\\r\n",
-					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_USER_PATH) & \\\r\n",
-					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH) & \\\r\n",
-					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH)\r\n",
+					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH.format(opco = OPCO)) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH.format(opco = OPCO)) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_USER_PATH.format(opco = OPCO)) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO)) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO))\r\n",
 					"\r\n",
 					"\r\n",
 					"is_stage_fl_exist = check_if_stage_file_exists()\r\n",
 					"if is_stage_fl_exist == False:  \r\n",
-					"    logger.error(\"check_if_stage_file_exists: Some of the input files don't exist in STG container. Check the below input paths \\n. {0}\\n{1}\\n{2}\\n{3}\\n{4}\".format(\r\n",
+					"    logger.error(\"check_if_stage_file_exists: Some of the input files don't exist in STG container. OPCO={0}. Check the below input paths \\n. {1}\\n{2}\\n{3}\\n{4}\\n{5}\".format(\r\n",
+					"        OPCO,\r\n",
 					"        STAGE_STORE_ORDER_PATH,\r\n",
 					"        STAGE_WEB_ORDER_PATH,\r\n",
 					"        STAGE_USER_PATH,\r\n",
@@ -586,51 +636,51 @@
 					"\r\n",
 					"#tbl_store_order\r\n",
 					"df_store_order = spark.read \\\r\n",
-					"                        .format(\"delta\") \\\r\n",
-					"                        .load(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH) \\\r\n",
-					"                        .select(\"transaction_ts\", \"user_id\", \"pod_id\",\"loyalty_id\")\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH.format(opco = OPCO)) \\\r\n",
+					"    .select(\"transaction_ts\", \"user_id\", \"pod_id\",\"loyalty_id\")\r\n",
 					"df_store_order.createOrReplaceTempView(\"tbl_store_order\")\r\n",
 					"logger.info(\"stage-data-load: Created Stage table[tbl_store_order] for all domains. Ready to start the integration. OPCO={0}, Path={1}, Count={2}\".format(OPCO, STAGE_STORE_ORDER_PATH, df_store_order.count()))\r\n",
 					"\r\n",
 					"#tbl_web_order\r\n",
 					"df_web_order = spark \\\r\n",
-					"                    .read \\\r\n",
-					"                    .format(\"delta\") \\\r\n",
-					"                    .load(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH) \\\r\n",
-					"                    .withColumn(\"order_date_time\",to_timestamp(concat(to_date(col(\"order_date\"),\"yyyy-MM-dd\").cast(\"string\"), lit(\" \"), col(\"order_time\")), \"yyyy-MM-dd HH:mm:ss\"))\\\r\n",
-					"                    .withColumn(\"delivery_date_time\",to_timestamp(concat(to_date(col(\"delivery_date\"),\"yyyy-MM-dd\").cast(\"string\"), lit(\" \"), lit(\"00:00:00\")), \"yyyy-MM-dd HH:mm:ss\"))\\\r\n",
-					"                    .select(\"order_time\",\"order_date\", \"delivery_date\", \"user_id\", \"pod_id\",  \"order_date_time\", \"delivery_date_time\")\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH.format(opco = OPCO)) \\\r\n",
+					"    .withColumn(\"order_date_time\",to_timestamp(concat(to_date(col(\"order_date\"),\"yyyy-MM-dd\").cast(\"string\"), lit(\" \"), col(\"order_time\")), \"yyyy-MM-dd HH:mm:ss\"))\\\r\n",
+					"    .withColumn(\"delivery_date_time\",to_timestamp(concat(to_date(col(\"delivery_date\"),\"yyyy-MM-dd\").cast(\"string\"), lit(\" \"), lit(\"00:00:00\")), \"yyyy-MM-dd HH:mm:ss\"))\\\r\n",
+					"    .select(\"order_time\",\"order_date\", \"delivery_date\", \"user_id\", \"pod_id\",  \"order_date_time\", \"delivery_date_time\")\r\n",
 					"df_web_order.createOrReplaceTempView(\"tbl_web_order\")\r\n",
 					"logger.info(\"stage-data-load: Created Stage table[tbl_web_order] for all domains. Ready to start the integration. OPCO={0}, Path={1}, Count={2}\".format(OPCO, STAGE_STORE_ORDER_PATH, df_web_order.count()))\r\n",
 					"\r\n",
 					"#tbl_repl_prod_id\r\n",
 					"df_repl_prod_id = spark \\\r\n",
-					"                    .read \\\r\n",
-					"                    .format(\"delta\") \\\r\n",
-					"                    .load(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH)\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO))\r\n",
 					"df_repl_prod_id.createOrReplaceTempView(\"tbl_repl_prod_id\")\r\n",
 					"logger.info(\"stage-data-load: Created Stage table[tbl_repl_prod_id] for all domains. Ready to start the integration. OPCO={0}, Path={1}, Count={2}\".format(OPCO, STAGE_STORE_ORDER_PATH, df_repl_prod_id.count()))\r\n",
 					"\r\n",
 					"#tbl_users\r\n",
 					"df_users = spark \\\r\n",
-					"        .read \\\r\n",
-					"        .format(\"delta\") \\\r\n",
-					"        .load(BASE_ADLS_CONN_STR + STAGE_USER_PATH) \\\r\n",
-					"        .select(\"user_id\", \"hndl_id\", \"rtlr_card_id\", \"mail_tx\", \"stat_cd\", \"opco_id\")\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + STAGE_USER_PATH.format(opco = OPCO)) \\\r\n",
+					"    .select(\"user_id\", \"hndl_id\", \"rtlr_card_id\", \"mail_tx\", \"stat_cd\", \"opco_id\")\r\n",
 					"df_users.createOrReplaceTempView(\"tbl_users\")\r\n",
 					"logger.info(\"stage-data-load: Created Stage table[tbl_users] for all domains. Ready to start the integration. OPCO={0}, Path={1}, Count={2}\".format(OPCO, STAGE_STORE_ORDER_PATH, df_users.count()))\r\n",
 					"\r\n",
 					"#tbl_deleted_prod\r\n",
 					"df_deleted_prod= spark \\\r\n",
-					"                .read \\\r\n",
-					"                .format(\"delta\") \\\r\n",
-					"                .load(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH)\r\n",
+					"    .read \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO))\r\n",
 					"df_deleted_prod.createOrReplaceTempView(\"tbl_deleted_prod\")\r\n",
 					"logger.info(\"stage-data-load: Created Stage table[tbl_deleted_prod] for all domains. Ready to start the integration. OPCO={0}, Path={1}, Count={2}\".format(OPCO, STAGE_STORE_ORDER_PATH, df_deleted_prod.count()))\r\n",
 					"\r\n",
 					"logger.info(\"stage-data-load: Created required all stage tables for all domains. Ready to start the integration. OPCO={0}\".format(OPCO))"
 				],
-				"execution_count": 69
+				"execution_count": 77
 			},
 			{
 				"cell_type": "markdown",
@@ -660,22 +710,18 @@
 				},
 				"source": [
 					"df_union_query = spark.sql(\r\n",
-					"\r\n",
-					"\r\n",
-					"                    \"\"\"\r\n",
-					"                    SELECT transaction_ts as order_date,user_id,pod_id\r\n",
-					"                    FROM tbl_store_order\r\n",
-					"                    UNION ALL\r\n",
-					"                    SELECT delivery_date_time as order_date,user_id,pod_id\r\n",
-					"                    FROM tbl_web_order\r\n",
-					"                    \"\"\"\r\n",
-					"\r\n",
-					"                    )\r\n",
-					"\r\n",
+					"    \"\"\"\r\n",
+					"    SELECT transaction_ts as order_date,user_id,pod_id\r\n",
+					"    FROM tbl_store_order\r\n",
+					"    UNION ALL\r\n",
+					"    SELECT delivery_date_time as order_date,user_id,pod_id\r\n",
+					"    FROM tbl_web_order\r\n",
+					"    \"\"\"\r\n",
+					"    )\r\n",
 					"df_union_query.createOrReplaceTempView(\"tbl_web_store_order\")\r\n",
 					"logger.info(\"merge-web-store-orders: Merged store and web orders into a single dataset. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 70
+				"execution_count": 78
 			},
 			{
 				"cell_type": "markdown",
@@ -715,7 +761,6 @@
 					"                        CASE WHEN months_between(current_date(),a.order_date)<=36 THEN TRUE ELSE FALSE END as orderWindowAllTimes\r\n",
 					"                        FROM tbl_web_store_order a\r\n",
 					"                        LEFT JOIN tbl_repl_prod_id b ON a.pod_id=b.prod_id\r\n",
-					"\r\n",
 					"                    \"\"\")\r\n",
 					"\r\n",
 					"df_usr_prd_three_months = df_query \\\r\n",
@@ -745,7 +790,7 @@
 					"df_usr_prd_all_times=df_usr_prd_all_times.withColumnRenamed(\"user_id\",\"user_id_all\")\r\n",
 					""
 				],
-				"execution_count": 71
+				"execution_count": 79
 			},
 			{
 				"cell_type": "markdown",
@@ -800,7 +845,7 @@
 					"df_usr_prd_last_order = df_usr_prd_last_order.withColumnRenamed(\"user_id\",\"user_id_last_order\") \r\n",
 					""
 				],
-				"execution_count": 72
+				"execution_count": 80
 			},
 			{
 				"cell_type": "markdown",
@@ -837,9 +882,9 @@
 					"                        SELECT DISTINCT\r\n",
 					"                        a.user_id as user_id_del,\r\n",
 					"                        coalesce(collect_set(a.pod_id) OVER(PARTITION BY a.user_id), array()) as removed_purchases\r\n",
-					"                        FROM tbl_web_store_order a\r\n",
+					"                        FROM (SELECT user_id, pod_id, MAX(order_date) max_order_date FROM tbl_web_store_order GROUP BY user_id, pod_id) a\r\n",
 					"                        INNER JOIN\r\n",
-					"                        tbl_deleted_prod b ON a.user_id=b.user_id AND a.pod_id=b.prod_id AND a.order_date < b.audt_cr_dt_tm\r\n",
+					"                        tbl_deleted_prod b ON a.user_id=b.user_id AND a.pod_id=b.prod_id AND a.max_order_date < b.audt_cr_dt_tm\r\n",
 					"                        \"\"\")\r\n",
 					"\r\n",
 					"df_usr_prd_three_months = df_usr_prd_three_months \\\r\n",
@@ -874,7 +919,7 @@
 					"    .drop(\"user_id_del\",\"removed_purchases\")\r\n",
 					"logger.info(\"aggregate-products: Remove user deleted past-purchase products from df_usr_prd_last_order. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 73
+				"execution_count": 81
 			},
 			{
 				"cell_type": "markdown",
@@ -955,12 +1000,12 @@
 					"        .format(\"delta\") \\\r\n",
 					"        .mode(\"overwrite\") \\\r\n",
 					"        .partitionBy(\"hash\") \\\r\n",
-					"        .save(BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH)\r\n",
+					"        .save(BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO))\r\n",
 					"\r\n",
 					"logger.info(\"persist: Customers' past-purchase has been processed and persisted for OPCO = {0}, Count={1}, Path={2}\".format(OPCO, df_past_purc.count(), TARGET_PAST_PURC_PATH)) \r\n",
 					""
 				],
-				"execution_count": 74
+				"execution_count": 82
 			},
 			{
 				"cell_type": "markdown",
@@ -1037,7 +1082,26 @@
 					"logger.info(\"persist: Persisted past-purchase in Cosmos for OPCO = {0}, Count={1}, Container={2}\".format(OPCO, df_past_purc.count(), COSMOS_CONTAINER_NM)) \n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 83
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"df_customer_usr.printSchema()"
+				],
+				"execution_count": 19
 			}
 		]
 	}

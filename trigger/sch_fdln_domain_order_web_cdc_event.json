@@ -3,7 +3,20 @@
 	"properties": {
 		"annotations": [],
 		"runtimeState": "Started",
-		"pipelines": [],
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_integration_past_purchase",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"PARAM_ADLS_BASE_CONN_STR": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/",
+					"PARAM_OPCO": "fdln",
+					"PARAM_OUTGOING_WEB_ORDER_FL": "@triggerBody().fileName",
+					"PARAM_IS_DELTA_LOAD": true
+				}
+			}
+		],
 		"type": "BlobEventsTrigger",
 		"typeProperties": {
 			"blobPathBeginsWith": "/data-integration/blobs/opco/fdln/domain/order/web-order/outgoing/",

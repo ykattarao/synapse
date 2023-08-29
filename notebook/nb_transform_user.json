@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "858f4fef-591c-45fd-be02-083e21f9d41f"
+				"spark.autotune.trackingId": "12b9b024-e89e-4c7f-bfe5-fb473ddf237d"
 			}
 		},
 		"metadata": {
@@ -82,13 +82,15 @@
 				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\n",
-					"SOURCE_CUSTOMER_LAKE_PATH = \"opco/fdln/domain/customer/user/lake/2023-06-11-05-31-14/\"\n",
+					"SOURCE_CUSTOMER_LAKE_PATH = \"opco/fdln/domain/customer/user/lake/2023-08-29-08-17-08\"\n",
 					"STAGE_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/stage/\"\n",
 					"TARGET_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/master/\"\n",
+					"OUTGOING_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/outgoing/\"\n",
+					"OUTGOING_CUSTOMER_FL = \"cdc_event_user_{curr_tmstmp}.csv\"\n",
 					"KEY_COL = \"user_id\"\n",
 					"PARTITION_COL = \"hash\""
 				],
-				"execution_count": 3
+				"execution_count": 57
 			},
 			{
 				"cell_type": "markdown",
@@ -119,7 +121,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_user\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": null
+				"execution_count": 58
 			},
 			{
 				"cell_type": "code",
@@ -146,7 +148,7 @@
 					"logger.info(\"\\t PARTITION_COL : {0}\".format(PARTITION_COL))\n",
 					"logger.info(\"******************************************************************************\")"
 				],
-				"execution_count": null
+				"execution_count": 59
 			},
 			{
 				"cell_type": "markdown",
@@ -195,7 +197,7 @@
 					"            \n",
 					"logger.info(\"stage-load : Load customer profile from lake path. Count={0}, Path={1}\".format(df_customer_stage.count(), SOURCE_CUSTOMER_LAKE_PATH))"
 				],
-				"execution_count": 18
+				"execution_count": 60
 			},
 			{
 				"cell_type": "markdown",
@@ -247,7 +249,7 @@
 					"logger.info(\"stage-load : Trimmed customer attributes.Count = {0}, Path = {1}\".format(df_customer_stage.count(), SOURCE_CUSTOMER_LAKE_PATH))\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 61
 			},
 			{
 				"cell_type": "markdown",
@@ -278,6 +280,9 @@
 				"source": [
 					"from pyspark.sql import functions as f\n",
 					"from delta.tables import DeltaTable\n",
+					"from datetime import datetime\n",
+					"from pytz import timezone\n",
+					"import re\n",
 					"\n",
 					"def init():\n",
 					"    df_customer_stage \\\n",
@@ -327,6 +332,24 @@
 					"        \"\"\"\n",
 					"    )\n",
 					"    logger.info(\"cdc-load : customer profile merged into master. Master_Count={0}, Delta_Count={1}, Path={2}\".format(df_customer_master.count(), df_customer_delta.count(), TARGET_CUSTOMER_PATH))\n",
+					"\n",
+					"def emit_events():\n",
+					"    if df_customer_stage.count() > 0 :\n",
+					"        curr_tmstmp = datetime.now(timezone('America/Chicago')).strftime(\"%Y-%m-%d-%H-%M-%S\")\n",
+					"        df_customer_stage \\\n",
+					"            .select(\"user_id\", \"rtlr_card_id\", \"rtlr_card_id_wo_chk_dgt\", \"opco_id\", \"audt_upd_dt_tm\") \\\n",
+					"            .repartition(1) \\\n",
+					"            .write \\\n",
+					"            .mode(\"overwrite\") \\\n",
+					"            .option(\"header\", \"true\") \\\n",
+					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH + curr_tmstmp)\n",
+					"        cdc_event_fl_path=[c.path for c in mssparkutils.fs.ls(BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH + curr_tmstmp) if re.search(\"\\.csv$\",c.name) is not None]\n",
+					"        logger.info(\"emit_events: List of cdc_event_user files geenrated. Files={0}\".format(cdc_event_fl_path))\n",
+					"        mssparkutils.fs.cp(src=cdc_event_fl_path[0], dest=BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH + OUTGOING_CUSTOMER_FL.format(curr_tmstmp = curr_tmstmp))\n",
+					"        mssparkutils.fs.rm(dir=BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH + curr_tmstmp, recurse=True)\n",
+					"        logger.info(\"emit_events: customer data emitted to downstream. Count={0}, Path={1} \".format(df_customer_stage.count(), OUTGOING_CUSTOMER_PATH + OUTGOING_CUSTOMER_FL.format(curr_tmstmp = curr_tmstmp)))\n",
+					"\n",
+					"\n",
 					"##############################\n",
 					"# FULL LOAD / DELTA LOAD\n",
 					"##############################\n",
@@ -334,9 +357,10 @@
 					"    init()\n",
 					"else:\n",
 					"    apply_cdc()\n",
+					"    emit_events()\n",
 					""
 				],
-				"execution_count": 19
+				"execution_count": 63
 			}
 		]
 	}

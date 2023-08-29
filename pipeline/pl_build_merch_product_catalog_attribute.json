@@ -31,7 +31,7 @@
 					"source": {
 						"type": "MySqlSource",
 						"query": {
-							"value": "@concat('SELECT atr_id,\n             disp_seq_qy,\n\t         atr_type_cd,\n             atr_name_cd,\n\t         atr_name_tx,\n\t\t     atr_disp_tx,\n\t\t     db_look_name_tx,\n\t\t     clss_cd,\n\t\t     reqd_cd,\n\t\t     sel_type_cd,\n\t     \t mult_val_allw_cd,\n\t\t     data_type_cd,\n\t\t     left_data_prec_cd,\n\t         rght_data_prec_cd\n             audt_cr_dt_tm,\n             audt_cr_user_cd,\n             audt_upd_dt_tm,\n             audt_upd_user_cd\n             FROM catalog_prod.omt_atr\n             WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
+							"value": "@concat('SELECT atr_id,\n             disp_seq_qy,\n\t         atr_type_cd,\n             atr_name_cd,\n\t         atr_name_tx,\n\t\t     atr_disp_tx,\n\t\t     db_look_name_tx,\n\t\t     clss_cd,\n\t\t     reqd_cd,\n\t\t     sel_type_cd,\n\t     \t mult_val_allw_cd,\n\t\t     data_type_cd,\n\t\t     left_data_prec_cd,\n\t         rght_data_prec_cd,\n             audt_cr_dt_tm,\n             audt_cr_user_cd,\n             audt_upd_dt_tm,\n             audt_upd_user_cd\n             FROM catalog_prod.omt_atr\n             WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
 							"type": "Expression"
 						}
 					},
@@ -193,13 +193,24 @@
 							},
 							{
 								"source": {
-									"name": "audt_cr_dt_tm",
+									"name": "rght_data_prec_cd",
 									"type": "Int32"
 								},
 								"sink": {
-									"name": "audt_cr_dt_tm",
+									"name": "rght_data_prec_cd",
 									"type": "Int32",
 									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
 								}
 							},
 							{
@@ -407,7 +418,7 @@
 							},
 							"type": "string"
 						},
-						"SOURCE_CTLG_ATR_LAKE_PATH": {
+						"SOURCE_MERCH_CATALOG_ATTRIBUTE_LAKE_PATH": {
 							"value": {
 								"value": "@variables('VAR_INGST_FLDR_PATH_CTLG_ATR')",
 								"type": "Expression"

@@ -48,7 +48,7 @@
 					"source": {
 						"type": "MySqlSource",
 						"query": {
-							"value": "@concat('SELECT atr_val_id,\n            lvl_id,\n            othr_key_id,\n            atr_id,\n            atr_val_cd, \n            srce_cd,\n            audt_cr_dt_tm,\n            audt_cr_user_cd,\n            audt_upd_dt_tm,\n            audt_upd_user_cd \n            FROM catalog_prod.omt_atr_val  \n            WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
+							"value": "@concat('SELECT atr_val_id,\n            lvl_id,\n            othr_key_id,\n            atr_id,\n            atr_val_cd, \n            srce_cd,\n            audt_cr_dt_tm,\n            audt_cr_user_cd,\n            audt_upd_dt_tm,\n            audt_upd_user_cd \n            FROM catalog_prod.omt_atr_val  \n            WHERE (ifnull(audt_upd_dt_tm, ''0000-00-00 00:00:00'') >= ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
 							"type": "Expression"
 						}
 					},
@@ -330,7 +330,7 @@
 							},
 							"type": "string"
 						},
-						"SOURCE_CTLG_ATR_VAL_LAKE_PATH": {
+						"SOURCE_MERCH_CATALOG_ATTRIBUTE_VALUE_LAKE_PATH": {
 							"value": {
 								"value": "@variables('VAR_INGST_FLDR_PATH_CTR_ATR_VAL')",
 								"type": "Expression"

@@ -198,7 +198,7 @@
 								"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
 								"type": "Expression"
 							},
-							"type": "string"
+							"type": "int"
 						},
 						"VAL_COL_VLS": {
 							"value": {
