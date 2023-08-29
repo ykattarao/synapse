@@ -1,6 +1,7 @@
 {
 	"name": "sch_fdln_domain_order_web_cdc_event",
 	"properties": {
+		"description": "CDC Event for Delta Web Orders",
 		"annotations": [],
 		"runtimeState": "Started",
 		"pipelines": [
