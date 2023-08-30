@@ -1,0 +1,32 @@
+{
+	"name": "sch_fdln_domain_customer_cdc_events",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_integration_past_purchase",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"PARAM_ADLS_BASE_CONN_STR": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/",
+					"PARAM_OPCO": "fdln",
+					"PARAM_OUTGOING_CUSTOMER_FL": "@triggerBody().fileName",
+					"PARAM_OUTGOING_WEB_ORDER_FL": "''",
+					"PARAM_IS_DELTA_LOAD": true
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/data-integration/blobs/opco/fdln/domain/customer/user/outgoing/",
+			"blobPathEndsWith": ".csv",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Storage/storageAccounts/sasynwpdlintnpdeve201",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}
