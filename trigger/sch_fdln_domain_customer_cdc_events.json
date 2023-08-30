@@ -1,7 +1,6 @@
 {
-	"name": "sch_fdln_domain_customer_cdc_event",
+	"name": "sch_fdln_domain_customer_cdc_events",
 	"properties": {
-		"description": "CDC Event for Delta Customers",
 		"annotations": [],
 		"runtimeState": "Started",
 		"pipelines": [
