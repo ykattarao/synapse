@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2a1bc84a-abf3-452d-8bdf-c3cfc3dba995"
+				"spark.autotune.trackingId": "2c372f1e-0fd5-4802-9bb1-2a43d123f24f"
 			}
 		},
 		"metadata": {
@@ -85,7 +85,8 @@
 					"STAGE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/web-order/stage/order-item/\"\n",
 					"TARGET_ORDER_PATH = \"opco/fdln/domain/order/web-order/master/order/\"\n",
 					"TARGET_ORDER_ITEM_PATH = \"opco/fdln/domain/order/web-order/master/order-item/\"\n",
-					"OUTGOING_WEB_ORDER_PATH = \"opco/fdln/domain/order/web-order/outgoing/{curr_tmstmp}\"\n",
+					"OUTGOING_STAGE_WEB_ORDER_PATH = \"opco/fdln/domain/order/web-order/outgoing/stage/{curr_tmstmp}\"\n",
+					"OUTGOING_MSTR_WEB_ORDER_PATH = \"opco/fdln/domain/order/web-order/outgoing/mstr/{curr_tmstmp}\"\n",
 					"\n",
 					"TARGET_ORDER_ITEM_COLS = [\"orderId\", \"orderDate\", \"orderTime\", \"deliveryDate\", \"deliverySlotStart\", \"deliverySlotEnd\", \"orderDescription\", \"orderStatus\", \"userId\", \"col.podId\", \"upc\", \n",
 					"                        \"uom\", \"rqstQy\", \"ordQy\", \"shipQy\", \"unitPrice\", \"regPrice\", \"categoryId\", \"categoryDesc\", \"year\", \"month\", \"day\"]\n",
@@ -348,8 +349,10 @@
 					"            .write \\\n",
 					"            .mode(\"overwrite\") \\\n",
 					"            .option(\"header\", \"true\") \\\n",
-					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH.format(curr_tmstmp = curr_tmstmp))\n",
-					"        logger.info(\"emit_events: Web Order data emitted to downstream. Count={0}, Path={1} \".format(df_web_order_delta.count(), OUTGOING_WEB_ORDER_PATH.format(curr_tmstmp = curr_tmstmp)))\n",
+					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_STAGE_WEB_ORDER_PATH.format(curr_tmstmp = curr_tmstmp))\n",
+					"        mssparkutils.fs.cp(src=BASE_ADLS_CONN_STR + OUTGOING_STAGE_WEB_ORDER_PATH.format(curr_tmstmp = curr_tmstmp), dest=BASE_ADLS_CONN_STR + OUTGOING_MSTR_WEB_ORDER_PATH.format(curr_tmstmp = curr_tmstmp), recurse=True)\n",
+					"        mssparkutils.fs.rm(dir=BASE_ADLS_CONN_STR + OUTGOING_STAGE_WEB_ORDER_PATH.format(curr_tmstmp = curr_tmstmp), recurse=True)\n",
+					"        logger.info(\"emit_events: Web Order data emitted to downstream. Count={0}, Path={1} \".format(df_web_order_delta.count(), OUTGOING_MSTR_WEB_ORDER_PATH.format(curr_tmstmp = curr_tmstmp)))\n",
 					"\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_ORDER_ITEM_PATH)):\n",
 					"    apply_cdc()\n",

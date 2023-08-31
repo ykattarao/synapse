@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "f3fb38e9-14d2-450a-a852-35f7831985e2"
+				"spark.autotune.trackingId": "274bf069-2870-46b6-8bef-e73e99b589c3"
 			}
 		},
 		"metadata": {
@@ -85,11 +85,12 @@
 					"SOURCE_CUSTOMER_LAKE_PATH = \"opco/fdln/domain/customer/user/lake/2023-08-29-08-17-08\"\n",
 					"STAGE_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/stage/\"\n",
 					"TARGET_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/master/\"\n",
-					"OUTGOING_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/outgoing/{curr_tmstmp}\"\n",
+					"OUTGOING_STAGE_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/outgoing/stage/{curr_tmstmp}\"\n",
+					"OUTGOING_MSTR_CUSTOMER_PATH = \"opco/fdln/domain/customer/user/outgoing/mstr/{curr_tmstmp}\"\n",
 					"KEY_COL = \"user_id\"\n",
 					"PARTITION_COL = \"hash\""
 				],
-				"execution_count": 1
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -341,8 +342,10 @@
 					"            .write \\\n",
 					"            .mode(\"overwrite\") \\\n",
 					"            .option(\"header\", \"true\") \\\n",
-					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH.format(curr_tmstmp = curr_tmstmp))\n",
-					"        logger.info(\"emit_events: customer data emitted to downstream. Count={0}, Path={1} \".format(df_customer_stage.count(), OUTGOING_CUSTOMER_PATH.format(curr_tmstmp = curr_tmstmp)))\n",
+					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_STAGE_CUSTOMER_PATH.format(curr_tmstmp = curr_tmstmp))\n",
+					"        mssparkutils.fs.cp(src=BASE_ADLS_CONN_STR + OUTGOING_STAGE_CUSTOMER_PATH.format(curr_tmstmp = curr_tmstmp), dest=BASE_ADLS_CONN_STR + OUTGOING_MSTR_CUSTOMER_PATH.format(curr_tmstmp = curr_tmstmp), recurse=True)\n",
+					"        mssparkutils.fs.rm(dir=BASE_ADLS_CONN_STR + OUTGOING_STAGE_CUSTOMER_PATH.format(curr_tmstmp = curr_tmstmp), recurse=True)\n",
+					"        logger.info(\"emit_events: customer data emitted to downstream. Count={0}, Path={1} \".format(df_customer_stage.count(), OUTGOING_MSTR_CUSTOMER_PATH.format(curr_tmstmp = curr_tmstmp)))\n",
 					"\n",
 					"\n",
 					"##############################\n",
@@ -355,7 +358,7 @@
 					"    emit_events()\n",
 					""
 				],
-				"execution_count": 6
+				"execution_count": 16
 			}
 		]
 	}
