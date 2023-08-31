@@ -82,12 +82,10 @@
 				"defaultValue": "fdln"
 			},
 			"PARAM_OUTGOING_CUSTOMER_FL": {
-				"type": "string",
-				"defaultValue": "cdc_event_user_2023-08-29-12-38-21.csv"
+				"type": "string"
 			},
 			"PARAM_OUTGOING_WEB_ORDER_FL": {
-				"type": "string",
-				"defaultValue": "cdc_event_web_order_2023-08-29-12-38-21.csv"
+				"type": "string"
 			},
 			"PARAM_IS_DELTA_LOAD": {
 				"type": "bool",

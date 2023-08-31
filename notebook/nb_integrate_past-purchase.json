@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "2dbf05c4-4dc4-4861-a09b-7bdc008dbdff"
+				"spark.autotune.trackingId": "e8ef09fe-8f8c-4061-a6b5-c72a466cdaf0"
 			}
 		},
 		"metadata": {
@@ -93,9 +93,9 @@
 					"STAGE_REPL_PROD_PATH=\"opco/{opco}/domain/integration/past-purchase/stage/replacement-products\"\r\n",
 					"STAGE_DEL_PROD_PATH =\"opco/{opco}/domain/integration/past-purchase/stage/deleted-products\"\r\n",
 					"OUTGOING_CUSTOMER_PATH = \"opco/{opco}/domain/customer/user/outgoing/\"\r\n",
-					"OUTGOING_CUSTOMER_FL = \"cdc_event_user_2023-08-29-12-38-21.csv\"\r\n",
+					"OUTGOING_CUSTOMER_FL = \"cdc_event_user_2023-08-30-10-00-04.csv\"\r\n",
 					"OUTGOING_WEB_ORDER_PATH = \"opco/{opco}/domain/order/web-order/outgoing/\"\r\n",
-					"OUTGOING_WEB_ORDER_FL = \"cdc_event_web_order_2023-08-29-13-57-05.csv\"\r\n",
+					"OUTGOING_WEB_ORDER_FL = \"\"\r\n",
 					"TARGET_PAST_PURC_PATH=\"opco/{opco}/domain/integration/past-purchase/master\"\r\n",
 					"NO_OF_PARTITIONS = 25\r\n",
 					"YRS_DATA= 3\r\n",
@@ -107,7 +107,7 @@
 					"COSMOS_DB_NM = \"purchase_history\"\r\n",
 					""
 				],
-				"execution_count": 25
+				"execution_count": 23
 			},
 			{
 				"cell_type": "markdown",
@@ -138,7 +138,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_past-purchase\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": 27
+				"execution_count": 24
 			},
 			{
 				"cell_type": "code",
@@ -171,7 +171,7 @@
 					"logger.info(\"\\t\\t YRS_DATA = {0}\".format(YRS_DATA))\n",
 					"logger.info(\"**********************************************************************************\")"
 				],
-				"execution_count": 28
+				"execution_count": 25
 			},
 			{
 				"cell_type": "markdown",
@@ -209,7 +209,7 @@
 					"    df_delta_usr = spark.createDataFrame([], StructType([StructField(\"user_id\", IntegerType(), False)]))\n",
 					"\n",
 					"    # Append delta users from customer domain\n",
-					"    if OUTGOING_CUSTOMER_FL.strip():\n",
+					"    if OUTGOING_CUSTOMER_FL and OUTGOING_CUSTOMER_FL.strip():\n",
 					"        df_customer_usr = spark \\\n",
 					"            .read \\\n",
 					"            .option(\"inferSchema\", \"true\") \\\n",
@@ -220,7 +220,7 @@
 					"        logger.info(\"delta-users: Loaded Delta Users from Customer. OPCO={0}, Count={1}, Path={2}\".format(OPCO, df_customer_usr.count(), OUTGOING_CUSTOMER_PATH.format(opco = OPCO)))\n",
 					"\n",
 					"    # Append delta users from web order domain\n",
-					"    if OUTGOING_WEB_ORDER_FL.strip():\n",
+					"    if OUTGOING_WEB_ORDER_FL and OUTGOING_WEB_ORDER_FL.strip():\n",
 					"        df_web_ord_usr = spark \\\n",
 					"            .read \\\n",
 					"            .option(\"inferSchema\", \"true\") \\\n",
@@ -235,7 +235,7 @@
 					"    df_delta_usr = df_delta_usr.dropDuplicates()\n",
 					"    logger.info(\"delta-users: Loaded unique Delta Users from Customer and Web Order Domain. OPCO={0}, Count={1}\".format(OPCO, df_delta_usr.count()))"
 				],
-				"execution_count": 34
+				"execution_count": 26
 			},
 			{
 				"cell_type": "markdown",
@@ -315,7 +315,7 @@
 					"    write_stage_stor_ord(df_stor_ord_master)\r\n",
 					""
 				],
-				"execution_count": 72
+				"execution_count": 27
 			},
 			{
 				"cell_type": "markdown",
@@ -400,7 +400,7 @@
 					"    write_stage_web_ord(df_web_ord_master)\r\n",
 					""
 				],
-				"execution_count": 73
+				"execution_count": 28
 			},
 			{
 				"cell_type": "markdown",
@@ -474,7 +474,7 @@
 					"else:\r\n",
 					"    write_stage_user(df_users_master)"
 				],
-				"execution_count": 74
+				"execution_count": 29
 			},
 			{
 				"cell_type": "markdown",
@@ -527,7 +527,7 @@
 					"        .save(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"replcamen-product: Write repalcement-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_repl_prod.count()))"
 				],
-				"execution_count": 75
+				"execution_count": 30
 			},
 			{
 				"cell_type": "markdown",
@@ -579,7 +579,7 @@
 					"    .save(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"deleted-product: Write deleted-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_del_prod.count()))"
 				],
-				"execution_count": 76
+				"execution_count": 31
 			},
 			{
 				"cell_type": "markdown",
@@ -680,7 +680,7 @@
 					"\r\n",
 					"logger.info(\"stage-data-load: Created required all stage tables for all domains. Ready to start the integration. OPCO={0}\".format(OPCO))"
 				],
-				"execution_count": 77
+				"execution_count": 32
 			},
 			{
 				"cell_type": "markdown",
@@ -721,7 +721,7 @@
 					"df_union_query.createOrReplaceTempView(\"tbl_web_store_order\")\r\n",
 					"logger.info(\"merge-web-store-orders: Merged store and web orders into a single dataset. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 78
+				"execution_count": 33
 			},
 			{
 				"cell_type": "markdown",
@@ -790,7 +790,7 @@
 					"df_usr_prd_all_times=df_usr_prd_all_times.withColumnRenamed(\"user_id\",\"user_id_all\")\r\n",
 					""
 				],
-				"execution_count": 79
+				"execution_count": 34
 			},
 			{
 				"cell_type": "markdown",
@@ -839,13 +839,13 @@
 					"\r\n",
 					"df_usr_prd_last_order = df_last_order_query \\\r\n",
 					"                                .groupBy(\"user_id\") \\\r\n",
-					"                                .agg(f.flatten(f.collect_set(\"pod_id_lst\")).alias(\"last_order\"))  \\\r\n",
+					"                                .agg(f.array_sort(f.array_distinct(f.flatten(f.collect_set(\"pod_id_lst\")))).alias(\"last_order\")) \\\r\n",
 					"                                .repartition(100, \"user_id\")\r\n",
 					"\r\n",
 					"df_usr_prd_last_order = df_usr_prd_last_order.withColumnRenamed(\"user_id\",\"user_id_last_order\") \r\n",
 					""
 				],
-				"execution_count": 80
+				"execution_count": 61
 			},
 			{
 				"cell_type": "markdown",
@@ -1083,25 +1083,6 @@
 					""
 				],
 				"execution_count": 83
-			},
-			{
-				"cell_type": "code",
-				"metadata": {
-					"jupyter": {
-						"source_hidden": false,
-						"outputs_hidden": false
-					},
-					"nteract": {
-						"transient": {
-							"deleting": false
-						}
-					},
-					"collapsed": false
-				},
-				"source": [
-					"df_customer_usr.printSchema()"
-				],
-				"execution_count": 19
 			}
 		]
 	}
