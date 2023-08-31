@@ -12,8 +12,10 @@
 				"parameters": {
 					"PARAM_ADLS_BASE_CONN_STR": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/",
 					"PARAM_OPCO": "fdln",
-					"OUTGOING_CUSTOMER_PATH": "@triggerBody().fileName",
+					"PARAM_OUTGOING_CUSTOMER_PATH": "@triggerBody().fileName",
 					"PARAM_OUTGOING_CUSTOMER_FL": "@triggerBody().folderPath",
+					"PARAM_OUTGOING_WEB_ORDER_PATH": "-",
+					"PARAM_OUTGOING_WEB_ORDER_FL": "-",
 					"PARAM_IS_DELTA_LOAD": true
 				}
 			}

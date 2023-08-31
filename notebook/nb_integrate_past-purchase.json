@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "e8ef09fe-8f8c-4061-a6b5-c72a466cdaf0"
+				"spark.autotune.trackingId": "d3e8e272-0f87-4664-bd6b-e59809053490"
 			}
 		},
 		"metadata": {
@@ -45,7 +45,8 @@
 				"sparkVersion": "3.3",
 				"nodeCount": 3,
 				"cores": 4,
-				"memory": 28
+				"memory": 28,
+				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
@@ -91,20 +92,19 @@
 					"STAGE_USER_PATH = \"opco/{opco}/domain/integration/past-purchase/stage/user\"\r\n",
 					"STAGE_REPL_PROD_PATH=\"opco/{opco}/domain/integration/past-purchase/stage/replacement-products\"\r\n",
 					"STAGE_DEL_PROD_PATH =\"opco/{opco}/domain/integration/past-purchase/stage/deleted-products\"\r\n",
-					"OUTGOING_CUSTOMER_PATH = \"opco/{opco}/domain/customer/user/outgoing/\"\r\n",
-					"OUTGOING_CUSTOMER_FL = \"cdc_event_user_2023-08-30-10-00-04.csv\"\r\n",
-					"OUTGOING_WEB_ORDER_PATH = \"opco/{opco}/domain/order/web-order/outgoing/\"\r\n",
-					"OUTGOING_WEB_ORDER_FL = \"\"\r\n",
+					"OUTGOING_CUSTOMER_PATH = \"-\"\r\n",
+					"OUTGOING_CUSTOMER_FL = \"-\"\r\n",
+					"OUTGOING_WEB_ORDER_PATH = \"-\"\r\n",
+					"OUTGOING_WEB_ORDER_FL = \"-\"\r\n",
 					"TARGET_PAST_PURC_PATH=\"opco/{opco}/domain/integration/past-purchase/master\"\r\n",
 					"NO_OF_PARTITIONS = 25\r\n",
 					"YRS_DATA= 3\r\n",
-					"IS_DELTA_LOAD = True\r\n",
+					"IS_DELTA_LOAD = False\r\n",
 					"OPCO = \"fdln\"\r\n",
 					"USR_PAST_PURCHASE = \"past-purchase-integration-pipeline\"\r\n",
 					"COSMOS_LINKED_SERVICE_NM = \"ls_az_cosmos_core_services_purchase_history_fdln\"\r\n",
 					"COSMOS_CONTAINER_NM = \"past-purchase-test\"\r\n",
-					"COSMOS_DB_NM = \"purchase_history\"\r\n",
-					""
+					"COSMOS_DB_NM = \"purchase_history\""
 				],
 				"execution_count": 23
 			},
@@ -208,7 +208,7 @@
 					"    df_delta_usr = spark.createDataFrame([], StructType([StructField(\"user_id\", IntegerType(), False)]))\n",
 					"\n",
 					"    # Append delta users from customer domain\n",
-					"    if OUTGOING_CUSTOMER_FL and OUTGOING_CUSTOMER_FL.strip():\n",
+					"    if OUTGOING_CUSTOMER_FL and OUTGOING_CUSTOMER_FL.strip() != '-':\n",
 					"        df_customer_usr = spark \\\n",
 					"            .read \\\n",
 					"            .option(\"inferSchema\", \"true\") \\\n",
@@ -219,7 +219,7 @@
 					"        logger.info(\"delta-users: Loaded Delta Users from Customer. OPCO={0}, Count={1}, Path={2}\".format(OPCO, df_customer_usr.count(), OUTGOING_CUSTOMER_PATH.format(opco = OPCO)))\n",
 					"\n",
 					"    # Append delta users from web order domain\n",
-					"    if OUTGOING_WEB_ORDER_FL and OUTGOING_WEB_ORDER_FL.strip():\n",
+					"    if OUTGOING_WEB_ORDER_FL and OUTGOING_WEB_ORDER_FL.strip() != '-':\n",
 					"        df_web_ord_usr = spark \\\n",
 					"            .read \\\n",
 					"            .option(\"inferSchema\", \"true\") \\\n",

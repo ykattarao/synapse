@@ -27,20 +27,6 @@
 							},
 							"type": "string"
 						},
-						"OUTGOING_CUSTOMER_FL": {
-							"value": {
-								"value": "@pipeline().parameters.PARAM_OUTGOING_CUSTOMER_FL",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
-						"OUTGOING_WEB_ORDER_FL": {
-							"value": {
-								"value": "@pipeline().parameters.PARAM_OUTGOING_WEB_ORDER_FL",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
 						"OPCO": {
 							"value": {
 								"value": "@pipeline().parameters.PARAM_OPCO",
@@ -54,6 +40,34 @@
 								"type": "Expression"
 							},
 							"type": "bool"
+						},
+						"OUTGOING_CUSTOMER_PATH": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_OUTGOING_CUSTOMER_PATH",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"OUTGOING_CUSTOMER_FL": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_OUTGOING_CUSTOMER_FL",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"OUTGOING_WEB_ORDER_PATH": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_OUTGOING_WEB_ORDER_PATH",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"OUTGOING_WEB_ORDER_FL": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_OUTGOING_WEB_ORDER_FL",
+								"type": "Expression"
+							},
+							"type": "string"
 						}
 					},
 					"snapshot": true,
@@ -81,17 +95,21 @@
 				"type": "string",
 				"defaultValue": "fdln"
 			},
-			"OUTGOING_CUSTOMER_PATH": {
-				"type": "string"
+			"PARAM_OUTGOING_CUSTOMER_PATH": {
+				"type": "string",
+				"defaultValue": "-"
 			},
 			"PARAM_OUTGOING_CUSTOMER_FL": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "-"
 			},
-			"OUTGOING_WEB_ORDER_PATH": {
-				"type": "bool"
+			"PARAM_OUTGOING_WEB_ORDER_PATH": {
+				"type": "string",
+				"defaultValue": "-"
 			},
 			"PARAM_OUTGOING_WEB_ORDER_FL": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "-"
 			},
 			"PARAM_IS_DELTA_LOAD": {
 				"type": "bool",
