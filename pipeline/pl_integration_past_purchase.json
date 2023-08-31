@@ -81,8 +81,14 @@
 				"type": "string",
 				"defaultValue": "fdln"
 			},
+			"OUTGOING_CUSTOMER_PATH": {
+				"type": "string"
+			},
 			"PARAM_OUTGOING_CUSTOMER_FL": {
 				"type": "string"
+			},
+			"OUTGOING_WEB_ORDER_PATH": {
+				"type": "bool"
 			},
 			"PARAM_OUTGOING_WEB_ORDER_FL": {
 				"type": "string"
