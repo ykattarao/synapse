@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "d3e8e272-0f87-4664-bd6b-e59809053490"
+				"spark.autotune.trackingId": "d032cb9d-ed45-4476-bff2-d5cb906de816"
 			}
 		},
 		"metadata": {
@@ -96,6 +96,7 @@
 					"OUTGOING_CUSTOMER_FL = \"-\"\r\n",
 					"OUTGOING_WEB_ORDER_PATH = \"-\"\r\n",
 					"OUTGOING_WEB_ORDER_FL = \"-\"\r\n",
+					"FL_PATH_SEPARATOR = \"/\"\r\n",
 					"TARGET_PAST_PURC_PATH=\"opco/{opco}/domain/integration/past-purchase/master\"\r\n",
 					"NO_OF_PARTITIONS = 25\r\n",
 					"YRS_DATA= 3\r\n",
@@ -106,7 +107,7 @@
 					"COSMOS_CONTAINER_NM = \"past-purchase-test\"\r\n",
 					"COSMOS_DB_NM = \"purchase_history\""
 				],
-				"execution_count": 23
+				"execution_count": 74
 			},
 			{
 				"cell_type": "markdown",
@@ -137,7 +138,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_past-purchase\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": 24
+				"execution_count": 70
 			},
 			{
 				"cell_type": "code",
@@ -170,7 +171,7 @@
 					"logger.info(\"\\t\\t YRS_DATA = {0}\".format(YRS_DATA))\n",
 					"logger.info(\"**********************************************************************************\")"
 				],
-				"execution_count": 25
+				"execution_count": 71
 			},
 			{
 				"cell_type": "markdown",
@@ -209,32 +210,34 @@
 					"\n",
 					"    # Append delta users from customer domain\n",
 					"    if OUTGOING_CUSTOMER_FL and OUTGOING_CUSTOMER_FL.strip() != '-':\n",
+					"        OUTGOING_CUSTOMER_PATH = OUTGOING_CUSTOMER_PATH.split('/',1)[1]\n",
 					"        df_customer_usr = spark \\\n",
 					"            .read \\\n",
 					"            .option(\"inferSchema\", \"true\") \\\n",
 					"            .option(\"header\", \"true\") \\\n",
-					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH.format(opco = OPCO) + OUTGOING_CUSTOMER_FL) \\\n",
+					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_CUSTOMER_PATH + FL_PATH_SEPARATOR + OUTGOING_CUSTOMER_FL) \\\n",
 					"            .select(\"user_id\")        \n",
 					"        df_delta_usr = df_delta_usr.unionByName(df_customer_usr)\n",
-					"        logger.info(\"delta-users: Loaded Delta Users from Customer. OPCO={0}, Count={1}, Path={2}\".format(OPCO, df_customer_usr.count(), OUTGOING_CUSTOMER_PATH.format(opco = OPCO)))\n",
+					"        logger.info(\"delta-users: Loaded Delta Users from Customer. OPCO={0}, Count={1}, Path={2}\".format(OPCO, df_customer_usr.count(), OUTGOING_CUSTOMER_PATH))\n",
 					"\n",
 					"    # Append delta users from web order domain\n",
 					"    if OUTGOING_WEB_ORDER_FL and OUTGOING_WEB_ORDER_FL.strip() != '-':\n",
+					"        OUTGOING_WEB_ORDER_PATH = OUTGOING_WEB_ORDER_PATH.split('/',1)[1]\n",
 					"        df_web_ord_usr = spark \\\n",
 					"            .read \\\n",
 					"            .option(\"inferSchema\", \"true\") \\\n",
 					"            .option(\"header\", \"true\") \\\n",
-					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH.format(opco = OPCO) + OUTGOING_WEB_ORDER_FL) \\\n",
+					"            .csv(BASE_ADLS_CONN_STR + OUTGOING_WEB_ORDER_PATH + FL_PATH_SEPARATOR + OUTGOING_WEB_ORDER_FL) \\\n",
 					"            .withColumnRenamed(\"userId\", \"user_id\") \\\n",
 					"            .select(\"user_id\") \\\n",
 					"            .distinct()\n",
 					"        df_delta_usr = df_delta_usr.unionByName(df_web_ord_usr)\n",
-					"        logger.info(\"delta-users: Loaded Delta Users from Web Order Domain. OPCO={0}, Count={1}, Path={2}\".format(OPCO, df_web_ord_usr.count(), OUTGOING_WEB_ORDER_PATH.format(opco = OPCO)))\n",
+					"        logger.info(\"delta-users: Loaded Delta Users from Web Order Domain. OPCO={0}, Count={1}, Path={2}\".format(OPCO, df_web_ord_usr.count(), OUTGOING_WEB_ORDER_PATH))\n",
 					"    \n",
 					"    df_delta_usr = df_delta_usr.dropDuplicates()\n",
 					"    logger.info(\"delta-users: Loaded unique Delta Users from Customer and Web Order Domain. OPCO={0}, Count={1}\".format(OPCO, df_delta_usr.count()))"
 				],
-				"execution_count": 26
+				"execution_count": 75
 			},
 			{
 				"cell_type": "markdown",
