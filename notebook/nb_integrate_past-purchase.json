@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "d032cb9d-ed45-4476-bff2-d5cb906de816"
+				"spark.autotune.trackingId": "ab62bc62-5513-4199-9079-3bd2416c8164"
 			}
 		},
 		"metadata": {
@@ -988,11 +988,13 @@
 					"        .withColumn(\"total_amount\",lit(0.00).cast(DecimalType(10,2))) \\\r\n",
 					"        .withColumn(\"avg_ord_amt\",lit(0.00).cast(DecimalType(10,2))) \\\r\n",
 					"        .withColumn(\"max_tot_purc_qy\",lit(0).cast(IntegerType())) \\\r\n",
-					"        .withColumn(\"last_updated_at\", current_timestamp()) \\\r\n",
+					"        .withColumn(\"last_updated_at\", from_unixtime(unix_timestamp(current_timestamp(), \"yyyy-MM-dd'T'HH:mm:ss'Z'\"),\"yyyy-MM-dd'T'HH:mm:ss'Z'\")) \\\r\n",
 					"        .withColumn(\"last_updated_by\",lit(USR_PAST_PURCHASE))\r\n",
 					"                           \r\n",
 					"\r\n",
 					"df_past_purc =  df_past_purc.withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
+					"\r\n",
+					"display(df_past_purc)\r\n",
 					"\r\n",
 					"df_past_purc \\\r\n",
 					"        .repartition(1, \"user_id\") \\\r\n",
@@ -1007,7 +1009,7 @@
 					"logger.info(\"persist: Customers' past-purchase has been processed and persisted for OPCO = {0}, Count={1}, Path={2}\".format(OPCO, df_past_purc.count(), TARGET_PAST_PURC_PATH)) \r\n",
 					""
 				],
-				"execution_count": 82
+				"execution_count": 140
 			},
 			{
 				"cell_type": "markdown",
@@ -1033,7 +1035,8 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
 					"from pyspark.sql import functions as F \n",
@@ -1073,6 +1076,7 @@
 					"    .withColumnRenamed(\"last_updated_at\", \"lastUpdatedAt\") \\\n",
 					"    .withColumnRenamed(\"last_updated_by\", \"lastUpdatedBy\") \\\n",
 					"    .drop(\"hash\", \"three_months_init\", \"six_months_init\", \"all_times_init\", \"last_order_init\")\n",
+					"display(df_past_purc_data_store)    \n",
 					"\n",
 					"df_past_purc_data_store \\\n",
 					"    .write \\\n",
@@ -1084,7 +1088,7 @@
 					"logger.info(\"persist: Persisted past-purchase in Cosmos for OPCO = {0}, Count={1}, Container={2}\".format(OPCO, df_past_purc.count(), COSMOS_CONTAINER_NM)) \n",
 					""
 				],
-				"execution_count": 83
+				"execution_count": 141
 			}
 		]
 	}
