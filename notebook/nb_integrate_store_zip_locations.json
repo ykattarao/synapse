@@ -1,0 +1,311 @@
+{
+	"name": "nb_integrate_store_zip_locations",
+	"properties": {
+		"folder": {
+			"name": "integration/service-location"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "0ad10b6a-78ba-4af2-b5d7-9949231d65f1"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"OPCO=\"fdln\"\r\n",
+					"TARGET_RTL_ZIP_LAT_LONG_PATH = \"opco/{opco}/domain/store/retailer-cpt-zip-lat-long/master/\"\r\n",
+					"TARGET_ZIP_LOCATIONS=\"opco/{opco}/integration/service-location/zip-locations/master\"\r\n",
+					"VAL_CNT_THRESHOLD=2"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_store_zip_locations\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"\r\n",
+					"logger.info(\"********************************************************************\")\r\n",
+					"logger.info(\"\\t STORE INTEGRATION - ZIP LAT LONG - Starting with below parameters\")\r\n",
+					"logger.info(\"********************************************************************\")\r\n",
+					"logger.info(\"\\t TARGET_RTL_ZIP_LAT_LONG_PATH : {0}\".format(TARGET_RTL_ZIP_LAT_LONG_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t OPCO : {0}\".format(OPCO))\r\n",
+					"logger.info(\"\\t TARGET_ZIP_LOCATIONS : {0}\".format(TARGET_ZIP_LOCATIONS))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"********************************************************************\")"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**LOADING ZIP LAT LONG FROM MASTER**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"\r\n",
+					"def check_if_master_file_exists():\r\n",
+					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RTL_ZIP_LAT_LONG_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"is_master_fl_exist = check_if_master_file_exists()\r\n",
+					"if is_master_fl_exist: \r\n",
+					"    df_zip_locations= spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\") \\\r\n",
+					"                            .option(\"inferSchema\", \"true\") \\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + TARGET_RTL_ZIP_LAT_LONG_PATH.format(opco = OPCO))\r\n",
+					"else:\r\n",
+					"    logger.info(\"zip_lat_long file does not exist for OPCO={0}\".format(OPCO))\r\n",
+					"    raise Exception(\"MASTER_FILE_DOES_NOT_EXIST\") \r\n",
+					"\r\n",
+					"logger.info(\"\\t DATA LOAD: zip_lat_long from master.\\n OPCO={0},\\n Count={1}\".format(OPCO,df_zip_locations.count()))"
+				],
+				"execution_count": 11
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**RENAMING ZIP LAT LONG COLUMNS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import col\r\n",
+					"df_zip_locations= df_zip_locations.select(col(\"zip_cd\").alias(\"zip_code\"), \\\r\n",
+					"                                        col(\"cntr_lat_qy\").alias(\"latitude\"), \\\r\n",
+					"                                        col(\"cntr_long_qy\").alias(\"longitude\")\r\n",
+					"                                        )"
+				],
+				"execution_count": 12
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**VALIDATING DATA & PERSISTING ZIP LOCATIONS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def check_if_master_file_exists():    \r\n",
+					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO))\r\n",
+					"\r\n",
+					"def load_zip_locations(df_load,path,opco):\r\n",
+					"    df_load\\\r\n",
+					"            .write \\\r\n",
+					"            .option(\"mergeSchema\", \"true\") \\\r\n",
+					"            .mode(\"overwrite\") \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .save(path)\r\n",
+					"    logger.info(\"\\t SERVICE LOCATION: Zip locations master data is overrided.\\n OPCO = {0},\\n Path={1},\\n Count={2}\".format(OPCO,TARGET_ZIP_LOCATIONS.format(opco=OPCO), df_load.count()))\r\n",
+					"# main starts here\r\n",
+					"is_master_fl_exist = check_if_master_file_exists()\r\n",
+					"if is_master_fl_exist: \r\n",
+					"    df_zip_locations_master= spark \\\r\n",
+					"                                .read \\\r\n",
+					"                                .format(\"delta\") \\\r\n",
+					"                                .load(BASE_ADLS_CONN_STR +TARGET_ZIP_LOCATIONS.format(opco = OPCO))\r\n",
+					"    logger.info(\"\\t SERVICE LOCATION: Zip locations loaded from master. OPCO = {0}, Count={1}\".format(OPCO, df_zip_locations_master.count()))\r\n",
+					"    is_val_success= validate_count(df_zip_locations_master,df_zip_locations,VAL_CNT_THRESHOLD)        \r\n",
+					"    if is_val_success :\r\n",
+					"        load_zip_locations(df_zip_locations,BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO), OPCO)\r\n",
+					"    else:\r\n",
+					"        logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"        raise Exception(\"EXCEEDING_THRESHOLD\")                             \r\n",
+					"else:\r\n",
+					"        logger.info(\"\\t First Time Master Load\")\r\n",
+					"        load_zip_locations(df_zip_locations,BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO), OPCO)\r\n",
+					""
+				],
+				"execution_count": 14
+			}
+		]
+	}
+}

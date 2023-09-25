@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "cf5e63a9-af1c-4e1d-ae81-3905b58dfde1"
+				"spark.autotune.trackingId": "349d323a-3fda-4346-a395-920ac3b6fc36"
 			}
 		},
 		"metadata": {
@@ -157,16 +157,16 @@
 				},
 				"source": [
 					"\r\n",
-					"logger.info(\"******************************************************************************\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
 					"logger.info(\"\\t MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\")\r\n",
-					"logger.info(\"******************************************************************************\")\r\n",
-					"logger.info(\"\\n SOURCE_LAKE_CNTRL_PUP_CTL_PATH : {0}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\n STAGE_CNTRL_PUP_CTL_PATH : {0}\".format(STAGE_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\n TARGET_CNTRL_PUP_CTL_PATH : {0}\".format(TARGET_CNTRL_PUP_CTL_PATH))\r\n",
-					"logger.info(\"\\n OPCO_LST : {0}\".format(OPCO_LST))\r\n",
-					"logger.info(\"\\n VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\n VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
-					"logger.info(\"\\n VAL_COLS : {0}\".format(VAL_COLS))\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_CNTRL_PUP_CTL_PATH : {0}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\t STAGE_CNTRL_PUP_CTL_PATH : {0}\".format(STAGE_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\t TARGET_CNTRL_PUP_CTL_PATH : {0}\".format(TARGET_CNTRL_PUP_CTL_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COLS : {0}\".format(VAL_COLS))\r\n",
 					"logger.info(\"**************************************************************************\")"
 				],
 				"execution_count": 16
@@ -259,7 +259,7 @@
 					"        StructField(\"drop_loc_zip_cd\", StringType(), True)\r\n",
 					"\r\n",
 					"])\r\n",
-					"logger.debug(\"schema-defination : Defined the schema for central:cit_pup_ctl.\\n {0}\".format(STAGE_CNTRL_PUP_CTL_SCHEMA))"
+					"logger.debug(\"\\t schema-defination : Defined the schema for central:cit_pup_ctl.\\n {0}\".format(STAGE_CNTRL_PUP_CTL_SCHEMA))"
 				],
 				"execution_count": 17
 			},
@@ -292,6 +292,7 @@
 				"source": [
 					"from delta.tables import DeltaTable\r\n",
 					"from pyspark.sql.functions import current_timestamp,lit\r\n",
+					"from pyspark.sql import functions as f\r\n",
 					"\r\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_CNTRL_PUP_CTL_PATH)):\r\n",
 					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_CNTRL_PUP_CTL_PATH, recurse = True)\r\n",
@@ -306,6 +307,9 @@
 					"                    .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
 					"                    .withColumn(\"tgt_audt_cr_id\", lit('usr-data-integration')) \\\r\n",
 					"                    .withColumn(\"tgt_audt_upd_id\", lit('usr-data-integration'))\r\n",
+					"str_cols=[colname for colname,coltype in df_pup_ctl_lake.dtypes if coltype==\"string\"] \r\n",
+					"for colname in str_cols:    \r\n",
+					"    df_pup_ctl_lake=df_pup_ctl_lake.withColumn(colname, f.trim(f.col(colname)))\r\n",
 					"\r\n",
 					"df_pup_ctl_lake \\\r\n",
 					"        .sort(KEY_COL) \\\r\n",
@@ -314,7 +318,7 @@
 					"        .option(\"inferSchema\", \"True\") \\\r\n",
 					"        .mode(\"overwrite\") \\\r\n",
 					"        .save(BASE_ADLS_CONN_STR + STAGE_CNTRL_PUP_CTL_PATH)\r\n",
-					"logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH, STAGE_CNTRL_PUP_CTL_PATH, df_pup_ctl_lake.count()))"
+					"logger.info(\"\\t stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_CNTRL_PUP_CTL_PATH, STAGE_CNTRL_PUP_CTL_PATH, df_pup_ctl_lake.count()))"
 				],
 				"execution_count": 18
 			},
@@ -356,12 +360,12 @@
 					"            .mode(\"overwrite\") \\\r\n",
 					"            .format(\"delta\") \\\r\n",
 					"            .save(path)\r\n",
-					"    logger.info(\"\\tCENTRAL:CIP_PUP_CTL Master data overwritten. OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"    logger.info(\"\\t CENTRAL:CIP_PUP_CTL Master data overwritten. OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
 					"\r\n",
 					"# main starts here\r\n",
 					"VAL_COL_LST=eval(VAL_COLS)\r\n",
 					"for opco in OPCO_LST:\r\n",
-					"    logger.info(\"\\n\\033[1m Processing MDM for CENTRAL:CIT_PUP_CTL - OPCO={0}\\033[0m\\n\".format(opco))\r\n",
+					"    logger.info(\"\\t Processing MDM for CENTRAL:CIT_PUP_CTL - OPCO={0}\".format(opco))\r\n",
 					"\r\n",
 					"    df_pup_ctl_stage= spark \\\r\n",
 					"                            .read \\\r\n",
@@ -388,7 +392,7 @@
 					"            \r\n",
 					"            \r\n",
 					"    else:\r\n",
-					"        logger.info(\"\\tFirst Time Master Load\")\r\n",
+					"        logger.info(\"\\t First Time Master Load\")\r\n",
 					"        load_master_data(df_pup_ctl_stage,BASE_ADLS_CONN_STR + TARGET_CNTRL_PUP_CTL_PATH.format(opco = opco),opco )\r\n",
 					"  "
 				],

@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "88f731b9-6ea9-4be0-b41c-bb206991cd5d"
+				"spark.autotune.trackingId": "ba5d2100-c01e-43dd-b305-5515cc8cabeb"
 			}
 		},
 		"metadata": {
@@ -147,10 +147,9 @@
 					}
 				},
 				"source": [
-					"\r\n",
-					"logger.info(\"******************************************************************************\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
 					"logger.info(\"\\t MDM - STORE - RETAILER - CPT_STOR_ZIP - Starting with below parameters\")\r\n",
-					"logger.info(\"******************************************************************************\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
 					"logger.info(\"\\t SOURCE_LAKE_RTL_STORE_ZIP_PATH : {0}\".format(SOURCE_LAKE_RTL_STORE_ZIP_PATH))\r\n",
 					"logger.info(\"\\t STAGE_RTL_STORE_ZIP_PATH : {0}\".format(STAGE_RTL_STORE_ZIP_PATH))\r\n",
 					"logger.info(\"\\t TARGET_RTL_STORE_ZIP_PATH : {0}\".format(TARGET_RTL_STORE_ZIP_PATH))\r\n",
@@ -158,7 +157,7 @@
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
 					"logger.info(\"\\t VAL_COL_CNT_THRESHOLD : {0}\".format(VAL_COL_CNT_THRESHOLD))\r\n",
 					"logger.info(\"\\t VAL_COLS : {0}\".format(VAL_COLS))\r\n",
-					"logger.info(\"*******************************************************************************\")"
+					"logger.info(\"*************************************************************************\")"
 				],
 				"execution_count": 41
 			},
@@ -213,7 +212,7 @@
 					"    StructField(\"support_site\", StringType(), True),\r\n",
 					"    StructField(\"sit_support_site\", StringType(), True)\r\n",
 					"])\r\n",
-					"logger.debug(\"schema-defination : Defined the schema for retailer:cpt_stor_zip.\\n {0}\".format(STAGE_RTL_STORE_ZIP_SCHEMA))"
+					"logger.debug(\"\\t schema-defination : Defined the schema for retailer:cpt_stor_zip.\\n {0}\".format(STAGE_RTL_STORE_ZIP_SCHEMA))"
 				],
 				"execution_count": 42
 			},
@@ -247,10 +246,11 @@
 				"source": [
 					"from pyspark.sql.functions import current_timestamp,lit\r\n",
 					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql import functions as f\r\n",
 					"\r\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_RTL_STORE_ZIP_PATH)):\r\n",
 					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_RTL_STORE_ZIP_PATH, recurse = True)\r\n",
-					"    logger.info(\"Purging data from STG container {0}\".format(STAGE_RTL_STORE_ZIP_PATH))\r\n",
+					"    logger.info(\"\\t Purging data from STG container {0}\".format(STAGE_RTL_STORE_ZIP_PATH))\r\n",
 					"\r\n",
 					"\r\n",
 					"df_stor_zip_lake = spark \\\r\n",
@@ -265,7 +265,10 @@
 					"            .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
 					"            .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
 					"            .withColumn(\"tgt_audt_cr_id\", lit('usr-data-integration')) \\\r\n",
-					"            .withColumn(\"tgt_audt_upd_id\", lit('usr-data-integration')) \\\r\n",
+					"            .withColumn(\"tgt_audt_upd_id\", lit('usr-data-integration')) \r\n",
+					"str_cols=[colname for colname,coltype in df_stor_zip_lake.dtypes if coltype==\"string\"] \r\n",
+					"for colname in str_cols:    \r\n",
+					"    df_stor_zip_lake=df_stor_zip_lake.withColumn(colname, f.trim(f.col(colname)))\r\n",
 					"\r\n",
 					"df_stor_zip_lake\\\r\n",
 					"        .sort(KEY_COL) \\\r\n",
@@ -274,7 +277,7 @@
 					"        .option(\"inferSchema\", \"True\") \\\r\n",
 					"        .mode(\"overwrite\") \\\r\n",
 					"        .save(BASE_ADLS_CONN_STR + STAGE_RTL_STORE_ZIP_PATH)\r\n",
-					"logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RTL_STORE_ZIP_PATH, STAGE_RTL_STORE_ZIP_PATH, df_stor_zip_lake.count()))"
+					"logger.info(\"\\t stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RTL_STORE_ZIP_PATH, STAGE_RTL_STORE_ZIP_PATH, df_stor_zip_lake.count()))"
 				],
 				"execution_count": 43
 			},
@@ -316,20 +319,20 @@
 					"            .mode(\"overwrite\") \\\r\n",
 					"            .format(\"delta\") \\\r\n",
 					"            .save(path)\r\n",
-					"    logger.info(\"\\tRETAILER:CPT_STOR_ZIP Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"    logger.info(\"\\t RETAILER:CPT_STOR_ZIP Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
 					"\r\n",
 					"# main starts here\r\n",
 					"VAL_COL_LST=eval(VAL_COLS)\r\n",
 					"for opco in OPCO_LST:\r\n",
 					"    \r\n",
-					"    logger.info(\"\\n\\033[1mProcessing  MDM for RETAILER:CPT_STOR_ZIP. OPCO={0}\\033[0m\\n\".format(opco))\r\n",
+					"    logger.info(\"\\t Processing  MDM for RETAILER:CPT_STOR_ZIP. OPCO={0}\".format(opco))\r\n",
 					"    \r\n",
 					"\r\n",
 					"    df_stor_zip_stage = spark \\\r\n",
 					"                            .read \\\r\n",
 					"                            .format(\"delta\") \\\r\n",
 					"                            .load(BASE_ADLS_CONN_STR +  STAGE_RTL_STORE_ZIP_PATH)\r\n",
-					"    logger.info(\"\\tRETAILER:CPT_STOR_ZIP loaded from stage. OPCO = {0}, Count={1}\".format(opco,df_stor_zip_stage.count()))\r\n",
+					"    logger.info(\"\\t RETAILER:CPT_STOR_ZIP loaded from stage. OPCO = {0}, Count={1}\".format(opco,df_stor_zip_stage.count()))\r\n",
 					"    \r\n",
 					"\r\n",
 					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RTL_STORE_ZIP_PATH.format(opco = opco))):\r\n",
@@ -338,7 +341,7 @@
 					"                            .read \\\r\n",
 					"                            .format(\"delta\") \\\r\n",
 					"                            .load(BASE_ADLS_CONN_STR + TARGET_RTL_STORE_ZIP_PATH.format(opco = opco))\r\n",
-					"        logger.info(\"\\tRETAILER:CPT_STOR_ZIP loaded from master. OPCO = {0}, Count={1}\".format(opco,df_stor_zip_master.count()))\r\n",
+					"        logger.info(\"\\t RETAILER:CPT_STOR_ZIP loaded from master. OPCO = {0}, Count={1}\".format(opco,df_stor_zip_master.count()))\r\n",
 					"        is_val_success= validate_count(df_stor_zip_master,df_stor_zip_stage, VAL_CNT_THRESHOLD )\r\n",
 					"        is_col_data_valid = unique_column_dataValidation(df_stor_zip_master,df_stor_zip_stage,VAL_COL_CNT_THRESHOLD,VAL_COL_LST)\r\n",
 					"        if (is_val_success & is_col_data_valid)== True:            \r\n",
@@ -346,11 +349,11 @@
 					"            \r\n",
 					"        else:\r\n",
 					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
-					"            raise Exception(\"\\tEXCEEDING_THRESHOLD\")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")\r\n",
 					"            \r\n",
 					"            \r\n",
 					"    else:\r\n",
-					"        logger.info('\\tFirst Time Master Load')\r\n",
+					"        logger.info(\"\\t First Time Master Load\")\r\n",
 					"        load_master_data(df_stor_zip_stage,BASE_ADLS_CONN_STR + TARGET_RTL_STORE_ZIP_PATH.format(opco = opco), opco)\r\n",
 					"        "
 				],

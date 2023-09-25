@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "0bfe708a-8a49-4a89-8505-58b471c062eb"
+				"spark.autotune.trackingId": "6248a9e3-22ff-4ff3-901f-85c85c404929"
 			}
 		},
 		"metadata": {
@@ -51,6 +51,19 @@
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
 			{
 				"cell_type": "code",
 				"metadata": {
@@ -134,9 +147,9 @@
 					}
 				},
 				"source": [
-					"logger.info(\"*****************************************************************************\")\n",
+					"logger.info(\"****************************************************************************\")\n",
 					"logger.info(\"\\t MDM - STORE - CENTRAL - PIT_PR_ZONE_XREF - Starting with below parameters\")\n",
-					"logger.info(\"*****************************************************************************\")\n",
+					"logger.info(\"****************************************************************************\")\n",
 					"logger.info(\"\\t SOURCE_LAKE_CNTRL_PR_ZONE_XREF_PATH : {0}\".format(SOURCE_LAKE_CNTRL_PR_ZONE_XREF_PATH))\n",
 					"logger.info(\"\\t STAGE_CNTRL_PR_ZONE_XREF_PATH : {0}\".format(STAGE_CNTRL_PR_ZONE_XREF_PATH))\n",
 					"logger.info(\"\\t TARGET_CNTRL_PR_ZONE_XREF_PATH : {0}\".format(TARGET_CNTRL_PR_ZONE_XREF_PATH))\n",
@@ -187,7 +200,7 @@
 					"    StructField(\"hypr_loc_cd\", IntegerType(), True),\r\n",
 					"    StructField(\"banr_id\", StringType(), True)\r\n",
 					"    ])\r\n",
-					"logger.debug(\"schema-defination : Defined the schema for central:pit_pr_zone_xref.\\n {0}\".format(STAGE_CNTRL_PR_ZONE_XREF_SCHEMA))"
+					"logger.debug(\"\\t schema-defination : Defined the schema for central:pit_pr_zone_xref.\\n {0}\".format(STAGE_CNTRL_PR_ZONE_XREF_SCHEMA))"
 				],
 				"execution_count": 5
 			},
@@ -220,6 +233,7 @@
 				"source": [
 					"from pyspark.sql.functions import current_timestamp, lit\r\n",
 					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql import functions as f\r\n",
 					"\r\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_CNTRL_PR_ZONE_XREF_PATH)):\r\n",
 					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_CNTRL_PR_ZONE_XREF_PATH, recurse = True)\r\n",
@@ -235,6 +249,10 @@
 					"    .withColumn(\"tgt_audt_cr_id\", lit('usr-data-integration')) \\\r\n",
 					"    .withColumn(\"tgt_audt_upd_id\", lit('usr-data-integration'))\r\n",
 					"\r\n",
+					"str_cols=[colname for colname,coltype in df_pr_zone_xref_lake.dtypes if coltype==\"string\"] \r\n",
+					"for colname in str_cols:    \r\n",
+					"    df_pr_zone_xref_lake=df_pr_zone_xref_lake.withColumn(colname, f.trim(f.col(colname)))\r\n",
+					"\r\n",
 					"df_pr_zone_xref_lake\\\r\n",
 					"    .sort(KEY_COL) \\\r\n",
 					"    .write \\\r\n",
@@ -243,7 +261,7 @@
 					"    .mode(\"overwrite\") \\\r\n",
 					"    .save(BASE_ADLS_CONN_STR + STAGE_CNTRL_PR_ZONE_XREF_PATH)\r\n",
 					"\r\n",
-					"logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_CNTRL_PR_ZONE_XREF_PATH, STAGE_CNTRL_PR_ZONE_XREF_PATH, df_pr_zone_xref_lake.count()))\r\n",
+					"logger.info(\"\\t stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_CNTRL_PR_ZONE_XREF_PATH, STAGE_CNTRL_PR_ZONE_XREF_PATH, df_pr_zone_xref_lake.count()))\r\n",
 					""
 				],
 				"execution_count": 6
@@ -286,24 +304,23 @@
 					"        .mode(\"overwrite\") \\\r\n",
 					"        .format(\"delta\") \\\r\n",
 					"        .save(path)\r\n",
-					"    logger.info(\"CENTRAL:PIT_PR_ZONE_XREF Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"    logger.info(\"\\t CENTRAL:PIT_PR_ZONE_XREF Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
 					"\r\n",
 					"# main starts here\r\n",
 					"VAL_COL_VLS_LST=eval(VAL_COL_VLS)\r\n",
 					"for opco in OPCO_LST:\r\n",
-					"    logger.info(\"_________________________________________________________________\")\r\n",
-					"    logger.info(\"Processing  MDM for CENTRAL:PIT_PR_ZONE_XREF. OPCO={0}\".format(opco))\r\n",
+					"    logger.info(\"\\t Processing  MDM for CENTRAL:PIT_PR_ZONE_XREF. OPCO={0}\".format(opco))\r\n",
 					"    df_pr_zone_xref_stage= spark \\\r\n",
 					"        .read \\\r\n",
 					"        .format(\"delta\") \\\r\n",
 					"        .load(BASE_ADLS_CONN_STR + STAGE_CNTRL_PR_ZONE_XREF_PATH)\r\n",
-					"    logger.info(\"CENTRAL:PIT_PR_ZONE_XREF loaded from stage. OPCO = {0}, Count={1}\".format(opco, df_pr_zone_xref_stage.count()))\r\n",
+					"    logger.info(\"\\t CENTRAL:PIT_PR_ZONE_XREF loaded from stage. OPCO = {0}, Count={1}\".format(opco, df_pr_zone_xref_stage.count()))\r\n",
 					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CNTRL_PR_ZONE_XREF_PATH.format(opco = opco) )): \r\n",
 					"        df_pr_zone_xref_master= spark \\\r\n",
 					"            .read \\\r\n",
 					"            .format(\"delta\") \\\r\n",
 					"            .load(BASE_ADLS_CONN_STR + TARGET_CNTRL_PR_ZONE_XREF_PATH.format(opco = opco)) \r\n",
-					"        logger.info(\"CENTRAL:PIT_PR_ZONE_XREF loaded from master. OPCO = {0}, Count={1}\".format(opco, df_pr_zone_xref_master.count()))\r\n",
+					"        logger.info(\"\\t CENTRAL:PIT_PR_ZONE_XREF loaded from master. OPCO = {0}, Count={1}\".format(opco, df_pr_zone_xref_master.count()))\r\n",
 					"        is_val_success= validate_count(df_pr_zone_xref_master,df_pr_zone_xref_stage,VAL_CNT_THRESHOLD)\r\n",
 					"        is_values_in_list= check_val_list(df_pr_zone_xref_stage, VAL_COL_NAME, VAL_COL_VLS_LST)\r\n",
 					"        \r\n",
@@ -313,7 +330,7 @@
 					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
 					"            raise Exception(\"EXCEEDING_THRESHOLD\")        \r\n",
 					"    else:\r\n",
-					"        logger.info('First Time Master Load')\r\n",
+					"        logger.info(\"\\t First Time Master Load\")\r\n",
 					"        load_master_data(df_pr_zone_xref_stage,BASE_ADLS_CONN_STR + TARGET_CNTRL_PR_ZONE_XREF_PATH.format(opco = opco), opco )\r\n",
 					""
 				],

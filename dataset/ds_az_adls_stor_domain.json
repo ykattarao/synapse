@@ -2,7 +2,7 @@
 	"name": "ds_az_adls_stor_domain",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "ls_Storage_SelfHosted",
+			"referenceName": "synw-pdlintegrations-nonprd-dev-e2-01-WorkspaceDefaultStorage",
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
