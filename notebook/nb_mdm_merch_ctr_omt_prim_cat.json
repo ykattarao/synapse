@@ -88,6 +88,7 @@
 					"TARGET_MERCH_CATEGORY_NAME_PATH=\"opco/{opco}/domain/merch/category/omt-prim-cat/master/\"\r\n",
 					"KEY_COL = \"prim_cat_id\"\r\n",
 					"VAL_CNT_THRESHOLD = 1\r\n",
+					"DELTA_LOAD = False\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
 					""
 				],
@@ -162,6 +163,7 @@
 					"logger.info(\"\\t SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH : {0}\".format(SOURCE_MERCH_CATEGORY_NAME_LAKE_PATH))\r\n",
 					"logger.info(\"\\t STAGE_MERCH_CATEGORY_NAME_PATH : {0}\".format(STAGE_MERCH_CATEGORY_NAME_PATH))\r\n",
 					"logger.info(\"\\t TARGET_MERCH_CATEGORY_NAME_PATH : {0}\".format(TARGET_MERCH_CATEGORY_NAME_PATH))\r\n",
+					"logger.info(\"\\t DELTA_LOAD : {0}\".format(DELTA_LOAD))\r\n",
 					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
 					"logger.info(\"**************************************************************************\")\r\n",
@@ -342,8 +344,8 @@
 					"##############################\r\n",
 					"for opco in OPCO_LST:\r\n",
 					"    logger.info(\"\\t Processing MASTER for CTR OMT_PRIM_CAT - OPCO={0}\".format(opco))\r\n",
-					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_MERCH_CATEGORY_NAME_PATH.format(opco = opco)) == False):\r\n",
-					"        init(opco)\r\n",
+					"    if DELTA_LOAD== False:\r\n",
+					"        init()\r\n",
 					"    else:\r\n",
 					"        apply_cdc(opco)    "
 				],

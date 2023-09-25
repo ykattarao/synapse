@@ -1,0 +1,85 @@
+{
+	"name": "pl_integration_category_consumer",
+	"properties": {
+		"activities": [
+			{
+				"name": "category-consumer",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_transform_category_consumer",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"KEY_COL": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_KEY_COL",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"OPCO": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"VAL_CNT_THRESHOLD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+								"type": "Expression"
+							},
+							"type": "int"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"driverSize": "Small"
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "fdln"
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 5
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "attributeId"
+			}
+		},
+		"folder": {
+			"name": "integration/category"
+		},
+		"annotations": []
+	}
+}

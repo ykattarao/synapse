@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "96eb1209-9730-4307-8ea8-b707da085626"
+				"spark.autotune.trackingId": "a13ccfd7-28f5-4b3a-a872-051349019c10"
 			}
 		},
 		"metadata": {
@@ -75,7 +75,10 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"tags": [
+						"parameters"
+					]
 				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",

@@ -1,0 +1,683 @@
+{
+	"name": "nb_integrate_category_default",
+	"properties": {
+		"folder": {
+			"name": "integration/category"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "1b5d953f-dbc3-4016-bf0b-085d27d0a538"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"TARGET_CONTENT_CONT_CTL_PATH = \"opco/{opco}/domain/merch/content/content-pit-cont-ctl/master\"\r\n",
+					"TARGET_CATALOG_ATTRIBUTE_PATH = \"opco/{opco}/domain/merch/catalog/omt-atr/master\"\r\n",
+					"TARGET_CATALOG_ATTRIBUTE_VAL_PATH = \"opco/{opco}/domain/merch/catalog/omt-atr-val/master\"\r\n",
+					"TARGET_CATEGORY_CAT_NAME_PATH = \"opco/{opco}/domain/merch/category/omt-prim-cat/master\"\r\n",
+					"TARGET_CATEGORY_CAT_TREE_PATH = \"opco/{opco}/domain/merch/category/omt-prim-cat-tree/master\"\r\n",
+					"TARGET_CATEGORY_DEFAULT_PATH = \"opco/{opco}/integration/category/category-default/master\"\r\n",
+					"VAR_ACTV_CD = 'Y'\r\n",
+					"VAR_ATR_TYPE_CD = 'C'\r\n",
+					"VAR_ATR_ID = 71\r\n",
+					"VAR_ATR_ATR_ID = 54\r\n",
+					"VAR_LVL_ID = 1\r\n",
+					"VAL_CNT_THRESHOLD = 2\r\n",
+					"OPCO = \"fdln\""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_category_default\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\r\n",
+					"logger.info(\"\\t INTEGRATION - CATAGORY  - DEFAULT - Starting with below parameters\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t OPCO : {0}\".format(OPCO))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t TARGET_CONTENT_CONT_CTL_PATH : {0}\".format(TARGET_CONTENT_CONT_CTL_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_CATALOG_ATTRIBUTE_PATH : {0}\".format(TARGET_CATALOG_ATTRIBUTE_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_CATALOG_ATTRIBUTE_VAL_PATH : {0}\".format(TARGET_CATALOG_ATTRIBUTE_VAL_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_CATEGORY_CAT_NAME_PATH : {0}\".format(TARGET_CATEGORY_CAT_NAME_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_CATEGORY_CAT_TREE_PATH : {0}\".format(TARGET_CATEGORY_CAT_TREE_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_CATEGORY_DEFAULT_PATH : {0}\".format(TARGET_CATEGORY_DEFAULT_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"**************************************************************************\")\r\n",
+					""
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**LOAD DATA FROM MASTER**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"import datetime\r\n",
+					"\r\n",
+					"\r\n",
+					"def check_if_master_file_exists():\r\n",
+					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CONTENT_CONT_CTL_PATH.format(opco = OPCO)) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATALOG_ATTRIBUTE_PATH.format(opco = OPCO)) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATALOG_ATTRIBUTE_VAL_PATH.format(opco = OPCO)) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATEGORY_CAT_NAME_PATH.format(opco = OPCO)) & \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATEGORY_CAT_TREE_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"is_master_fl_exist = check_if_master_file_exists()\r\n",
+					"if(is_master_fl_exist == True): \r\n",
+					"\r\n",
+					"    df_category_cat_name = spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\")\\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_CAT_NAME_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"    df_category_cat_tree = spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\")\\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_CAT_TREE_PATH.format(opco = OPCO) )\r\n",
+					"\r\n",
+					"\r\n",
+					"    df_ctlg_attribute = spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\")\\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + TARGET_CATALOG_ATTRIBUTE_PATH.format(opco = OPCO) )\r\n",
+					"\r\n",
+					"    df_ctlg_attribute_val = spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\")\\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + TARGET_CATALOG_ATTRIBUTE_VAL_PATH.format(opco = OPCO) )\r\n",
+					"\r\n",
+					"    df_cont_ctl = spark \\\r\n",
+					"                            .read \\\r\n",
+					"                            .format(\"delta\")\\\r\n",
+					"                            .load(BASE_ADLS_CONN_STR + TARGET_CONTENT_CONT_CTL_PATH.format(opco = OPCO) )\r\n",
+					"else:\r\n",
+					"    logger.error(\"Master file does not exist for OPCO={0}\".format(OPCO))\r\n",
+					"    raise Exception(\"MASTER_FILE_DOES_NOT_EXIST\") \r\n",
+					"\r\n",
+					"logger.info(\"load-data : catalog-attribute, catalog-attribute-value,category-name,category-tree and prod-content loaded from master\")"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**CATEGORY HIERARCHY**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"df_category_hierarchy = df_category_cat_tree.join(df_category_cat_name,df_category_cat_tree.chld_cat_id==df_category_cat_name.prim_cat_id)\\\r\n",
+					"                        .filter(df_category_cat_name.actv_cd==VAR_ACTV_CD)\\\r\n",
+					"                        .select(df_category_cat_tree.prim_cat_tree_id.alias(\"nodeId\"),\\\r\n",
+					"                         df_category_cat_tree.tree_id,\\\r\n",
+					"                         df_category_cat_tree.seq_id,\\\r\n",
+					"                         df_category_cat_tree.chld_cat_id.alias(\"categoryId\"),\\\r\n",
+					"                         df_category_cat_tree.parn_cat_tree_id.alias(\"parentNodeId\"),\\\r\n",
+					"                         df_category_cat_name.cat_name_tx.alias(\"name\"))\\\r\n",
+					"                         .orderBy(df_category_cat_tree.parn_cat_tree_id,df_category_cat_tree.prim_cat_tree_id)\r\n",
+					"logger.info(\"Joining category-tree and category-name for category hierarchy.OPCO = {0}, Count = {1}\".format(OPCO, df_category_hierarchy.count()))           "
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**IMAGE ATTRIBUTE**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql.functions import struct,col, lit, concat, when\r\n",
+					"\r\n",
+					"df_image_atr = df_ctlg_attribute.join(df_ctlg_attribute_val,df_ctlg_attribute.atr_id==df_ctlg_attribute_val.atr_id) \\\r\n",
+					"                    .filter(df_ctlg_attribute.atr_id == VAR_ATR_ID) \\\r\n",
+					"                    .filter(df_ctlg_attribute.atr_type_cd == VAR_ATR_TYPE_CD) \\\r\n",
+					"                    .select(df_ctlg_attribute_val.atr_val_id.alias(\"id\"), \\\r\n",
+					"                     df_ctlg_attribute.atr_id.alias(\"attribute_id\"), \\\r\n",
+					"                     when(df_ctlg_attribute_val.lvl_id.isNotNull(),df_ctlg_attribute_val.lvl_id.cast('long')) \\\r\n",
+					"                     .otherwise(0).alias(\"level_id\"), \\\r\n",
+					"                     df_ctlg_attribute_val.othr_key_id.alias(\"category_id\"), \\\r\n",
+					"                     df_ctlg_attribute.atr_name_cd.alias(\"attribute_name\"), \\\r\n",
+					"                     when(df_ctlg_attribute_val.atr_val_cd.isNotNull(),df_ctlg_attribute_val.atr_val_cd.cast('long')) \\\r\n",
+					"                     .otherwise(0).alias(\"attribute_value\"), \\\r\n",
+					"                     df_ctlg_attribute.atr_type_cd.alias(\"attribute_type\")\r\n",
+					"                     )\r\n",
+					"\r\n",
+					"\r\n",
+					"df_image_atr=df_image_atr \\\r\n",
+					"        .join(df_cont_ctl,  \\\r\n",
+					"        df_image_atr.attribute_value==df_cont_ctl.cont_id,\"left\") \\\r\n",
+					"        .select(df_image_atr.id.alias(\"id\"), \\\r\n",
+					"                     df_image_atr.attribute_id, \\\r\n",
+					"                     df_image_atr.level_id, \\\r\n",
+					"                     df_image_atr.category_id, \\\r\n",
+					"                     df_image_atr.attribute_name, \\\r\n",
+					"                     df_image_atr.attribute_value, \\\r\n",
+					"                     df_image_atr.attribute_type, \\\r\n",
+					"                     df_cont_ctl.file_name_tx.alias(\"file_name\")\r\n",
+					"                     )\r\n",
+					"\r\n",
+					"df_image_atr = df_image_atr.withColumn(\"image_attribute\",struct(df_image_atr['*']))\r\n",
+					"logger.info(\"integrate : Started integrating catalog-attribute, catalog-attribute-value and prod-content.OPCO = {0}, Count = {1}\".format(OPCO, df_image_atr.count()))\r\n",
+					""
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**CONSUMMER ATTRIBUTE**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"df_cons_atr = df_ctlg_attribute.join(df_ctlg_attribute_val,\\\r\n",
+					"                df_ctlg_attribute.atr_id == df_ctlg_attribute_val.atr_id)\\\r\n",
+					"                .filter((df_ctlg_attribute.atr_type_cd == VAR_ATR_TYPE_CD) &\\\r\n",
+					"                (df_ctlg_attribute.atr_id == VAR_ATR_ATR_ID) &\\\r\n",
+					"                (df_ctlg_attribute_val.lvl_id == VAR_LVL_ID))\\\r\n",
+					"                .select(df_ctlg_attribute_val.atr_val_id.alias(\"id\"),\\\r\n",
+					"                df_ctlg_attribute.atr_id.alias(\"attribute_id\"),\\\r\n",
+					"                df_ctlg_attribute_val.lvl_id.alias(\"level_id\"),\\\r\n",
+					"                df_ctlg_attribute_val.othr_key_id.alias(\"category_id\"),\\\r\n",
+					"                df_ctlg_attribute.atr_name_cd.alias(\"attribute_name\"),\\\r\n",
+					"                df_ctlg_attribute_val.atr_val_cd.alias(\"attribute_value\"),\\\r\n",
+					"                df_ctlg_attribute.atr_type_cd.alias(\"attribute_type\"))\r\n",
+					"\r\n",
+					"df_cons_atr = df_cons_atr.withColumn(\"consumer_attribute\",struct(df_cons_atr['*']))\r\n",
+					"logger.info(\"integrate : Started integrating catalog-attribute, catalog-attribute-value and prod-content.OPCO = {0}, Count = {1}\".format(OPCO, df_cons_atr.count()))\r\n",
+					""
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**PARENT TO CHILD NODE COLLECT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"df_category_hierarchy_w_node_path_depth=df_category_hierarchy\\\r\n",
+					"            .filter(df_category_hierarchy.parentNodeId==0).select(df_category_hierarchy['*'])\r\n",
+					"logger.info(\"This condition filter all parent zero nodes and select all columns \")\r\n",
+					"df_category_hierarchy_w_node_path_depth = df_category_hierarchy_w_node_path_depth.withColumn(\"pathToNode\",col(\"nodeId\"))\\\r\n",
+					"            .withColumn(\"depth\",lit(1))\r\n",
+					"logger.info(\"Initial depth taken as 1:here depth is degree of parent\")            \r\n",
+					"df_category_hierarchy_w_node_path_depth = df_category_hierarchy_w_node_path_depth.select(col(\"nodeId\").alias(\"node\"),\\\r\n",
+					"            col(\"tree_id\").alias(\"treeId\"),col(\"seq_id\").alias(\"seqId\"),\\\r\n",
+					"            col(\"categoryId\").alias(\"category\"),col(\"parentNodeId\").alias(\"parent\"),\\\r\n",
+					"            col(\"name\").alias(\"Name\"),col(\"pathToNode\"),col(\"depth\"))\r\n",
+					"logger.info(\"Avoid column ambiguty while joining so renaming one of the df columns\")  \r\n",
+					"\r\n",
+					"i = 1\r\n",
+					"while True:\r\n",
+					"    df_internal_iterate = df_category_hierarchy.join(df_category_hierarchy_w_node_path_depth,\\\r\n",
+					"                df_category_hierarchy[\"parentNodeId\"] == df_category_hierarchy_w_node_path_depth[\"node\"])\\\r\n",
+					"                .where(df_category_hierarchy_w_node_path_depth.depth == i).select(df_category_hierarchy['*'],\\\r\n",
+					"                df_category_hierarchy_w_node_path_depth.pathToNode,df_category_hierarchy_w_node_path_depth.depth)\r\n",
+					"    df_internal_iterate = df_internal_iterate.withColumn(\"depth\", col(\"depth\")+1)\\\r\n",
+					"                   .withColumn(\"pathToNode\",concat(col(\"pathToNode\"),lit(\",\"),col(\"nodeId\")))\r\n",
+					"    if df_internal_iterate.count()==0:\r\n",
+					"        break\r\n",
+					"\r\n",
+					"    df_category_hierarchy_w_node_path_depth = df_category_hierarchy_w_node_path_depth.union(df_internal_iterate).distinct()\r\n",
+					"    i = i+1\r\n",
+					"\r\n",
+					"logger.info(\"\\t parent: parent to child node collect.OPCO = {0}, Count = {1}\".format(OPCO, df_category_hierarchy_w_node_path_depth.count()))\r\n",
+					""
+				],
+				"execution_count": 9
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**COLLECT ALL CHILD TO CHILD NODES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql.window import Window \r\n",
+					"from pyspark.sql.functions import collect_list\r\n",
+					"\r\n",
+					"df_collect = Window.partitionBy(df_category_hierarchy.parentNodeId)\r\n",
+					"df_category_hierarchy=df_category_hierarchy.withColumn(\"child_node_ids\",collect_list(col(\"nodeId\"))\\\r\n",
+					"                    .over(df_collect))\r\n",
+					"\r\n",
+					"logger.info(\"\\t child: child to child node collect.OPCO = {0}, Count = {1}\".format(OPCO, df_category_hierarchy.count()))"
+				],
+				"execution_count": 10
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**JOINING OF PARENT AND CHILDS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"df_category_hierarchy_w_child_node = df_category_hierarchy_w_node_path_depth.join(df_category_hierarchy,\\\r\n",
+					"                df_category_hierarchy.parentNodeId == df_category_hierarchy_w_node_path_depth.node,\"left\")\\\r\n",
+					"                .select(df_category_hierarchy_w_node_path_depth['*'],df_category_hierarchy.child_node_ids).distinct()\r\n",
+					"logger.info(\"\\t joining parent and child to get all childs of nodeId.OPCO = {0}, Count = {1}\".format(OPCO, df_category_hierarchy_w_child_node.count()))"
+				],
+				"execution_count": 11
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**JOINING IMAGE AND CONSUMER TO CATEGORY HIERARCHY**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"df_category_default = df_category_hierarchy_w_child_node.join(df_image_atr,df_category_hierarchy_w_child_node\\\r\n",
+					"            .category == df_image_atr.category_id,\"left\")\\\r\n",
+					"            .join(df_cons_atr,df_category_hierarchy_w_child_node.category == df_cons_atr.category_id,\"left\")\\\r\n",
+					"            .select(df_category_hierarchy_w_child_node['*'],df_image_atr.image_attribute,df_cons_atr\\\r\n",
+					"            .consumer_attribute)\r\n",
+					"logger.info(\"\\t joining category hierarchy,image attribute and consumer attribute.OPCO = {0}, Count = {1}\".format(OPCO, df_category_default.count()))"
+				],
+				"execution_count": 12
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**CATEGORY DEFAULT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql.functions import split, current_timestamp\r\n",
+					"df_integration_ctr_default = df_category_default.select(col(\"node\").alias(\"node_id\"),\\\r\n",
+					"            col(\"treeId\").alias(\"tree_id\"),\\\r\n",
+					"            col(\"seqId\").alias(\"sequence_id\"),\\\r\n",
+					"            col(\"category\").alias(\"category_id\"),\\\r\n",
+					"            col(\"parent\").alias(\"parent_node_id\"),\\\r\n",
+					"            col(\"name\"),\\\r\n",
+					"            col(\"image_attribute\"),\\\r\n",
+					"            col(\"consumer_attribute\"),\\\r\n",
+					"            split(col(\"pathToNode\"),',').cast('array<int>').alias(\"path_to_node\"),\\\r\n",
+					"            col(\"child_node_ids\"),\\\r\n",
+					"            col(\"depth\").alias(\"sort_order\"))\\\r\n",
+					"            .withColumn(\"last_modified\", current_timestamp())"
+				],
+				"execution_count": 13
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**VALIDATING DATA AND PERSISTING CATEGORY DEFAULT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def check_if_master_file_exists():    \r\n",
+					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATEGORY_DEFAULT_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"def load_category_default(df_load,path,opco):\r\n",
+					"    df_load\\\r\n",
+					"            .write \\\r\n",
+					"            .option(\"mergeSchema\", \"true\") \\\r\n",
+					"            .mode(\"overwrite\") \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .save(path)\r\n",
+					"    logger.info(\"\\t CATEGORY DEFAULT: Category default master data is written.\\n OPCO = {0},\\n Path={1},\\n Count={2}\".format(OPCO,TARGET_CATEGORY_DEFAULT_PATH.format(opco = OPCO),df_load.count()))\r\n",
+					"\r\n",
+					"\r\n",
+					"is_master_fl_exist = check_if_master_file_exists()\r\n",
+					"if is_master_fl_exist: \r\n",
+					"    df_integration_ctr_default_master= spark \\\r\n",
+					"                                .read \\\r\n",
+					"                                .format(\"delta\") \\\r\n",
+					"                                .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_DEFAULT_PATH.format(opco = OPCO))\r\n",
+					"    logger.info(\"\\t CATEGORY DEFAULT: Category default loaded from master. OPCO = {0}, Count={1}\".format(OPCO, df_integration_ctr_default_master.count()))\r\n",
+					"    is_val_success= validate_count(df_integration_ctr_default_master,df_integration_ctr_default,VAL_CNT_THRESHOLD)        \r\n",
+					"    if is_val_success :\r\n",
+					"        load_category_default(df_integration_ctr_default,BASE_ADLS_CONN_STR + TARGET_CATEGORY_DEFAULT_PATH.format(opco = OPCO), OPCO)\r\n",
+					"    else:\r\n",
+					"        logger.error(\"\\t Failed to override master since threshold is exceeding \")\r\n",
+					"        raise Exception(\"EXCEEDING_THRESHOLD\")                             \r\n",
+					"else:\r\n",
+					"        logger.info(\"\\t First Time Master Load\")\r\n",
+					"        load_category_default(df_integration_ctr_default,BASE_ADLS_CONN_STR + TARGET_CATEGORY_DEFAULT_PATH.format(opco = OPCO), OPCO)\r\n",
+					""
+				],
+				"execution_count": 14
+			}
+		]
+	}
+}

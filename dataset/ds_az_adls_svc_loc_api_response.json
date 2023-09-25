@@ -1,0 +1,37 @@
+{
+	"name": "ds_az_adls_svc_loc_api_response",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "synw-pdlintegrations-nonprd-dev-e2-01-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"VAR_FILENAME": {
+				"type": "String"
+			},
+			"PARAM_STAGE_SERVICE_LOC_FLDR_PATH": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "integration/category"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().VAR_FILENAME",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().PARAM_STAGE_SERVICE_LOC_FLDR_PATH",
+					"type": "Expression"
+				},
+				"fileSystem": "data-integration"
+			}
+		},
+		"schema": {}
+	}
+}

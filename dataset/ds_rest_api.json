@@ -1,0 +1,26 @@
+{
+	"name": "ds_rest_api",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_rest_api",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"URL_PARAM": {
+					"value": "@dataset().PARAM_URL",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"PARAM_URL": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "integration/category"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"schema": []
+	}
+}

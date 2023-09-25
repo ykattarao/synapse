@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "0d916764-7a70-4d99-b106-dbc10ece8b9b"
+				"spark.autotune.trackingId": "fe489f09-0177-4c60-9a61-e1f8253e000e"
 			}
 		},
 		"metadata": {
@@ -88,6 +88,7 @@
 					"TARGET_MERCH_CONTENT_PATH=\"opco/{opco}/domain/merch/content/content-pit-cont-ctl/master/\"\r\n",
 					"KEY_COL = \"cont_id\"\r\n",
 					"VAL_CNT_THRESHOLD = 5\r\n",
+					"DELTA_LOAD = False\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]"
 				],
 				"execution_count": 1
@@ -161,6 +162,7 @@
 					"logger.info(\"\\t SOURCE_MERCH_CONTENT_LAKE_PATH : {0}\".format(SOURCE_MERCH_CONTENT_LAKE_PATH))\r\n",
 					"logger.info(\"\\t STAGE_MERCH_CONTENT_PATH : {0}\".format(STAGE_MERCH_CONTENT_PATH))\r\n",
 					"logger.info(\"\\t TARGET_MERCH_CONTENT_PATH : {0}\".format(TARGET_MERCH_CONTENT_PATH))\r\n",
+					"logger.info(\"\\t DELTA_LOAD : {0}\".format(DELTA_LOAD))\r\n",
 					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
 					"logger.info(\"**************************************************************************\")\r\n",
@@ -354,7 +356,7 @@
 					"##############################\r\n",
 					"for opco in OPCO_LST:\r\n",
 					"    logger.info(\"\\t Processing MASTER for CTLG CONTENT - OPCO={0}\".format(opco))\r\n",
-					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_MERCH_CONTENT_PATH.format(opco = opco)) == False):\r\n",
+					"    if DELTA_LOAD== False:\r\n",
 					"        init()\r\n",
 					"    else:\r\n",
 					"        apply_cdc()    "

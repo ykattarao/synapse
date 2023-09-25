@@ -1,0 +1,373 @@
+{
+	"name": "nb_integrate_category_tree",
+	"properties": {
+		"folder": {
+			"name": "integration/category"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "25bdfd45-87e1-4f01-9925-a58e09c77618"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"TARGET_SERVICE_LOC_ID_OUT_PATH = \"opco/{opco}/integration/category/stage/cpt_stor_zip/out/\"\r\n",
+					"TARGET_CATEGORY_DEFAULT_PATH = \"opco/{opco}/integration/category/category-default/master\"\r\n",
+					"TARGET_CATEGORY_TREE_PATH = \"opco/{opco}/integration/category/category-tree/master\"\r\n",
+					"OPCO=\"stsh\"\r\n",
+					"VAL_CNT_THRESHOLD=2"
+				],
+				"execution_count": 14
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_category_tree\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 15
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 16
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\r\n",
+					"logger.info(\"\\t INTEGRATION - CATAGORY  - TREE - Starting with below parameters\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t OPCO : {0}\".format(OPCO))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t TARGET_SERVICE_LOC_ID_OUT_PATH : {0}\".format(TARGET_SERVICE_LOC_ID_OUT_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_CATEGORY_DEFAULT_PATH : {0}\".format(TARGET_CATEGORY_DEFAULT_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_CATEGORY_TREE_PATH : {0}\".format(TARGET_CATEGORY_TREE_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"**************************************************************************\")\r\n",
+					""
+				],
+				"execution_count": 17
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**LOAD API JSON ENRICH INTO CATEGORY ID AND COUNT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from pyspark.sql.window import Window \r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import explode, from_json, to_json, split,col,struct,collect_list,current_timestamp,sort_array\r\n",
+					"from pyspark.sql.types import StringType, LongType, MapType,StructType,StructField\r\n",
+					"\r\n",
+					"df_cat_prod_service_location = spark\\\r\n",
+					"    .read\\\r\n",
+					"    .json(BASE_ADLS_CONN_STR + TARGET_SERVICE_LOC_ID_OUT_PATH.format(opco = OPCO))\r\n",
+					"logger.info(\"\\t load-data : product service location api response from master\")\r\n",
+					"df_cat_prod_service_location = df_cat_prod_service_location.select(\r\n",
+					"struct([col(\"product_api_response.\" + c) for c in df_cat_prod_service_location.select(\"product_api_response.*\").columns if c not in [\"service_location\", \"price_zone\"]]).alias(\"product_api_response\"),\r\n",
+					"col(\"product_api_response.service_location\").alias(\"service_location\"),\r\n",
+					"col(\"product_api_response.price_zone\").alias(\"price_zone\")\r\n",
+					")\r\n",
+					"logger.info(\"\\t Single column To Three columns : Converted Struct(product_api_response) column into product_api_response,service_location,price_zone\")\r\n",
+					"df_cat_prod_service_location = df_cat_prod_service_location.withColumn(\"product_api_response\",\\\r\n",
+					"                     from_json(to_json(col(\"product_api_response\")),\\\r\n",
+					"                     MapType(StringType(), LongType())))\r\n",
+					"logger.info(\"\\t data type convertion : struct type into maptype.OPCO = {0}, Count = {1}\".format(OPCO, df_cat_prod_service_location.count()))\r\n",
+					"df_cat_prod_service_location_flatten = df_cat_prod_service_location\\\r\n",
+					"                    .select(explode(df_cat_prod_service_location.product_api_response)\\\r\n",
+					"                    .alias(\"key\", \"value\"),\"price_zone\",\"service_location\")\r\n",
+					"logger.info(\"\\t Flattening apiResponse : Flatten api response.OPCO = {0}, Count = {1}\".format(OPCO, df_cat_prod_service_location_flatten.count()))\r\n",
+					"df_cat_prod_service_location_flatten= df_cat_prod_service_location_flatten.select(col(\"key\").alias(\"category_id\"),\\\r\n",
+					"                        col(\"value\").alias(\"product_count\"),\\\r\n",
+					"                        col(\"price_zone\"),\\\r\n",
+					"                        split(col(\"service_location\"), ',').cast('array<int>').alias(\"service_location\"))"
+				],
+				"execution_count": 18
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**JOINING CATEGORY DEFAULT WITH SERVICE CATEGORY AND CREATING TREE**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_integration_ctr_default = spark\\\r\n",
+					"    .read\\\r\n",
+					"    .format(\"delta\")\\\r\n",
+					"    .option(\"inferSchema\",\"True\")\\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_DEFAULT_PATH.format(opco=OPCO))\r\n",
+					"logger.info(\"\\t Load Category Default: Load default data.OPCO = {0}, Count = {1}\".format(OPCO, df_integration_ctr_default.count()))\r\n",
+					"df_integration_ctr_tree = df_integration_ctr_default.\\\r\n",
+					"    join(df_cat_prod_service_location_flatten,df_integration_ctr_default.\\\r\n",
+					"    category_id == df_cat_prod_service_location_flatten.category_id).\\\r\n",
+					"    select(df_integration_ctr_default['*'], df_cat_prod_service_location_flatten.product_count,\\\r\n",
+					"    df_cat_prod_service_location_flatten.price_zone,\\\r\n",
+					"    df_cat_prod_service_location_flatten.service_location)\r\n",
+					"df_integration_ctr_tree = df_integration_ctr_tree.drop(\"child_node_ids\",\"last_modified\")\r\n",
+					"logger.info(\"\\t category tree:Join category default and service location.OPCO = {0}, Count = {1}\".format(OPCO, df_integration_ctr_tree.count()))"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**COLLECT CHILD NODES AND PERSISTING IN TARGET FOLDER**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"df_integration_ctr_tree_self = df_integration_ctr_tree.select(col(\"node_id\")\\\r\n",
+					"            .alias(\"node\"),col(\"parent_node_id\").alias(\"parent_node\")).distinct()\r\n",
+					"df_collect_child = Window.partitionBy(df_integration_ctr_tree_self.parent_node)\r\n",
+					"df_integration_ctr_tree_self = df_integration_ctr_tree_self.withColumn(\"child_node_ids\",\\\r\n",
+					"            sort_array(collect_list(\"node\").over(df_collect_child)))\r\n",
+					"df_integration_ctr_tree = df_integration_ctr_tree.join(df_integration_ctr_tree_self,\\\r\n",
+					"            df_integration_ctr_tree_self.parent_node == df_integration_ctr_tree.node_id)\\\r\n",
+					"            .select(df_integration_ctr_tree['*'],df_integration_ctr_tree_self.child_node_ids).distinct()\r\n",
+					"df_integration_ctr_tree = df_integration_ctr_tree.withColumn(\"last_modified\",current_timestamp())\r\n",
+					"logger.info(\"\\t CATEGORY TREE:Collecting all child nodes for node ids based on the category_ids.OPCO = {0}, Count = {1}\".format(OPCO, df_integration_ctr_tree.count()))"
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**VALIDATING DATA AND PERSISTING CATEGORY TREE**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"def check_if_master_file_exists():    \r\n",
+					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATEGORY_TREE_PATH.format(opco = OPCO))\r\n",
+					"\r\n",
+					"def load_category_tree(df_load,path,opco):\r\n",
+					"    df_load\\\r\n",
+					"            .write \\\r\n",
+					"            .option(\"mergeSchema\", \"true\") \\\r\n",
+					"            .mode(\"overwrite\") \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .save(path)\r\n",
+					"    logger.info(\"\\t CATEGORY TREE: Category tree master data is written.\\n OPCO = {0},\\n Path={1},\\n Count={2}\".format(OPCO,TARGET_CATEGORY_TREE_PATH.format(opco = OPCO),df_load.count()))\r\n",
+					"\r\n",
+					"\r\n",
+					"is_master_fl_exist = check_if_master_file_exists()\r\n",
+					"if is_master_fl_exist: \r\n",
+					"    df_integration_ctr_tree_master= spark \\\r\n",
+					"                                .read \\\r\n",
+					"                                .format(\"delta\") \\\r\n",
+					"                                .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_TREE_PATH.format(opco = OPCO))\r\n",
+					"    logger.info(\"\\t CATEGORY TREE: Category tree loaded from master. OPCO = {0}, Count={1}\".format(OPCO, df_integration_ctr_tree_master.count()))\r\n",
+					"    is_val_success= validate_count(df_integration_ctr_tree_master,df_integration_ctr_tree,VAL_CNT_THRESHOLD)        \r\n",
+					"    if is_val_success :\r\n",
+					"        load_category_tree(df_integration_ctr_tree,BASE_ADLS_CONN_STR + TARGET_CATEGORY_TREE_PATH.format(opco = OPCO), OPCO)\r\n",
+					"    else:\r\n",
+					"        logger.error(\"\\t Failed to override master since threshold is exceeding \")\r\n",
+					"        raise Exception(\"EXCEEDING_THRESHOLD\")                             \r\n",
+					"else:\r\n",
+					"        logger.info(\"\\t First Time Master Load\")\r\n",
+					"        load_category_tree(df_integration_ctr_tree,BASE_ADLS_CONN_STR + TARGET_CATEGORY_TREE_PATH.format(opco = OPCO), OPCO)\r\n",
+					""
+				],
+				"execution_count": 22
+			}
+		]
+	}
+}

@@ -48,8 +48,8 @@
 					"source": {
 						"type": "MySqlSource",
 						"query": {
-							"value": "@concat('SELECT atr_val_id,\n            lvl_id,\n            othr_key_id,\n            atr_id,\n            atr_val_cd, \n            srce_cd,\n            audt_cr_dt_tm,\n            audt_cr_user_cd,\n            audt_upd_dt_tm,\n            audt_upd_user_cd \n            FROM catalog_prod.omt_atr_val  \n            WHERE (ifnull(audt_upd_dt_tm, ''0000-00-00 00:00:00'') >= ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
-							"type": "Expression"
+						"value": "@if(equals(pipeline().parameters.PARAM_DELTA_LOAD,true),concat('SELECT atr_val_id,\r\n    lvl_id,\r\n    othr_key_id,\r\n    atr_id,\r\n    atr_val_cd, \r\n    srce_cd,\r\n    audt_cr_dt_tm,\r\n    audt_cr_user_cd,\r\n    audt_upd_dt_tm,\r\n    audt_upd_user_cd \r\n    FROM catalog_prod.omt_atr_val  \r\n    WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')'),'SELECT atr_val_id,\r\n            lvl_id,\r\n            othr_key_id,\r\n            atr_id,\r\n            atr_val_cd, \r\n            srce_cd,\r\n            audt_cr_dt_tm,\r\n            audt_cr_user_cd,\r\n            audt_upd_dt_tm,\r\n            audt_upd_user_cd \r\n            FROM catalog_prod.omt_atr_val')",
+						"type": "Expression"
 						}
 					},
 					"sink": {
@@ -259,46 +259,6 @@
 				}
 			},
 			{
-				"name": "lkp-ext-start-time",
-				"type": "Lookup",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.00:30:00",
-					"retry": 3,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "DelimitedTextSource",
-						"storeSettings": {
-							"type": "AzureBlobFSReadSettings",
-							"recursive": true,
-							"enablePartitionDiscovery": false
-						},
-						"formatSettings": {
-							"type": "DelimitedTextReadSettings"
-						}
-					},
-					"dataset": {
-						"referenceName": "ds_az_adls_cntrl_fl_latest",
-						"type": "DatasetReference",
-						"parameters": {
-							"PARAM_OPCO": {
-								"value": "@pipeline().parameters.PARAM_OPCO",
-								"type": "Expression"
-							},
-							"PARAM_DOMAIN": {
-								"value": "@pipeline().parameters.PARAM_DOMAIN",
-								"type": "Expression"
-							}
-						}
-					}
-				}
-			},
-			{
 				"name": "mdm-catalog-attr-val",
 				"type": "SynapseNotebook",
 				"dependsOn": [
@@ -350,6 +310,13 @@
 								"type": "Expression"
 							},
 							"type": "string"
+						},
+						"DELTA_LOAD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+								"type": "Expression"
+							},
+							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -365,6 +332,46 @@
 					},
 					"driverSize": "Small",
 					"numExecutors": null
+				}
+			},
+			{
+				"name": "lkp-ext-start-time",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:30:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_cntrl_fl_latest",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_DOMAIN": {
+								"value": "@pipeline().parameters.PARAM_DOMAIN",
+								"type": "Expression"
+							}
+						}
+					}
 				}
 			}
 		],
@@ -396,6 +403,10 @@
 			"PARAM_KEY_COL": {
 				"type": "string",
 				"defaultValue": "atr_val_id"
+			},
+			"PARAM_DELTA_LOAD": {
+				"type": "bool",
+				"defaultValue": false
 			}
 		},
 		"variables": {

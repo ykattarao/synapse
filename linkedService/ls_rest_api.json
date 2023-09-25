@@ -1,0 +1,22 @@
+{
+	"name": "ls_rest_api",
+	"properties": {
+		"parameters": {
+			"URL_PARAM": {
+				"type": "string",
+				"defaultValue": "http://qaregression-product-api.service.qa.peapod.com:8080"
+			}
+		},
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "@{linkedService().URL_PARAM}",
+			"enableServerCertificateValidation": false,
+			"authenticationType": "Anonymous"
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedRuntime01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

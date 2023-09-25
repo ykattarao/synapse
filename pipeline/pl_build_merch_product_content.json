@@ -31,7 +31,7 @@
 					"source": {
 						"type": "InformixSource",
 						"query": {
-							"value": "@concat('SELECT cont_id,\n             app_type_cd,\n             file_ext_cd,\n             file_loc_cd, \n             cont_name_tx,\n             file_name_tx,\n             cont_ttl_tx,\n             src_cd,\n             view_cd, \n             audt_cr_id,\n             audt_cr_dt,\n             audt_upd_id,\n             audt_upd_dt \n             FROM content:pit_cont_ctl \n             WHERE (audt_upd_dt > ''',formatDateTime(addDays(formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),-1),'MM-dd-yyyy'),''')')",
+							"value": "@if(equals(pipeline().parameters.PARAM_DELTA_LOAD,true),concat('SELECT cont_id,\n             app_type_cd,\n             file_ext_cd,\n             file_loc_cd, \n             cont_name_tx,\n             file_name_tx,\n             cont_ttl_tx,\n             src_cd,\n             view_cd, \n             audt_cr_id,\n             audt_cr_dt,\n             audt_upd_id,\n             audt_upd_dt \n             FROM content:pit_cont_ctl \n             WHERE (audt_upd_dt > ''',formatDateTime(addDays(formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),-1),'MM-dd-yyyy'),''')'),\n\t'SELECT cont_id,\n             app_type_cd,\n             file_ext_cd,\n             file_loc_cd, \n             cont_name_tx,\n             file_name_tx,\n             cont_ttl_tx,\n             src_cd,\n             view_cd, \n             audt_cr_id,\n             audt_cr_dt,\n             audt_upd_id,\n             audt_upd_dt \n             FROM content:pit_cont_ctl')",
 							"type": "Expression"
 						}
 					},
@@ -373,6 +373,13 @@
 								"type": "Expression"
 							},
 							"type": "string"
+						},
+						"DELTA_LOAD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+								"type": "Expression"
+							},
+							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -411,6 +418,10 @@
 			"PARAM_KEY_COL": {
 				"type": "string",
 				"defaultValue": "cont_id"
+			},
+			"PARAM_DELTA_LOAD": {
+				"type": "bool",
+				"defaultValue": false
 			}
 		},
 		"variables": {

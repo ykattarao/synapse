@@ -48,7 +48,7 @@
 					"source": {
 						"type": "MySqlSource",
 						"query": {
-							"value": "@concat('SELECT prim_cat_id,\n             cat_name_tx, \n             cat_srch_name_tx, \n             type_cd, \n             actv_cd,\n             audt_cr_dt_tm,\n             audt_cr_user_cd,\n             audt_upd_dt_tm,\n             audt_upd_user_cd\n             FROM catalog_prod.omt_prim_cat \n             WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
+							"value": "@if(equals(pipeline().parameters.PARAM_DELTA_LOAD,true),concat('SELECT prim_cat_id,\n             cat_name_tx, \n             cat_srch_name_tx, \n             type_cd, \n             actv_cd,\n             audt_cr_dt_tm,\n             audt_cr_user_cd,\n             audt_upd_dt_tm,\n             audt_upd_user_cd\n             FROM catalog_prod.omt_prim_cat \n             WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')'),\n\t'SELECT prim_cat_id,\n             cat_name_tx, \n             cat_srch_name_tx, \n             type_cd, \n             actv_cd,\n             audt_cr_dt_tm,\n             audt_cr_user_cd,\n             audt_upd_dt_tm,\n             audt_upd_user_cd\n             FROM catalog_prod.omt_prim_cat')",
 							"type": "Expression"
 						}
 					},
@@ -339,6 +339,13 @@
 								"type": "Expression"
 							},
 							"type": "string"
+						},
+						"DELTA_LOAD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+								"type": "Expression"
+							},
+							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -385,6 +392,10 @@
 			"PARAM_KEY_COL": {
 				"type": "string",
 				"defaultValue": "prim_cat_id"
+			},
+			"PARAM_DELTA_LOAD": {
+				"type": "bool",
+				"defaultValue": false
 			}
 		},
 		"variables": {

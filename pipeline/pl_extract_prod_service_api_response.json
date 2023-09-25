@@ -1,0 +1,249 @@
+{
+	"name": "pl_extract_prod_service_api_response",
+	"properties": {
+		"activities": [
+			{
+				"name": "lkp-stor-zip-id",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "pricezone-servicelocation-ids",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.parquet",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_stor_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_STOR_LAKE_PATH": {
+								"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/integration/category/stage/cpt_stor_zip/in')",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "lkp-stor-zip-id",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('lkp-stor-zip-id').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 50,
+					"activities": [
+						{
+							"name": "extact-svc-loc-api-response",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.01:00:00",
+								"retry": 1,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"additionalColumns": [
+										{
+											"name": "service_location",
+											"value": {
+												"value": "@item().service_location_lst",
+												"type": "Expression"
+											}
+										},
+										{
+											"name": "price_zone",
+											"value": {
+												"value": "@item().pr_zone_cd",
+												"type": "Expression"
+											}
+										}
+									],
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "$"
+											},
+											"sink": {
+												"path": "product_api_response"
+											}
+										}
+									],
+									"collectionReference": ""
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_rest_api",
+									"type": "DatasetReference",
+									"parameters": {
+										"PARAM_URL": {
+											"value": "@concat(pipeline().parameters.PARAM_PRODUCT_API_URL,item().service_location)",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_az_adls_svc_loc_api_response",
+									"type": "DatasetReference",
+									"parameters": {
+										"VAR_FILENAME": {
+											"value": "@concat(item().pr_zone_cd,'.json')",
+											"type": "Expression"
+										},
+										"PARAM_STAGE_SERVICE_LOC_FLDR_PATH": {
+											"value": "@concat('opco/',pipeline().parameters.PARAM_OPCO,'/integration/category/stage/cpt_stor_zip/out')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "pricezone-servicelocation-ids",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_integrate_price_zone_service_location_ids",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"OPCO": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "wait-handling-failed-api-response",
+				"type": "Wait",
+				"dependsOn": [
+					{
+						"activity": "ForEach",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"waitTimeInSeconds": 10
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "fdln"
+			},
+			"PARAM_PRODUCT_API_URL": {
+				"type": "string",
+				"defaultValue": "http://ada-product-api.service.qa.peapod.com:8080/v1/internal/products/count/"
+			}
+		},
+		"folder": {
+			"name": "integration/category"
+		},
+		"annotations": []
+	}
+}

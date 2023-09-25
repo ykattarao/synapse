@@ -83,11 +83,12 @@
 				"source": [
 					"\r\n",
 					"BASE_ADLS_CONN_STR= \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
-					"SOURCE_MERCH_CATALOG_ATTRIBUTE_LAKE_PATH = \"opco/ppod/domain/merch/catalog/omt-atr/lake/2023-08-24-10-35-32\"\r\n",
+  				"SOURCE_MERCH_CATALOG_ATTRIBUTE_LAKE_PATH = \"opco/ppod/domain/merch/catalog/omt-atr/lake/2023-08-24-10-35-32\"\r\n",
 					"STAGE_MERCH_CATALOG_ATTRIBUTE_PATH=\"opco/ppod/domain/merch/catalog/omt-atr/stage/\"\r\n",
 					"TARGET_MERCH_CATALOG_ATTRIBUTE_PATH=\"opco/{opco}/domain/merch/catalog/omt-atr/master/\"\r\n",
 					"KEY_COL = \"atr_id\"\r\n",
 					"VAL_CNT_THRESHOLD = 1\r\n",
+					"DELTA_LOAD = False\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
 					""
 				],
@@ -122,7 +123,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_merch_ctlg_omt_atr\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": 3
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -140,7 +141,7 @@
 				"source": [
 					"%run utils/validation/nb_auto_data_validation_framework"
 				],
-				"execution_count": 4
+				"execution_count": 3
 			},
 			{
 				"cell_type": "code",
@@ -162,13 +163,14 @@
 					"logger.info(\"\\t SOURCE_MERCH_CATALOG_ATTRIBUTE_LAKE_PATH : {0}\".format(SOURCE_MERCH_CATALOG_ATTRIBUTE_LAKE_PATH))\r\n",
 					"logger.info(\"\\t STAGE_MERCH_CATALOG_ATTRIBUTE_PATH : {0}\".format(STAGE_MERCH_CATALOG_ATTRIBUTE_PATH))\r\n",
 					"logger.info(\"\\t TARGET_MERCH_CATALOG_ATTRIBUTE_PATH : {0}\".format(TARGET_MERCH_CATALOG_ATTRIBUTE_PATH))\r\n",
+					"logger.info(\"\\t DELTA_LOAD : {0}\".format(DELTA_LOAD))\r\n",
 					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
 					"logger.info(\"**************************************************************************\")\r\n",
 					"\r\n",
 					""
 				],
-				"execution_count": 5
+				"execution_count": 4
 			},
 			{
 				"cell_type": "markdown",
@@ -221,7 +223,7 @@
 					"])\r\n",
 					"logger.debug(\"\\t schema-defination : Defined the schema for catalog_prod:omt_atr.\\n {0}\".format(STAGE_MERCH_CATALOG_ATTRIBUTE_SCHEMA))"
 				],
-				"execution_count": 6
+				"execution_count": 5
 			},
 			{
 				"cell_type": "markdown",
@@ -283,7 +285,7 @@
 					"logger.info(\"\\t stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_MERCH_CATALOG_ATTRIBUTE_LAKE_PATH, STAGE_MERCH_CATALOG_ATTRIBUTE_PATH, df_prod_ctlg_attr_stage.count()))\r\n",
 					""
 				],
-				"execution_count": 7
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -348,12 +350,12 @@
 					"##############################\r\n",
 					"for opco in OPCO_LST:\r\n",
 					"    logger.info(\"\\t Processing MASTER for CTLG OMT CAT ATR - OPCO={0}\".format(opco))\r\n",
-					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_MERCH_CATALOG_ATTRIBUTE_PATH.format(opco = opco)) == False):\r\n",
+					"    if DELTA_LOAD == False:\r\n",
 					"        init()\r\n",
 					"    else:\r\n",
 					"        apply_cdc()    "
 				],
-				"execution_count": 10
+				"execution_count": 7
 			}
 		]
 	}

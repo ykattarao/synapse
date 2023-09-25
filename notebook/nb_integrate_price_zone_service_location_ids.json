@@ -1,0 +1,266 @@
+{
+	"name": "nb_integrate_price_zone_service_location_ids",
+	"properties": {
+		"folder": {
+			"name": "integration/category"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "f4384edc-eeb1-4fba-96bf-c1b322df20d9"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"\r\n",
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"TARGET_RTL_CPT_STORE_ZIP_PATH = \"opco/{opco}/domain/store/retailer-cpt-store-zip/master\"\r\n",
+					"TARGET_RTL_CPT_ECOM_STORE_CTL_PATH=\"opco/{opco}/domain/store/retailer-cpt-ecom-store-ctl/master\"\r\n",
+					"TARGET_SERVICE_LOC_ID_PATH = \"opco/{opco}/integration/category/stage/cpt_stor_zip/in\"\r\n",
+					"TARGET_SERVICE_LOC_OUT_PATH = \"opco/{opco}/integration/category/stage/cpt_stor_zip/out\"\r\n",
+					"OPCO = \"fdln\""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_price_zone_service_location_ids\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\r\n",
+					"logger.info(\"\\t PRODUCT - SERVICE  - CPT -STORE-ZIP - Starting with below parameters\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t OPCO : {0}\".format(OPCO))\r\n",
+					"logger.info(\"\\t TARGET_RTL_CPT_STORE_ZIP_PATH : {0}\".format(TARGET_RTL_CPT_STORE_ZIP_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_RTL_CPT_ECOM_STORE_CTL_PATH : {0}\".format(TARGET_RTL_CPT_ECOM_STORE_CTL_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_SERVICE_LOC_OUT_PATH : {0}\".format(TARGET_SERVICE_LOC_OUT_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"\\t TARGET_SERVICE_LOC_ID_PATH : {0}\".format(TARGET_SERVICE_LOC_ID_PATH.format(opco = OPCO)))\r\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**PURGE EXISTING FOLDERS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"folder_paths = [BASE_ADLS_CONN_STR + TARGET_SERVICE_LOC_ID_PATH.format(opco = OPCO),\r\n",
+					"\t    BASE_ADLS_CONN_STR + TARGET_SERVICE_LOC_OUT_PATH.format(opco = OPCO)]\r\n",
+					"\r\n",
+					"for folder_path in folder_paths:\r\n",
+					"    if mssparkutils.fs.exists(folder_path):\r\n",
+					"        mssparkutils.fs.rm(folder_path, True)\r\n",
+					"        logger.info(\"\\t PURGE EXISTING FOLDER: Existing files deleted from path = {0}\".format(folder_path))\r\n",
+					"    else:\r\n",
+					"        logger.info(\"\\t NOT EXIST: Folder path does not exist from path = {0}\".format(folder_path))"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**LOAD STORE SERVICE DATA AND ENRICH**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import *\r\n",
+					"from pyspark.sql.types import *\r\n",
+					"\r\n",
+					"def check_if_master_file_exists():\r\n",
+					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RTL_CPT_STORE_ZIP_PATH.format(opco = OPCO))& \\\r\n",
+					"           DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RTL_CPT_ECOM_STORE_CTL_PATH.format(opco = OPCO)) \r\n",
+					"\r\n",
+					"is_master_fl_exist = check_if_master_file_exists()\r\n",
+					"if(is_master_fl_exist == True): \r\n",
+					"\r\n",
+					"    df_rtl_cpt_store_zip = spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"delta\")\\\r\n",
+					"        .option(\"inferSchema\",\"True\")\\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_RTL_CPT_STORE_ZIP_PATH.format(opco = OPCO) )\r\n",
+					"    \r\n",
+					"    logger.info(\"\\t LOAD DATA: Loading data from store service location\")\r\n",
+					"    df_rtl_cpt_ecom_store_ctl = spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"delta\")\\\r\n",
+					"        .option(\"inferSchema\",\"True\")\\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_RTL_CPT_ECOM_STORE_CTL_PATH.format(opco = OPCO) )\r\n",
+					"    logger.info(\"\\t LOAD DATA: Loading data from ecom store control\")\r\n",
+					"else:\r\n",
+					"    logger.error(\"Master file does not exist for OPCO={0}\".format(OPCO))\r\n",
+					"    raise Exception(\"MASTER_FILE_DOES_NOT_EXIST\") \r\n",
+					"\r\n",
+					"df_rtl_cpt_store_zip_enrchd = df_rtl_cpt_store_zip.join(df_rtl_cpt_ecom_store_ctl,df_rtl_cpt_store_zip.ecom_stor_id == df_rtl_cpt_ecom_store_ctl.ecom_stor_id)\\\r\n",
+					"    .filter(df_rtl_cpt_ecom_store_ctl.opco_id == OPCO.upper())\\\r\n",
+					"    .select(\"pr_zone_cd\",\"stor_zip_id\")\\\r\n",
+					"    .groupBy(\"pr_zone_cd\").agg({\"stor_zip_id\": \"collect_list\"})\\\r\n",
+					"    .withColumnRenamed(\"collect_list(stor_zip_id)\",\"service_location_lst\")\\\r\n",
+					"    .withColumn(\"service_location\", element_at(col(\"service_location_lst\"),1))\\\r\n",
+					"    .withColumn(\"service_location_lst\", concat_ws(\",\",col(\"service_location_lst\")))\r\n",
+					"\r\n",
+					"df_rtl_cpt_store_zip_enrchd \\\r\n",
+					"    .write \\\r\n",
+					"    .format(\"parquet\") \\\r\n",
+					"    .option(\"mergeSchema\", \"True\") \\\r\n",
+					"    .mode(\"overwrite\") \\\r\n",
+					"    .save(BASE_ADLS_CONN_STR + TARGET_SERVICE_LOC_ID_PATH.format(opco = OPCO))  \r\n",
+					"logger.info(\"\\t PERSISTING DATA:rtl-store-zip service location.OPCO = {0},path = {1}, Count = {2}\".format(OPCO,TARGET_SERVICE_LOC_ID_PATH.format(opco = OPCO), df_rtl_cpt_store_zip_enrchd.count()))"
+				],
+				"execution_count": 5
+			}
+		]
+	}
+}

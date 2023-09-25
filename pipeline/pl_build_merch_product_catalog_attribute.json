@@ -31,8 +31,8 @@
 					"source": {
 						"type": "MySqlSource",
 						"query": {
-							"value": "@concat('SELECT atr_id,\n             disp_seq_qy,\n\t         atr_type_cd,\n             atr_name_cd,\n\t         atr_name_tx,\n\t\t     atr_disp_tx,\n\t\t     db_look_name_tx,\n\t\t     clss_cd,\n\t\t     reqd_cd,\n\t\t     sel_type_cd,\n\t     \t mult_val_allw_cd,\n\t\t     data_type_cd,\n\t\t     left_data_prec_cd,\n\t         rght_data_prec_cd,\n             audt_cr_dt_tm,\n             audt_cr_user_cd,\n             audt_upd_dt_tm,\n             audt_upd_user_cd\n             FROM catalog_prod.omt_atr\n             WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
-							"type": "Expression"
+						"value": "@if(equals(pipeline().parameters.PARAM_DELTA_LOAD,true),concat('SELECT atr_id,\n         disp_seq_qy,\n\t     atr_type_cd,\n         atr_name_cd,\n\t     atr_name_tx,\n\t     atr_disp_tx,\n\t     db_look_name_tx,\n\t     clss_cd,\n\t     reqd_cd,\n\t     sel_type_cd,\n         mult_val_allw_cd,\n\t     data_type_cd,\n\t     left_data_prec_cd,\n\t     rght_data_prec_cd\n         audt_cr_dt_tm,\n         audt_cr_user_cd,\n         audt_upd_dt_tm,\n         audt_upd_user_cd\n             FROM catalog_prod.omt_atr\n             WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')'),\n\t'SELECT atr_id,\n             disp_seq_qy,\n\t     atr_type_cd,\n             atr_name_cd,\n\t     atr_name_tx,\n\t     atr_disp_tx,\n\t     db_look_name_tx,\n\t     clss_cd,\n\t     reqd_cd,\n\t     sel_type_cd,\n             mult_val_allw_cd,\n\t     data_type_cd,\n\t     left_data_prec_cd,\n             rght_data_prec_cd\n             audt_cr_dt_tm,\n             audt_cr_user_cd,\n             audt_upd_dt_tm,\n             audt_upd_user_cd\n             FROM catalog_prod.omt_atr')",
+						"type": "Expression"
 						}
 					},
 					"sink": {
@@ -438,6 +438,13 @@
 								"type": "Expression"
 							},
 							"type": "string"
+						},
+						"DELTA_LOAD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+								"type": "Expression"
+							},
+							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -484,6 +491,10 @@
 			"PARAM_KEY_COL": {
 				"type": "string",
 				"defaultValue": "atr_id"
+			},
+			"PARAM_DELTA_LOAD": {
+				"type": "bool",
+				"defaultValue": false
 			}
 		},
 		"variables": {

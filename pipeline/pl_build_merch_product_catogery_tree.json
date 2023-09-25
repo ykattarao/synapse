@@ -48,7 +48,7 @@
 					"source": {
 						"type": "MySqlSource",
 						"query": {
-							"value": "@concat('SELECT prim_cat_tree_id, \n                tree_id, \n                seq_id, \n                chld_cat_id, \n                parn_cat_tree_id, \n                actv_cd,\n                audt_cr_dt_tm,\n                audt_cr_user_cd,\n                audt_upd_dt_tm,\n                audt_upd_user_cd\n                FROM catalog_prod.omt_prim_cat_tree  \n                WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')')",
+							"value": "@if(equals(pipeline().parameters.PARAM_DELTA_LOAD,true),concat('SELECT prim_cat_tree_id, \n                tree_id, \n                seq_id, \n                chld_cat_id, \n                parn_cat_tree_id, \n                actv_cd,\n                audt_cr_dt_tm,\n                audt_cr_user_cd,\n                audt_upd_dt_tm,\n                audt_upd_user_cd\n                FROM catalog_prod.omt_prim_cat_tree  \n                WHERE (audt_upd_dt_tm > ''',activity('lkp-ext-start-time').output.firstRow.Prop_0,''')'),\n\t'SELECT prim_cat_tree_id, \n                tree_id, \n                seq_id, \n                chld_cat_id, \n                parn_cat_tree_id, \n                actv_cd,\n                audt_cr_dt_tm,\n                audt_cr_user_cd,\n                audt_upd_dt_tm,\n                audt_upd_user_cd\n                FROM catalog_prod.omt_prim_cat_tree')",
 							"type": "Expression"
 						}
 					},
@@ -350,6 +350,13 @@
 								"type": "Expression"
 							},
 							"type": "string"
+						},
+						"DELTA_LOAD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+								"type": "Expression"
+							},
+							"type": "bool"
 						}
 					},
 					"snapshot": true,
@@ -396,6 +403,10 @@
 			"PARAM_KEY_COL": {
 				"type": "string",
 				"defaultValue": "prim_cat_tree_id"
+			},
+			"PARAM_DELTA_LOAD": {
+				"type": "bool",
+				"defaultValue": false
 			}
 		},
 		"variables": {
