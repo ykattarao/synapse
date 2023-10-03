@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "ab62bc62-5513-4199-9079-3bd2416c8164"
+				"spark.autotune.trackingId": "86c13521-15ea-4d71-8988-f406aeffa5f6"
 			}
 		},
 		"metadata": {
@@ -92,6 +92,7 @@
 					"STAGE_USER_PATH = \"opco/{opco}/domain/integration/past-purchase/stage/user\"\r\n",
 					"STAGE_REPL_PROD_PATH=\"opco/{opco}/domain/integration/past-purchase/stage/replacement-products\"\r\n",
 					"STAGE_DEL_PROD_PATH =\"opco/{opco}/domain/integration/past-purchase/stage/deleted-products\"\r\n",
+					"STAGE_ORDER_GENIUS_DEFAULT_PATH=\"opco/{opco}/domain/integration/past-purchase/stage/order-genius-default\"\r\n",
 					"OUTGOING_CUSTOMER_PATH = \"-\"\r\n",
 					"OUTGOING_CUSTOMER_FL = \"-\"\r\n",
 					"OUTGOING_WEB_ORDER_PATH = \"-\"\r\n",
@@ -99,6 +100,8 @@
 					"FL_PATH_SEPARATOR = \"/\"\r\n",
 					"TARGET_PAST_PURC_PATH=\"opco/{opco}/domain/integration/past-purchase/master\"\r\n",
 					"NO_OF_PARTITIONS = 25\r\n",
+					"NO_OF_PROD_ORD_RANK=500\r\n",
+					"NO_OF_PARTITONS_ORD_RANK=6\r\n",
 					"YRS_DATA= 3\r\n",
 					"IS_DELTA_LOAD = False\r\n",
 					"OPCO = \"fdln\"\r\n",
@@ -107,7 +110,7 @@
 					"COSMOS_CONTAINER_NM = \"past-purchase-test\"\r\n",
 					"COSMOS_DB_NM = \"purchase_history\""
 				],
-				"execution_count": 74
+				"execution_count": 69
 			},
 			{
 				"cell_type": "markdown",
@@ -237,7 +240,7 @@
 					"    df_delta_usr = df_delta_usr.dropDuplicates()\n",
 					"    logger.info(\"delta-users: Loaded unique Delta Users from Customer and Web Order Domain. OPCO={0}, Count={1}\".format(OPCO, df_delta_usr.count()))"
 				],
-				"execution_count": 75
+				"execution_count": 72
 			},
 			{
 				"cell_type": "markdown",
@@ -269,6 +272,7 @@
 					"from pyspark.sql.functions import *\r\n",
 					"from delta.tables import DeltaTable\r\n",
 					"from pyspark.sql import functions as f\r\n",
+					"from pyspark.sql.window import Window\r\n",
 					"\r\n",
 					"def get_all_stor_ord():\r\n",
 					"    curr_date= current_date()\r\n",
@@ -281,7 +285,7 @@
 					"        .filter((df_store_order_mstr.transaction_ts >= from_date) & (df_store_order_mstr.transaction_ts <= curr_date)) \\\r\n",
 					"        .filter(\"user_id IS NOT NULL\") \\\r\n",
 					"        .withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS)) \\\r\n",
-					"        .select(\"order_num\", \"loyalty_id\", \"transaction_ts\", \"user_id\", \"pod_id\", \"hash\")\r\n",
+					"        .select(\"order_num\", \"loyalty_id\", \"transaction_ts\", \"user_id\", \"pod_id\",\"qty_sld_amt\",\"hash\")\r\n",
 					"    logger.info(\"get_all_stor_ord : Extract ALL store orders between {0} and {1}. OPCO = {2}, Count = {3}\".format(from_date, curr_date, OPCO, df_store_order_mstr.count()))\r\n",
 					"    return df_store_order_mstr\r\n",
 					"\r\n",
@@ -317,7 +321,7 @@
 					"    write_stage_stor_ord(df_stor_ord_master)\r\n",
 					""
 				],
-				"execution_count": 27
+				"execution_count": 73
 			},
 			{
 				"cell_type": "markdown",
@@ -366,7 +370,8 @@
 					"        .withColumnRenamed(\"deliveryDate\", \"delivery_date\") \\\r\n",
 					"        .withColumnRenamed(\"userId\", \"user_id\") \\\r\n",
 					"        .withColumnRenamed(\"podId\", \"pod_id\") \\\r\n",
-					"        .select(\"order_id\", \"order_date\", \"delivery_date\", \"user_id\", \"pod_id\", \"hash\",\"order_time\")\r\n",
+					"        .withColumnRenamed(\"ordQy\",\"ord_Qy\")\\\r\n",
+					"        .select(\"order_id\", \"order_date\", \"delivery_date\", \"user_id\", \"pod_id\",\"ord_Qy\",\"hash\",\"order_time\")\r\n",
 					"    logger.info(\"get_all_web_ord : Extract ALL web orders between {0} and {1}. OPCO = {2}, Count = {3}\".format(from_date, curr_date, OPCO, df_web_order_mstr.count()))\r\n",
 					"    return df_web_order_mstr\r\n",
 					"\r\n",
@@ -402,7 +407,7 @@
 					"    write_stage_web_ord(df_web_ord_master)\r\n",
 					""
 				],
-				"execution_count": 28
+				"execution_count": 74
 			},
 			{
 				"cell_type": "markdown",
@@ -476,7 +481,7 @@
 					"else:\r\n",
 					"    write_stage_user(df_users_master)"
 				],
-				"execution_count": 29
+				"execution_count": 75
 			},
 			{
 				"cell_type": "markdown",
@@ -529,7 +534,7 @@
 					"        .save(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"replcamen-product: Write repalcement-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_repl_prod.count()))"
 				],
-				"execution_count": 30
+				"execution_count": 76
 			},
 			{
 				"cell_type": "markdown",
@@ -581,7 +586,7 @@
 					"    .save(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"deleted-product: Write deleted-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_del_prod.count()))"
 				],
-				"execution_count": 31
+				"execution_count": 77
 			},
 			{
 				"cell_type": "markdown",
@@ -614,7 +619,7 @@
 					"from pyspark.sql.functions import *\r\n",
 					"from pyspark.sql import functions as f\r\n",
 					"import datetime\r\n",
-					"from pyspark.sql.types import StringType, ArrayType, DecimalType, IntegerType\r\n",
+					"from pyspark.sql.types import StringType, ArrayType, DecimalType, IntegerType,MapType\r\n",
 					"\r\n",
 					"def check_if_stage_file_exists():\r\n",
 					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH.format(opco = OPCO)) & \\\r\n",
@@ -640,7 +645,7 @@
 					"df_store_order = spark.read \\\r\n",
 					"    .format(\"delta\") \\\r\n",
 					"    .load(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH.format(opco = OPCO)) \\\r\n",
-					"    .select(\"transaction_ts\", \"user_id\", \"pod_id\",\"loyalty_id\")\r\n",
+					"    .select(\"transaction_ts\", \"user_id\", \"pod_id\",\"loyalty_id\",\"qty_sld_amt\")\r\n",
 					"df_store_order.createOrReplaceTempView(\"tbl_store_order\")\r\n",
 					"logger.info(\"stage-data-load: Created Stage table[tbl_store_order] for all domains. Ready to start the integration. OPCO={0}, Path={1}, Count={2}\".format(OPCO, STAGE_STORE_ORDER_PATH, df_store_order.count()))\r\n",
 					"\r\n",
@@ -651,7 +656,7 @@
 					"    .load(BASE_ADLS_CONN_STR + STAGE_WEB_ORDER_PATH.format(opco = OPCO)) \\\r\n",
 					"    .withColumn(\"order_date_time\",to_timestamp(concat(to_date(col(\"order_date\"),\"yyyy-MM-dd\").cast(\"string\"), lit(\" \"), col(\"order_time\")), \"yyyy-MM-dd HH:mm:ss\"))\\\r\n",
 					"    .withColumn(\"delivery_date_time\",to_timestamp(concat(to_date(col(\"delivery_date\"),\"yyyy-MM-dd\").cast(\"string\"), lit(\" \"), lit(\"00:00:00\")), \"yyyy-MM-dd HH:mm:ss\"))\\\r\n",
-					"    .select(\"order_time\",\"order_date\", \"delivery_date\", \"user_id\", \"pod_id\",  \"order_date_time\", \"delivery_date_time\")\r\n",
+					"    .select(\"order_time\",\"order_date\", \"delivery_date\", \"user_id\", \"pod_id\",\"order_date_time\", \"delivery_date_time\",\"ord_Qy\")\r\n",
 					"df_web_order.createOrReplaceTempView(\"tbl_web_order\")\r\n",
 					"logger.info(\"stage-data-load: Created Stage table[tbl_web_order] for all domains. Ready to start the integration. OPCO={0}, Path={1}, Count={2}\".format(OPCO, STAGE_STORE_ORDER_PATH, df_web_order.count()))\r\n",
 					"\r\n",
@@ -682,7 +687,7 @@
 					"\r\n",
 					"logger.info(\"stage-data-load: Created required all stage tables for all domains. Ready to start the integration. OPCO={0}\".format(OPCO))"
 				],
-				"execution_count": 32
+				"execution_count": 78
 			},
 			{
 				"cell_type": "markdown",
@@ -713,17 +718,17 @@
 				"source": [
 					"df_union_query = spark.sql(\r\n",
 					"    \"\"\"\r\n",
-					"    SELECT transaction_ts as order_date,user_id,pod_id\r\n",
+					"    SELECT transaction_ts as order_date,user_id,pod_id,qty_sld_amt as ord_Qy\r\n",
 					"    FROM tbl_store_order\r\n",
 					"    UNION ALL\r\n",
-					"    SELECT delivery_date_time as order_date,user_id,pod_id\r\n",
+					"    SELECT delivery_date_time as order_date,user_id,pod_id,ord_Qy\r\n",
 					"    FROM tbl_web_order\r\n",
 					"    \"\"\"\r\n",
 					"    )\r\n",
 					"df_union_query.createOrReplaceTempView(\"tbl_web_store_order\")\r\n",
 					"logger.info(\"merge-web-store-orders: Merged store and web orders into a single dataset. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 33
+				"execution_count": 79
 			},
 			{
 				"cell_type": "markdown",
@@ -792,7 +797,7 @@
 					"df_usr_prd_all_times=df_usr_prd_all_times.withColumnRenamed(\"user_id\",\"user_id_all\")\r\n",
 					""
 				],
-				"execution_count": 34
+				"execution_count": 80
 			},
 			{
 				"cell_type": "markdown",
@@ -847,7 +852,7 @@
 					"df_usr_prd_last_order = df_usr_prd_last_order.withColumnRenamed(\"user_id\",\"user_id_last_order\") \r\n",
 					""
 				],
-				"execution_count": 61
+				"execution_count": 81
 			},
 			{
 				"cell_type": "markdown",
@@ -921,7 +926,140 @@
 					"    .drop(\"user_id_del\",\"removed_purchases\")\r\n",
 					"logger.info(\"aggregate-products: Remove user deleted past-purchase products from df_usr_prd_last_order. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 81
+				"execution_count": 82
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**CALCULATING ORDER GENIUS DEFAULT,ORDER RANKING**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"from math import ceil\r\n",
+					"logger.info(\"Calculating Order genius and Order Ranking for Users. OPCO = {0}\".format(OPCO))\r\n",
+					"\r\n",
+					"\r\n",
+					"def ord_rank_partion(ord_gen_list,max_num_prod,max_num_partitions):\r\n",
+					"    \r\n",
+					"    partition_size= max_num_prod//max_num_partitions\r\n",
+					"    num_ord_gen_list_part=ceil(len(ord_gen_list) / partition_size)\r\n",
+					"\r\n",
+					"    if(max_num_partitions>num_ord_gen_list_part):        \r\n",
+					"        num_partitions=num_ord_gen_list_part\r\n",
+					"    else:\r\n",
+					"        num_partitions=max_num_partitions   \r\n",
+					"   \r\n",
+					"    result = {}     \r\n",
+					"    for i in range(num_partitions):\r\n",
+					"        if(i+1==num_partitions):\r\n",
+					"            result[str(i)] = ord_gen_list[i*partition_size:max_num_prod]            \r\n",
+					"        else:\r\n",
+					"            result[str(i)] = ord_gen_list[i*partition_size: (i+1)*partition_size]\r\n",
+					"\r\n",
+					"    return result    \r\n",
+					"udf_ord_rank_partition=udf(ord_rank_partion,MapType(StringType(),ArrayType(IntegerType())))\r\n",
+					"\r\n",
+					"logger.info(\"User defined function to get Order Genius Rank Partition .OPCO = {0} limiting to Top {1} and No of Partions {2} \" .format(OPCO,NO_OF_PROD_ORD_RANK,NO_OF_PARTITONS_ORD_RANK))\r\n",
+					"\r\n",
+					"#Assining Data frame from Main Data frame\r\n",
+					"df_web_store_order_union=df_union_query\r\n",
+					"\r\n",
+					"logger.info(\"merge-web-store-orders: Merged store and web orders into a single dataset with reguired columns . OPCO = {0}  Count = {1}\" .format(OPCO,df_web_store_order_union.count()))\r\n",
+					"\r\n",
+					"avg_order_feq_expr=(datediff(max(col(\"order_date\")),min(col(\"order_date\")))+1)/(countDistinct(date_format(col(\"order_date\"),\"yyyy-MM-dd\")))\r\n",
+					"\r\n",
+					"df_user_purchase=df_web_store_order_union.groupby(\"user_id\").agg(\r\n",
+					"                                        min(col(\"order_date\")).alias(\"first_user_pur_date\"),\r\n",
+					"                                        max(col(\"order_date\")).alias(\"last_user_pur_date\"),\r\n",
+					"                                        sum(col(\"ord_Qy\")).alias(\"total_user_qty\"),\r\n",
+					"                                        max(col(\"ord_Qy\")).alias(\"max_user_prc_qty\"),\r\n",
+					"                                        datediff(current_timestamp(),min(col(\"order_date\"))).alias(\"days_since_last_first_pur\"))\r\n",
+					"\r\n",
+					"logger.info(\"Creating Data frame for User Purchase  . OPCO = {0} \".format(OPCO))                                       \r\n",
+					"\r\n",
+					"\r\n",
+					"df_user_purchase_product=df_web_store_order_union.groupby(\"user_id\",\"pod_id\").agg(\r\n",
+					"                                            min(col(\"order_date\")).alias(\"first_prd_pur_date\"),\r\n",
+					"                                            max(col(\"order_date\")).alias(\"last_prd_pur_date\"),\r\n",
+					"                                            countDistinct(date_format(col(\"order_date\"),\"yyyy-MM-dd\")).alias(\"total_unique_ords\"),\r\n",
+					"                                            sum(col(\"ord_Qy\")).alias(\"total_prd_qty\"),\r\n",
+					"                                            max(col(\"ord_Qy\")).alias(\"max_user_prd_qty\"),\r\n",
+					"                                            round(avg_order_feq_expr,1).alias(\"avg_ord_freq_days\"),\r\n",
+					"                                            datediff(current_timestamp(),max(col(\"order_date\"))).alias(\"days_since_last_pur_prd\"))\r\n",
+					"\r\n",
+					"logger.info(\"Creating Data frame for User Product Purchase  . OPCO = {0} \".format(OPCO))                                             \r\n",
+					"               \r\n",
+					"df_user_product_joined=df_user_purchase.alias(\"a\").join(df_user_purchase_product.alias(\"b\"),[\"user_id\"],how=\"inner\")\r\n",
+					"\r\n",
+					"logger.info(\"Joining data frame for User Purchase, Product Purchase  . OPCO = {0} \".format(OPCO)) \r\n",
+					"\r\n",
+					"\r\n",
+					"df_recency_factor_expr=(greatest(lit(1.0),(col(\"days_since_last_first_pur\")-col(\"days_since_last_pur_prd\"))))/(greatest(lit(1.0),(col(\"days_since_last_first_pur\"))))\r\n",
+					"df_pur_quan_factor_expr=(greatest(lit(1.0),col(\"total_prd_qty\")))/(greatest(lit(1.0),col(\"total_user_qty\")))\r\n",
+					"df_ord_freq_factor_expr=least((greatest(lit(1.0),(col(\"days_since_last_pur_prd\")))/col(\"avg_ord_freq_days\")),(col(\"avg_ord_freq_days\")/greatest(lit(1.0),(col(\"days_since_last_pur_prd\")))))\r\n",
+					"df_score_expr=pow(col(\"recency_factor\"),1)*pow(col(\"pur_qty_factor\"),1)*pow(col(\"ord_freq_factor\"),1)\r\n",
+					"\r\n",
+					"\r\n",
+					"df_user_product_factors=df_user_product_joined.withColumn(\"recency_factor\",round(df_recency_factor_expr,4))\\\r\n",
+					"                                            .withColumn(\"pur_qty_factor\",round(df_pur_quan_factor_expr,4))\\\r\n",
+					"                                            .withColumn(\"ord_freq_factor\",round(df_ord_freq_factor_expr,4))\r\n",
+					"\r\n",
+					"logger.info(\"Order Genius and Default:Calcualting Recency factor,Purchase Quanity factor,Order Frequency factor . OPCO = {0} \".format(OPCO))\r\n",
+					"\r\n",
+					"df_pod_score=Window.partitionBy(\"user_id\").orderBy(desc(\"score\"),desc(\"pod_id\"))\r\n",
+					"\r\n",
+					"\r\n",
+					"df_user_product_org_default=df_user_product_factors.withColumn(\"score\",df_score_expr)\\\r\n",
+					"                                                    .withColumn(\"rank\",row_number().over(df_pod_score))\\\r\n",
+					"                                                    .select(col(\"user_id\").alias(\"ord_gen_user_id\"),\"pod_id\",\"recency_factor\",\"pur_qty_factor\",\"ord_freq_factor\",\"score\",\"rank\")\r\n",
+					"\r\n",
+					"logger.info(\"Arranging pod_id's according to score and rank . OPCO = {0}\".format(OPCO))\r\n",
+					"\r\n",
+					"if(LOGGING_LEVEL== \"DEBUG\"):\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_ORDER_GENIUS_DEFAULT_PATH.format(opco = OPCO))):\r\n",
+					"        mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_ORDER_GENIUS_DEFAULT_PATH.format(opco = OPCO), recurse = True)\r\n",
+					"        logger.debug(\"organic default:Purging organic default from STG container. OPCO = {0}\".format(OPCO))\r\n",
+					"        \r\n",
+					"    df_ord_genius_stg=df_user_product_org_default.withColumn(\"hash\", f.abs(f.hash(f.col(\"ord_gen_user_id\"))%NO_OF_PARTITIONS))\r\n",
+					"    \r\n",
+					"    df_ord_genius_stg.repartition(1, \"ord_gen_user_id\") \\\r\n",
+					"                        .sort(\"ord_gen_user_id\") \\\r\n",
+					"                        .write \\\r\n",
+					"                        .format(\"delta\") \\\r\n",
+					"                        .mode(\"overwrite\") \\\r\n",
+					"                        .partitionBy(\"hash\") \\\r\n",
+					"                        .save(BASE_ADLS_CONN_STR + STAGE_ORDER_GENIUS_DEFAULT_PATH.format(opco = OPCO))\r\n",
+					"    logger.debug(\"organic default rankings: Write organic default rankings into STG container. OPCO = {0},path={1} Count = {2}\".format(OPCO,BASE_ADLS_CONN_STR + STAGE_ORDER_GENIUS_DEFAULT_PATH.format(opco = OPCO), df_ord_genius_stg.count()))\r\n",
+					"    \r\n",
+					"df_ord_genius_default=df_user_product_org_default.orderBy(\"ord_gen_user_id\",asc(\"rank\")).groupby(\"ord_gen_user_id\")\\\r\n",
+					"                                                .agg(collect_list(\"pod_id\").alias(\"ordergenius_default\"),\r\n",
+					"                                            udf_ord_rank_partition(collect_list(\"pod_id\"),lit(NO_OF_PROD_ORD_RANK),lit(NO_OF_PARTITONS_ORD_RANK)).alias(\"ordergenius_rank_Partition\"))\r\n",
+					"\r\n",
+					"                             \r\n",
+					"logger.info(\" Calculate ordergeniusRankPartition and ordergeniusdefault values. OPCO = {0} Count = {1}\".format(OPCO, df_ord_genius_default.count()))"
+				],
+				"execution_count": 83
 			},
 			{
 				"cell_type": "markdown",
@@ -960,8 +1098,11 @@
 					"                        .join(df_usr_prd_six_months, df_users.user_id == df_usr_prd_six_months.user_id_six_months, \"left\") \\\r\n",
 					"                        .join(df_usr_prd_three_months, df_users.user_id == df_usr_prd_three_months.user_id_three_months, \"left\") \\\r\n",
 					"                        .join(df_usr_prd_last_order, df_users.user_id == df_usr_prd_last_order.user_id_last_order, \"left\") \\\r\n",
+					"                        .join(df_ord_genius_default,df_users.user_id==df_ord_genius_default.ord_gen_user_id,\"left\")\\\r\n",
 					"                        .join(df_removed_purc, df_users.user_id == df_removed_purc.user_id_del, \"left\") \\\r\n",
 					"                        .select(\"user_id\",\"hndl_id\", \"rtlr_card_id\", \"mail_tx\", \"stat_cd\", \"opco_id\", \\\r\n",
+					"                        coalesce(\"ordergenius_default\",array()).alias(\"ordergenius_default\").cast(ArrayType(IntegerType())),\\\r\n",
+					"                        coalesce(\"ordergenius_rank_Partition\",create_map()).alias(\"ordergenius_rank_Partition\").cast(MapType(StringType(),ArrayType(IntegerType()))),\\\r\n",
 					"                        coalesce(\"three_months\",array()).alias(\"three_months_init\").cast(ArrayType(IntegerType())), \\\r\n",
 					"                        coalesce(\"six_months\",array()).alias(\"six_months_init\").cast(ArrayType(IntegerType())), \\\r\n",
 					"                        coalesce(\"all_times\",array()).alias(\"all_times_init\").cast(ArrayType(IntegerType())), \\\r\n",
@@ -971,11 +1112,10 @@
 					"                        coalesce(\"all_times_purch_removed\",array()).alias(\"all_times\").cast(ArrayType(IntegerType())), \\\r\n",
 					"                        coalesce(\"last_order_purch_removed\",array()).alias(\"last_order\").cast(ArrayType(IntegerType())), \\\r\n",
 					"                        coalesce(\"removed_purchases\",array()).alias(\"removed_purchases\").cast(ArrayType(IntegerType())))\r\n",
+					"                    \r\n",
 					"\r\n",
 					"df_past_purc = df_past_purc \\\r\n",
 					"        .withColumn(\"id\", F.col(\"user_id\").cast(\"string\")) \\\r\n",
-					"        .withColumn(\"ordergenius_rank_partition\", F.lit(None).cast(NullType())) \\\r\n",
-					"        .withColumn(\"ordergenius_default\",array([]).cast(ArrayType(IntegerType()))) \\\r\n",
 					"        .withColumn(\"ordergenius_set_recency_decay\",array([]).cast(ArrayType(IntegerType()))) \\\r\n",
 					"        .withColumn(\"first_lpurc_dt\", F.lit(None).cast(NullType())) \\\r\n",
 					"        .withColumn(\"last_lpurc_dt\", F.lit(None).cast(NullType())) \\\r\n",
@@ -990,11 +1130,9 @@
 					"        .withColumn(\"max_tot_purc_qy\",lit(0).cast(IntegerType())) \\\r\n",
 					"        .withColumn(\"last_updated_at\", from_unixtime(unix_timestamp(current_timestamp(), \"yyyy-MM-dd'T'HH:mm:ss'Z'\"),\"yyyy-MM-dd'T'HH:mm:ss'Z'\")) \\\r\n",
 					"        .withColumn(\"last_updated_by\",lit(USR_PAST_PURCHASE))\r\n",
-					"                           \r\n",
+					"                        \r\n",
 					"\r\n",
 					"df_past_purc =  df_past_purc.withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
-					"\r\n",
-					"display(df_past_purc)\r\n",
 					"\r\n",
 					"df_past_purc \\\r\n",
 					"        .repartition(1, \"user_id\") \\\r\n",
@@ -1009,7 +1147,7 @@
 					"logger.info(\"persist: Customers' past-purchase has been processed and persisted for OPCO = {0}, Count={1}, Path={2}\".format(OPCO, df_past_purc.count(), TARGET_PAST_PURC_PATH)) \r\n",
 					""
 				],
-				"execution_count": 140
+				"execution_count": 84
 			},
 			{
 				"cell_type": "markdown",
@@ -1076,7 +1214,7 @@
 					"    .withColumnRenamed(\"last_updated_at\", \"lastUpdatedAt\") \\\n",
 					"    .withColumnRenamed(\"last_updated_by\", \"lastUpdatedBy\") \\\n",
 					"    .drop(\"hash\", \"three_months_init\", \"six_months_init\", \"all_times_init\", \"last_order_init\")\n",
-					"display(df_past_purc_data_store)    \n",
+					"    \n",
 					"\n",
 					"df_past_purc_data_store \\\n",
 					"    .write \\\n",
@@ -1088,7 +1226,7 @@
 					"logger.info(\"persist: Persisted past-purchase in Cosmos for OPCO = {0}, Count={1}, Container={2}\".format(OPCO, df_past_purc.count(), COSMOS_CONTAINER_NM)) \n",
 					""
 				],
-				"execution_count": 141
+				"execution_count": 85
 			}
 		]
 	}
