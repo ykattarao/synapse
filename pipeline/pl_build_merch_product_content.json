@@ -202,17 +202,7 @@
 				"inputs": [
 					{
 						"referenceName": "ds_qts_ifx_merch_domain_content_domain",
-						"type": "DatasetReference",
-						"parameters": {
-							"PARAM_IFX_DB_NM": {
-								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
-								"type": "Expression"
-							},
-							"PARAM_IFX_TB_NM": {
-								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
-								"type": "Expression"
-							}
-						}
+						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
@@ -429,13 +419,6 @@
 				"type": "string",
 				"defaultValue": "cont_id"
 			},
-			"PARAM_IFX_DB_NM": {
-				"type": "string",
-				"defaultValue": "content"
-			},
-			"PARAM_IFX_TB_NM": {
-				"type": "string",
-				"defaultValue": "pit-cont-ctl"
 			"PARAM_DELTA_LOAD": {
 				"type": "bool",
 				"defaultValue": false
