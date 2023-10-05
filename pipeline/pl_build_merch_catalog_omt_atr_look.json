@@ -1,13 +1,30 @@
 {
-	"name": "pl_build_merch_cnt_cpt_cont_ctl",
+	"name": "pl_build_merch_catalog_omt_atr_look",
 	"properties": {
 		"activities": [
 			{
-				"name": "ingest-content-cpt-cont-ctl",
+				"name": "set-ingest-catalog-omt-atr-look-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-catalog-omt-atr-look",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "set-ingest-content-cpt-cont-ctl-path",
+						"activity": "set-ingest-catalog-omt-atr-look-path",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -20,7 +37,7 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.1:00:00",
+					"timeout": "0.01:00:00",
 					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -29,9 +46,9 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "InformixSource",
+						"type": "MySqlSource",
 						"query": {
-							"value": "@if(pipeline().parameters.PARAM_IS_DELTA,\nconcat('SELECT  cont_id,\n                file_ext_cd,\n                cont_desc_tx,\n                file_name_tx,\n                vndr_cd,\n                audt_cr_id,\n                TO_CHAR(audt_cr_dt, \"%Y-%m-%d\") as audt_cr_dt,\n                audt_upd_id,\n                TO_CHAR(audt_upd_dt, \"%Y-%m-%d\") as audt_upd_dt\n                FROM content:cpt_cont_ctl\n                WHERE (audt_cr_dt >= ''',formatDateTime(formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),'MM-dd-yyyy')\n                    ,'''',' OR ',\n                    'audt_upd_dt >= ''',formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),''')')\n,'SELECT        cont_id,\n                file_ext_cd,\n                cont_desc_tx,\n                file_name_tx,\n                vndr_cd,\n                audt_cr_id,\n                TO_CHAR(audt_cr_dt, \"%Y-%m-%d\") as audt_cr_dt,\n                audt_upd_id,\n                TO_CHAR(audt_upd_dt, \"%Y-%m-%d\") as audt_upd_dt\n                FROM content:cpt_cont_ctl')",
+							"value": "@if(equals(pipeline().parameters.PARAM_IS_DELTA,true),\nconcat('SELECT atr_look_id, \n              lvl_id,atr_id, \n              atr_val_cd, \n              disp_seq_qy, \n              atr_val_name_tx, \n              audt_cr_dt_tm, \n              audt_cr_user_cd, \n              audt_upd_dt_tm, \n              audt_upd_user_cd \n       FROM catalog_prod.omt_atr_look\n       WHERE (audt_upd_dt_tm >= ''',formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),'''',' OR ',\n            'audt_upd_dt_tm >= ''',formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),''')'),\n       'SELECT atr_look_id, \n              lvl_id,atr_id, \n              atr_val_cd, \n              disp_seq_qy, \n              atr_val_name_tx, \n              audt_cr_dt_tm, \n              audt_cr_user_cd, \n              audt_upd_dt_tm, \n              audt_upd_user_cd \n       FROM catalog_prod.omt_atr_look')",
 							"type": "Expression"
 						}
 					},
@@ -50,99 +67,110 @@
 						"mappings": [
 							{
 								"source": {
-									"name": "cont_id",
+									"name": "atr_look_id",
+									"type": "Int64"
+								},
+								"sink": {
+									"name": "atr_look_id",
+									"type": "Int64",
+									"physicalType": "INT_64"
+								}
+							},
+							{
+								"source": {
+									"name": "lvl_id",
 									"type": "Int32"
 								},
 								"sink": {
-									"name": "cont_id",
+									"name": "lvl_id",
 									"type": "Int32",
 									"physicalType": "INT_32"
 								}
 							},
 							{
 								"source": {
-									"name": "file_ext_cd",
+									"name": "atr_id",
+									"type": "Int64"
+								},
+								"sink": {
+									"name": "atr_id",
+									"type": "Int64",
+									"physicalType": "INT_64"
+								}
+							},
+							{
+								"source": {
+									"name": "atr_val_cd",
 									"type": "String"
 								},
 								"sink": {
-									"name": "file_ext_cd",
+									"name": "atr_val_cd",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "cont_desc_tx",
+									"name": "disp_seq_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "disp_seq_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "atr_val_name_tx",
 									"type": "String"
 								},
 								"sink": {
-									"name": "cont_desc_tx",
+									"name": "atr_val_name_tx",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "file_name_tx",
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_user_cd",
 									"type": "String"
 								},
 								"sink": {
-									"name": "file_name_tx",
+									"name": "audt_cr_user_cd",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "vndr_cd",
-									"type": "String"
+									"name": "audt_upd_dt_tm",
+									"type": "DateTime"
 								},
 								"sink": {
-									"name": "vndr_cd",
-									"type": "String",
-									"physicalType": "UTF8"
+									"name": "audt_upd_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
 								}
 							},
 							{
 								"source": {
-									"name": "audt_cr_id",
+									"name": "audt_upd_user_cd",
 									"type": "String"
 								},
 								"sink": {
-									"name": "audt_cr_id",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "audt_cr_dt",
-									"type": "String"
-								},
-								"sink": {
-									"name": "audt_cr_dt",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "audt_upd_id",
-									"type": "String"
-								},
-								"sink": {
-									"name": "audt_upd_id",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "audt_upd_dt",
-									"type": "String"
-								},
-								"sink": {
-									"name": "audt_upd_dt",
+									"name": "audt_upd_user_cd",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
@@ -157,15 +185,15 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_qts_ifx_merch_domain_content_domain",
+						"referenceName": "ds_qts_mysql_merch_prod_catalog_domain",
 						"type": "DatasetReference",
 						"parameters": {
-							"PARAM_IFX_DB_NM": {
-								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+							"PARAM_MYSQL_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_MYSQL_DB_NM",
 								"type": "Expression"
 							},
-							"PARAM_IFX_TB_NM": {
-								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+							"PARAM_MYSQL_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_MYSQL_TB_NM",
 								"type": "Expression"
 							}
 						}
@@ -173,10 +201,10 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_az_adls_merch_content_domain",
+						"referenceName": "ds_az_adls_merch_prod_catalog_domain",
 						"type": "DatasetReference",
 						"parameters": {
-							"PARAM_CONTENT_LAKE_PATH": {
+							"PARAM_PROD_CATALOG_LAKE_PATH": {
 								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
 								"type": "Expression"
 							}
@@ -185,74 +213,11 @@
 				]
 			},
 			{
-				"name": "set-ingest-content-cpt-cont-ctl-path",
-				"type": "SetVariable",
-				"dependsOn": [],
-				"policy": {
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
-					"value": {
-						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
-						"type": "Expression"
-					}
-				}
-			},
-			{
-				"name": "update-btch-cntrl",
-				"type": "ExecutePipeline",
-				"dependsOn": [
-					{
-						"activity": "record-count-checkpoint",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"userProperties": [],
-				"typeProperties": {
-					"pipeline": {
-						"referenceName": "pl_update_btch_cntrl_fl",
-						"type": "PipelineReference"
-					},
-					"waitOnCompletion": true,
-					"parameters": {
-						"START_TIME": {
-							"value": "@convertFromUtc(activity('ingest-content-cpt-cont-ctl').ExecutionStartTime,'Central Standard Time')",
-							"type": "Expression"
-						},
-						"END_TIME": {
-							"value": "@convertFromUtc(activity('ingest-content-cpt-cont-ctl').ExecutionEndTime,'Central Standard Time')",
-							"type": "Expression"
-						},
-						"RECORD_COUNT": {
-							"value": "@activity('ingest-content-cpt-cont-ctl').output.rowsCopied",
-							"type": "Expression"
-						},
-						"STATUS": {
-							"value": "@activity('ingest-content-cpt-cont-ctl').status",
-							"type": "Expression"
-						},
-						"PARAM_OPCO": {
-							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
-							"type": "Expression"
-						},
-						"PARAM_DOMAIN": {
-							"value": "@pipeline().parameters.PARAM_DOMAIN",
-							"type": "Expression"
-						}
-					}
-				}
-			},
-			{
 				"name": "lkp-ext-start-time",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
-					"timeout": "0.0:30:00",
+					"timeout": "0.01:00:00",
 					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -288,11 +253,57 @@
 				}
 			},
 			{
+				"name": "update-btch-cntrl",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "record-count-checkpoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_update_btch_cntrl_fl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"START_TIME": {
+							"value": "@convertFromUtc(activity('ingest-catalog-omt-atr-look').ExecutionStartTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"END_TIME": {
+							"value": "@convertFromUtc(activity('ingest-catalog-omt-atr-look').ExecutionEndTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"RECORD_COUNT": {
+							"value": "@activity('ingest-catalog-omt-atr-look').output.rowsCopied",
+							"type": "Expression"
+						},
+						"STATUS": {
+							"value": "@activity('ingest-catalog-omt-atr-look').status",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
+							"type": "Expression"
+						},
+						"PARAM_DOMAIN": {
+							"value": "@pipeline().parameters.PARAM_DOMAIN",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
 				"name": "record-count-checkpoint",
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "ingest-content-cpt-cont-ctl",
+						"activity": "ingest-catalog-omt-atr-look",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -301,16 +312,16 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@greater(activity('ingest-content-cpt-cont-ctl').output.rowsCopied, 0)",
+						"value": "@greater(activity('ingest-catalog-omt-atr-look').output.rowsCopied,0)",
 						"type": "Expression"
 					},
 					"ifTrueActivities": [
 						{
-							"name": "mdm-content-cpt-cont-ctl",
+							"name": "mdm_merch_catalog-omt-atr-look",
 							"type": "SynapseNotebook",
 							"dependsOn": [],
 							"policy": {
-								"timeout": "0.1:00:00",
+								"timeout": "0.01:00:00",
 								"retry": 3,
 								"retryIntervalInSeconds": 30,
 								"secureOutput": false,
@@ -319,7 +330,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"notebook": {
-									"referenceName": "nb_mdm_merch_cnt_cpt_cont_ctl",
+									"referenceName": "nb_mdm_merch_ctlg_omt_atr_look",
 									"type": "NotebookReference"
 								},
 								"parameters": {
@@ -344,13 +355,6 @@
 										},
 										"type": "string"
 									},
-									"NO_OF_PARTITIONS": {
-										"value": {
-											"value": "@pipeline().parameters.PARAM_NO_OF_PARTITIONS",
-											"type": "Expression"
-										},
-										"type": "int"
-									},
 									"IS_DELTA": {
 										"value": {
 											"value": "@pipeline().parameters.PARAM_IS_DELTA",
@@ -360,7 +364,7 @@
 									},
 									"VAL_CNT_THRESHOLD": {
 										"value": {
-											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+											"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD",
 											"type": "Expression"
 										},
 										"type": "int"
@@ -386,21 +390,21 @@
 			}
 		],
 		"parameters": {
-			"PARAM_IFX_DB_NM": {
-				"type": "string",
-				"defaultValue": "content"
-			},
-			"PARAM_IFX_TB_NM": {
-				"type": "string",
-				"defaultValue": "cpt_cont_ctl"
-			},
 			"PARAM_OPCO": {
 				"type": "string",
 				"defaultValue": "PPOD"
 			},
 			"PARAM_DOMAIN": {
 				"type": "string",
-				"defaultValue": "merch/content/content-cpt-cont-ctl"
+				"defaultValue": "merch/catalog/omt-atr-look"
+			},
+			"PARAM_MYSQL_DB_NM": {
+				"type": "string",
+				"defaultValue": "catalog_prod"
+			},
+			"PARAM_MYSQL_TB_NM": {
+				"type": "string",
+				"defaultValue": "omt_atr_look"
 			},
 			"PARAM_BASE_ADLS_CONN_STR": {
 				"type": "string",
@@ -408,17 +412,13 @@
 			},
 			"PARAM_KEY_COL": {
 				"type": "string",
-				"defaultValue": "cont_id"
-			},
-			"PARAM_NO_OF_PARTITIONS": {
-				"type": "int",
-				"defaultValue": 25
+				"defaultValue": "atr_val_cd"
 			},
 			"PARAM_IS_DELTA": {
 				"type": "bool",
 				"defaultValue": false
 			},
-			"PARAM_VAL_CNT_THRESHOLD": {
+			"PARM_VAL_CNT_THRESHOLD": {
 				"type": "int",
 				"defaultValue": 2
 			}
@@ -426,11 +426,11 @@
 		"variables": {
 			"VAR_INGST_MERCH_FLDR_PATH": {
 				"type": "String",
-				"defaultValue": "opco/ppod/domain/merch/content/content-cpt-cont-ctl/lake/"
+				"defaultValue": "opco/ppod/domain/merch/catalog/omt-atr-look/lake/"
 			}
 		},
 		"folder": {
-			"name": "domain/merchandise/content"
+			"name": "domain/merchandise/catalog"
 		},
 		"annotations": []
 	}

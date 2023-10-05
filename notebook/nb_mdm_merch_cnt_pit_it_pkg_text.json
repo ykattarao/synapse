@@ -1,0 +1,427 @@
+{
+	"name": "nb_mdm_merch_cnt_pit_it_pkg_text",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/merchandise/content"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "9a92e909-90c7-4b7f-90df-866071939e39"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITIALIZATION OF VARIABLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"\r\n",
+					"BASE_ADLS_CONN_STR= \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_RELATIVE_PATH = \"opco/ppod/domain/merch/content/content-pit-it-pkg-text/lake/2023-09-27-01-38-20/\"\r\n",
+					"STAGE_RELATIVE_PATH=\"opco/ppod/domain/merch/content/content-pit-it-pkg-text/stage/\"\r\n",
+					"TARGET_RELATIVE_PATH=\"opco/{opco}/domain/merch/content/content-pit-it-pkg-text/master/\"\r\n",
+					"KEY_COL = \"pod_id\"\r\n",
+					"IS_DELTA = False\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
+					"PARAM_MERCH_PRODUCT=\"usr-data-integration\"\r\n",
+					"VAL_CNT_THRESHOLD=2"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_merch_cnt_pit_it_pkg_text\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"******************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - CONTENT- PIT IT PKG TEXT - Starting with below parameters\")\r\n",
+					"logger.info(\"******************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_RELATIVE_PATH : {0}\".format(SOURCE_LAKE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t STAGE_RELATIVE_PATH : {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t TARGET_RELATIVE_PATH : {0}\".format(TARGET_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\r\n",
+					"logger.info(\"\\t IS_DELTA : {0}\".format(IS_DELTA))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"*******************************************************************\")"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, StringType,TimestampType, IntegerType, LongType, DecimalType, BooleanType, DateType, ArrayType\r\n",
+					"\r\n",
+					"STAGE_CONTENT_PIT_IT_PKG_TEXT_SCHEMA = StructType([\r\n",
+					"    StructField(\"pod_id\", IntegerType(), False),\r\n",
+					"    StructField(\"brnd_tx\", StringType(), True),\r\n",
+					"    StructField(\"it_size_cd\", StringType(), True),\r\n",
+					"    StructField(\"uom_cd\", StringType(), True),\r\n",
+					"    StructField(\"mfg_name_tx\", StringType(), True),\r\n",
+					"    StructField(\"mfg_adr_bx\", StringType(), True),\r\n",
+					"    StructField(\"mfg_phon_cd\", StringType(), True),\r\n",
+					"    StructField(\"cprt_tx\", StringType(), True),\r\n",
+					"    StructField(\"prod_desc_bx\", StringType(), True),\r\n",
+					"    StructField(\"prod_dtl_bx\", StringType(), True),\r\n",
+					"    StructField(\"indc_bx\", StringType(), True),\r\n",
+					"    StructField(\"drct_bx\", StringType(), True),\r\n",
+					"    StructField(\"ingr_bx\", StringType(), True),\r\n",
+					"    StructField(\"warn_bx\", StringType(), True),\r\n",
+					"    StructField(\"drug_intc_bx\", StringType(), True),\r\n",
+					"    StructField(\"ctry_of_orig_bx\", StringType(), True),\r\n",
+					"    StructField(\"ppod_sell_bx\", StringType(), True),\r\n",
+					"    StructField(\"dept_tx\", StringType(), True),\r\n",
+					"    StructField(\"cat_tx\", StringType(), True),\r\n",
+					"    StructField(\"sub_cat_tx\", StringType(), True),\r\n",
+					"    StructField(\"fat_free_cd\", StringType(), True),\r\n",
+					"    StructField(\"low_fat_cd\", StringType(), True),\r\n",
+					"    StructField(\"orgn_cd\", StringType(), True),\r\n",
+					"    StructField(\"sugr_free_cd\", StringType(), True),\r\n",
+					"    StructField(\"hght_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"wdth_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"dpth_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"wght_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"cntr_type_cd\", StringType(), True),\r\n",
+					"    StructField(\"case_pack_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"innr_pack_qy\", IntegerType(), True),\r\n",
+					"    StructField(\"src_cd\", StringType(), True),\r\n",
+					"    StructField(\"egg_fl\", StringType(), False),\r\n",
+					"    StructField(\"dary_fl\", StringType(), False),\r\n",
+					"    StructField(\"pnut_fl\", StringType(), False),\r\n",
+					"    StructField(\"gltn_fl\", StringType(), False),\r\n",
+					"    StructField(\"egg_hold_fl\", StringType(), True),\r\n",
+					"    StructField(\"dary_hold_fl\", StringType(), True),\r\n",
+					"    StructField(\"pnut_hold_fl\", StringType(), True),\r\n",
+					"    StructField(\"gltn_hold_fl\", StringType(), True),\r\n",
+					"    StructField(\"egg_stag_fl\", StringType(), False),\r\n",
+					"    StructField(\"dary_stag_fl\", StringType(), False),\r\n",
+					"    StructField(\"pnut_stag_fl\", StringType(), False),\r\n",
+					"    StructField(\"gltn_stag_fl\", StringType(), False),\r\n",
+					"    StructField(\"parv_cd\", StringType(), True),\r\n",
+					"    StructField(\"kshr_1_id\", IntegerType(), False),\r\n",
+					"    StructField(\"kshr_2_id\", IntegerType(), True),\r\n",
+					"    StructField(\"kshr_3_id\", IntegerType(), True),\r\n",
+					"    StructField(\"kshr_4_id\", IntegerType(), True),\r\n",
+					"    StructField(\"non_gmo_fl\", StringType(), False),\r\n",
+					"    StructField(\"vegn_fl\", StringType(), False),\r\n",
+					"    StructField(\"lact_free_fl\", StringType(), False),\r\n",
+					"    StructField(\"abio_free_fl\", StringType(), False),\r\n",
+					"    StructField(\"whea_free_fl\", StringType(), False),\r\n",
+					"    StructField(\"hrmn_free_fl\", StringType(), False),\r\n",
+					"    StructField(\"ntra_free_fl\", StringType(), False),\r\n",
+					"    StructField(\"ntrl_fl\", StringType(), False),\r\n",
+					"    StructField(\"audt_cr_id\", StringType(), True),\r\n",
+					"    StructField(\"audt_cr_dt\", StringType(), True),\r\n",
+					"    StructField(\"audt_upd_id\", StringType(), True),\r\n",
+					"    StructField(\"audt_upd_dt\", StringType(), True)\r\n",
+					"    ])\r\n",
+					"\r\n",
+					"logger.debug(\"\\t schema-defination : Defined the schema for CONTENT:PIT_IT_PKG_TEXT.\\n {0}\".format(STAGE_CONTENT_PIT_IT_PKG_TEXT_SCHEMA))"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**PIT IT PKG TEXT STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import current_timestamp, lit\r\n",
+					"from pyspark.sql import functions as f\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH, recurse = True)\r\n",
+					"    logger.info(\"\\t Purging data from STG container {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"df_cnt_pit_it_pkg_text_stage = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .format(\"parquet\") \\\r\n",
+					"    .schema(STAGE_CONTENT_PIT_IT_PKG_TEXT_SCHEMA) \\\r\n",
+					"    .option(\"inferSchema\", \"true\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_RELATIVE_PATH) \\\r\n",
+					"    .withColumnRenamed(\"audt_cr_dt\", \"src_audt_cr_dt\") \\\r\n",
+					"    .withColumnRenamed(\"audt_cr_id\", \"src_audt_cr_id\") \\\r\n",
+					"    .withColumnRenamed(\"audt_upd_dt\", \"src_audt_upd_dt\") \\\r\n",
+					"    .withColumnRenamed(\"audt_upd_id\", \"src_audt_upd_id\") \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_dt\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_dt\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_id\", lit(PARAM_MERCH_PRODUCT)) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_id\", lit(PARAM_MERCH_PRODUCT)) \r\n",
+					"\r\n",
+					"df_cnt_pit_it_pkg_text_stage = df_cnt_pit_it_pkg_text_stage \\\r\n",
+					"                                    .withColumn(\"hght_qy\", df_cnt_pit_it_pkg_text_stage[\"hght_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                                    .withColumn(\"wdth_qy\", df_cnt_pit_it_pkg_text_stage[\"wdth_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                                    .withColumn(\"dpth_qy\", df_cnt_pit_it_pkg_text_stage[\"dpth_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                                    .withColumn(\"wght_qy\", df_cnt_pit_it_pkg_text_stage[\"wght_qy\"].cast(DecimalType(precision=6, scale=2)))\r\n",
+					"\r\n",
+					"str_cols=[colname for colname,coltype in df_cnt_pit_it_pkg_text_stage.dtypes if coltype==\"string\"] \r\n",
+					"for colname in str_cols:    \r\n",
+					"        df_cnt_pit_it_pkg_text_stage=df_cnt_pit_it_pkg_text_stage.withColumn(colname, f.trim(f.col(colname)))   \r\n",
+					"\r\n",
+					"\r\n",
+					"df_cnt_pit_it_pkg_text_stage \\\r\n",
+					"    .sort(KEY_COL) \\\r\n",
+					"    .write \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .mode(\"overwrite\") \\\r\n",
+					"    .save(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH) \r\n",
+					"\r\n",
+					"logger.info(\"\\t stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RELATIVE_PATH, STAGE_RELATIVE_PATH, df_cnt_pit_it_pkg_text_stage.count()))  "
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import count_distinct, col\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"           .sort(KEY_COL) \\\r\n",
+					"           .write \\\r\n",
+					"           .option(\"mergeSchema\", \"True\") \\\r\n",
+					"           .mode(\"overwrite\") \\\r\n",
+					"           .format(\"delta\") \\\r\n",
+					"           .save(path)\r\n",
+					"    logger.info(\"\\t CONTENT:PIT_IT_PKG_TEXT Master data overwrite.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"\r\n",
+					"def apply_cdc(opco):\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))):\r\n",
+					"        dt_cnt_pit_it_pkg_text_master = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"\\t CONTENT:PIT_IT_PKG_TEXT loaded from master. OPCO = {0}, Count={1}\".format(opco, dt_cnt_pit_it_pkg_text_master.toDF().count()))\r\n",
+					"\r\n",
+					"        dt_cnt_pit_it_pkg_text_master.alias(\"mstr\") \\\r\n",
+					"        .merge(df_cnt_pit_it_pkg_text_stage.alias(\"stg\"), \"mstr.pod_id = stg.pod_id \") \\\r\n",
+					"        .whenMatchedUpdateAll() \\\r\n",
+					"        .whenNotMatchedInsertAll() \\\r\n",
+					"        .execute()\r\n",
+					"        logger.info(\"\\t CONTENT:PIT_IT_PKG_TEXT merged delta records to main file.\\nOPCO = {0}, \\nMaster_Count={1}, \\nDelta_Count={2},\\n Path={3}\".format(opco,dt_cnt_pit_it_pkg_text_master.toDF().count(), df_cnt_pit_it_pkg_text_stage.count(),TARGET_RELATIVE_PATH.format(opco = opco)))\r\n",
+					"    else:\r\n",
+					"        init(opco)\r\n",
+					"\r\n",
+					"\r\n",
+					"def init(opco):\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))):\r\n",
+					"        df_cnt_pit_it_pkg_text_master= spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"\\t CONTENT:PIT_IT_PKG_TEXT loaded from master. OPCO = {0}, Count={1}\".format(opco, df_cnt_pit_it_pkg_text_master.count()))\r\n",
+					"        is_val_success= validate_count(df_cnt_pit_it_pkg_text_master,df_cnt_pit_it_pkg_text_stage,VAL_CNT_THRESHOLD)        \r\n",
+					"        if is_val_success :\r\n",
+					"            load_master_data(df_cnt_pit_it_pkg_text_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")        \r\n",
+					"    else:\r\n",
+					"        logger.info(\"\\t First Time Master Load\")\r\n",
+					"        load_master_data(df_cnt_pit_it_pkg_text_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"\r\n",
+					"    \r\n",
+					"\r\n",
+					"###########################\r\n",
+					"\r\n",
+					"# FULL LOAD / DELTA LOAD  #\r\n",
+					"\r\n",
+					"###########################\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"\\t Processing MASTER for CONTENT:PIT_IT_PKG_TEXT.  OPCO={0} ,IS_DELTA={1}\".format(opco,IS_DELTA))\r\n",
+					"    if IS_DELTA:\r\n",
+					"        apply_cdc(opco) \r\n",
+					"    else:\r\n",
+					"        init(opco)\r\n",
+					"           "
+				],
+				"execution_count": 7
+			}
+		]
+	}
+}

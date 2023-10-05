@@ -1,9 +1,9 @@
 {
-	"name": "pl_build_merch_cnt_cpt_cont_it",
+	"name": "pl_build_merch_cntrl_pit_it_cat",
 	"properties": {
 		"activities": [
 			{
-				"name": "set-ingest-content-cpt-cont-it-path",
+				"name": "set-ingest-cntrl-purchase-date-path",
 				"type": "SetVariable",
 				"dependsOn": [],
 				"policy": {
@@ -14,17 +14,17 @@
 				"typeProperties": {
 					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
 					"value": {
-						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
 						"type": "Expression"
 					}
 				}
 			},
 			{
-				"name": "ingest-content-cpt-cont-it",
+				"name": "ingest-cntrl-pit_it_cat",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "set-ingest-content-cpt-cont-it-path",
+						"activity": "set-ingest-cntrl-purchase-date-path",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -42,7 +42,7 @@
 					"source": {
 						"type": "InformixSource",
 						"query": {
-							"value": "SELECT prod_id,\n       prim_cont_id,\n       smll_cont_id,\n       med_cont_id,\n       lrge_cont_id,\n       xlrg_cont_id,\n       cpn_cont_id,\n       actv_cd \n\t   FROM content:cpt_cont_it",
+							"value": "SELECT \npod_id,\ncat_type_id,\ncat_val_id,\naudt_upd_id\nFROM central:pit_it_cat",
 							"type": "Expression"
 						}
 					},
@@ -61,88 +61,44 @@
 						"mappings": [
 							{
 								"source": {
-									"name": "prod_id",
+									"name": "pod_id",
 									"type": "Int32"
 								},
 								"sink": {
-									"name": "prod_id",
+									"name": "pod_id",
 									"type": "Int32",
 									"physicalType": "INT_32"
 								}
 							},
 							{
 								"source": {
-									"name": "prim_cont_id",
+									"name": "cat_type_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "cat_type_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "cat_val_id",
 									"type": "Int32"
 								},
 								"sink": {
-									"name": "prim_cont_id",
+									"name": "cat_val_id",
 									"type": "Int32",
 									"physicalType": "INT_32"
 								}
 							},
 							{
 								"source": {
-									"name": "smll_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "smll_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "med_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "med_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "lrge_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "lrge_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "xlrg_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "xlrg_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "cpn_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "cpn_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "actv_cd",
+									"name": "audt_upd_id",
 									"type": "String"
 								},
 								"sink": {
-									"name": "actv_cd",
+									"name": "audt_upd_id",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
@@ -157,14 +113,14 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_qts_ifx_merch_domain_content_domain",
+						"referenceName": "ds_qts_infomix_merch_product_domain",
 						"type": "DatasetReference",
 						"parameters": {
-							"PARAM_IFX_DB_NM": {
+							"IFX_DB_NM": {
 								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
 								"type": "Expression"
 							},
-							"PARAM_IFX_TB_NM": {
+							"IFX_TBL_NM": {
 								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
 								"type": "Expression"
 							}
@@ -173,10 +129,10 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_az_adls_merch_content_domain",
+						"referenceName": "ds_az_adls_merch_product_domain",
 						"type": "DatasetReference",
 						"parameters": {
-							"PARAM_CONTENT_LAKE_PATH": {
+							"PARAM_INGST_FLDR_PATH": {
 								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
 								"type": "Expression"
 							}
@@ -189,7 +145,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "ingest-content-cpt-cont-it",
+						"activity": "ingest-cntrl-pit_it_cat",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -198,16 +154,16 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@greater(activity('ingest-content-cpt-cont-it').output.rowsCopied, 0)",
+						"value": "@greater(activity('ingest-cntrl-pit_it_cat').output.rowsCopied,0)",
 						"type": "Expression"
 					},
 					"ifTrueActivities": [
 						{
-							"name": "mdm-content-cpt-cont-it",
+							"name": "mdm-merch-cntrl-pit_it_cat",
 							"type": "SynapseNotebook",
 							"dependsOn": [],
 							"policy": {
-								"timeout": "0.1:00:00",
+								"timeout": "0.01:00:00",
 								"retry": 3,
 								"retryIntervalInSeconds": 30,
 								"secureOutput": false,
@@ -216,17 +172,10 @@
 							"userProperties": [],
 							"typeProperties": {
 								"notebook": {
-									"referenceName": "nb_mdm_merch_cnt_cpt_cont_it",
+									"referenceName": "nb_mdm_merch_cntl_pit_it_cat",
 									"type": "NotebookReference"
 								},
 								"parameters": {
-									"BASE_ADLS_CONN_STR": {
-										"value": {
-											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
-											"type": "Expression"
-										},
-										"type": "string"
-									},
 									"SOURCE_LAKE_RELATIVE_PATH": {
 										"value": {
 											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
@@ -254,6 +203,13 @@
 											"type": "Expression"
 										},
 										"type": "bool"
+									},
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
 									}
 								},
 								"snapshot": true,
@@ -278,11 +234,11 @@
 		"parameters": {
 			"PARAM_IFX_DB_NM": {
 				"type": "string",
-				"defaultValue": "content"
+				"defaultValue": "central"
 			},
 			"PARAM_IFX_TB_NM": {
 				"type": "string",
-				"defaultValue": "cpt_cont_it"
+				"defaultValue": "pit_it_cat"
 			},
 			"PARAM_OPCO": {
 				"type": "string",
@@ -290,19 +246,19 @@
 			},
 			"PARAM_DOMAIN": {
 				"type": "string",
-				"defaultValue": "merch/product/content-cpt-cont-it"
+				"defaultValue": "merch/product/central-pit-it-cat"
 			},
 			"PARAM_BASE_ADLS_CONN_STR": {
 				"type": "string",
 				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
 			},
-			"PARAM_KEY_COL": {
-				"type": "string",
-				"defaultValue": "prod_id"
-			},
 			"PARAM_VAL_CNT_THRESHOLD": {
 				"type": "int",
-				"defaultValue": 3
+				"defaultValue": 2
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "pod_id"
 			},
 			"PARAM_IS_DELTA": {
 				"type": "bool",
@@ -312,7 +268,7 @@
 		"variables": {
 			"VAR_INGST_MERCH_FLDR_PATH": {
 				"type": "String",
-				"defaultValue": "opco/ppod/domain/merch/content/content-cpt-cont-it/lake/"
+				"defaultValue": "opco/ppod/domain/merch/product/central-pit-it-cat/lake/"
 			}
 		},
 		"folder": {

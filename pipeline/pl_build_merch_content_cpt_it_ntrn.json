@@ -1,9 +1,9 @@
 {
-	"name": "pl_build_merch_cnt_cpt_cont_it",
+	"name": "pl_build_merch_content_cpt_it_ntrn",
 	"properties": {
 		"activities": [
 			{
-				"name": "set-ingest-content-cpt-cont-it-path",
+				"name": "set-ingest-content-cpt-it-ntrn",
 				"type": "SetVariable",
 				"dependsOn": [],
 				"policy": {
@@ -20,11 +20,11 @@
 				}
 			},
 			{
-				"name": "ingest-content-cpt-cont-it",
+				"name": "ingest-merch-content-cpt-it-ntrn",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "set-ingest-content-cpt-cont-it-path",
+						"activity": "set-ingest-content-cpt-it-ntrn",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -42,7 +42,7 @@
 					"source": {
 						"type": "InformixSource",
 						"query": {
-							"value": "SELECT prod_id,\n       prim_cont_id,\n       smll_cont_id,\n       med_cont_id,\n       lrge_cont_id,\n       xlrg_cont_id,\n       cpn_cont_id,\n       actv_cd \n\t   FROM content:cpt_cont_it",
+							"value": "SELECT prod_id,\n       it_ntrn_bx\nFROM content:cpt_it_ntrn;",
 							"type": "Expression"
 						}
 					},
@@ -72,77 +72,11 @@
 							},
 							{
 								"source": {
-									"name": "prim_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "prim_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "smll_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "smll_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "med_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "med_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "lrge_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "lrge_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "xlrg_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "xlrg_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "cpn_cont_id",
-									"type": "Int32"
-								},
-								"sink": {
-									"name": "cpn_cont_id",
-									"type": "Int32",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "actv_cd",
+									"name": "it_ntrn_bx",
 									"type": "String"
 								},
 								"sink": {
-									"name": "actv_cd",
+									"name": "it_ntrn_bx",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
@@ -189,7 +123,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "ingest-content-cpt-cont-it",
+						"activity": "ingest-merch-content-cpt-it-ntrn",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -198,16 +132,16 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@greater(activity('ingest-content-cpt-cont-it').output.rowsCopied, 0)",
+						"value": "@greater(activity('ingest-merch-content-cpt-it-ntrn').output.rowsCopied,0)",
 						"type": "Expression"
 					},
 					"ifTrueActivities": [
 						{
-							"name": "mdm-content-cpt-cont-it",
+							"name": "mdm-content-cpt-it-ntrn",
 							"type": "SynapseNotebook",
 							"dependsOn": [],
 							"policy": {
-								"timeout": "0.1:00:00",
+								"timeout": "0.01:00:00",
 								"retry": 3,
 								"retryIntervalInSeconds": 30,
 								"secureOutput": false,
@@ -216,7 +150,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"notebook": {
-									"referenceName": "nb_mdm_merch_cnt_cpt_cont_it",
+									"referenceName": "nb_mdm_merch_cnt_cpt_it_ntrn",
 									"type": "NotebookReference"
 								},
 								"parameters": {
@@ -276,33 +210,33 @@
 			}
 		],
 		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
 			"PARAM_IFX_DB_NM": {
 				"type": "string",
 				"defaultValue": "content"
 			},
 			"PARAM_IFX_TB_NM": {
 				"type": "string",
-				"defaultValue": "cpt_cont_it"
-			},
-			"PARAM_OPCO": {
-				"type": "string",
-				"defaultValue": "PPOD"
+				"defaultValue": "cpt_it_ntrn"
 			},
 			"PARAM_DOMAIN": {
 				"type": "string",
-				"defaultValue": "merch/product/content-cpt-cont-it"
+				"defaultValue": "merch/content/cpt-it-ntrn"
 			},
 			"PARAM_BASE_ADLS_CONN_STR": {
 				"type": "string",
 				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
 			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			},
 			"PARAM_KEY_COL": {
 				"type": "string",
 				"defaultValue": "prod_id"
-			},
-			"PARAM_VAL_CNT_THRESHOLD": {
-				"type": "int",
-				"defaultValue": 3
 			},
 			"PARAM_IS_DELTA": {
 				"type": "bool",
@@ -312,11 +246,11 @@
 		"variables": {
 			"VAR_INGST_MERCH_FLDR_PATH": {
 				"type": "String",
-				"defaultValue": "opco/ppod/domain/merch/content/content-cpt-cont-it/lake/"
+				"defaultValue": "opco/ppod/domain/merch/content/content-cpt-it-ntrn/lake/"
 			}
 		},
 		"folder": {
-			"name": "domain/merchandise/product"
+			"name": "domain/merchandise/content"
 		},
 		"annotations": []
 	}

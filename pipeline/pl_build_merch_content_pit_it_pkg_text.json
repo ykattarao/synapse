@@ -1,0 +1,998 @@
+{
+	"name": "pl_build_merch_content_pit_it_pkg_text",
+	"properties": {
+		"activities": [
+			{
+				"name": "ingest-merch-content-pit-it-pkg-text",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-content-pit-it-pkg-text-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "lkp-ext-start-time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.09:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": {
+							"value": "@if(pipeline().parameters.PARAM_IS_DELTA,\nconcat('SELECT pod_id,\n            brnd_tx,\n            it_size_cd,\n            uom_cd,\n            mfg_name_tx,\n            mfg_adr_bx,\n            mfg_phon_cd,\n            cprt_tx,\n            prod_desc_bx,\n            prod_dtl_bx,\n            indc_bx,\n            drct_bx,\n            ingr_bx,\n            warn_bx,\n            drug_intc_bx,\n            ctry_of_orig_bx,\n            ppod_sell_bx,\n            dept_tx,\n            cat_tx,\n            sub_cat_tx,\n            fat_free_cd,\n            low_fat_cd,\n            orgn_cd,\n            sugr_free_cd,\n            hght_qy,\n            wdth_qy,\n            dpth_qy,\n            wght_qy,\n            cntr_type_cd,\n            case_pack_qy,\n            innr_pack_qy,\n            src_cd,\n            egg_fl,\n            dary_fl,\n            pnut_fl,\n            gltn_fl,\n            egg_hold_fl,\n            dary_hold_fl,\n            pnut_hold_fl,\n            gltn_hold_fl,\n            egg_stag_fl,\n            dary_stag_fl,\n            pnut_stag_fl,\n            gltn_stag_fl,\n            parv_cd,\n            kshr_1_id,\n            kshr_2_id,\n            kshr_3_id,\n            kshr_4_id,\n            non_gmo_fl,\n            vegn_fl,\n            lact_free_fl,\n            abio_free_fl,\n            whea_free_fl,\n            hrmn_free_fl,\n            ntra_free_fl,\n            ntrl_fl,\n            audt_cr_id,\n            audt_upd_id,\n            TO_CHAR(audt_cr_dt, \"%Y-%m-%d\") as audt_cr_dt,\n            TO_CHAR(audt_upd_dt, \"%Y-%m-%d\") as audt_upd_dt\n        FROM content:pit_it_pkg_text\n        WHERE (audt_cr_dt >= ''',formatDateTime(formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),'MM-dd-yyyy'),'''',' OR ',\n            'audt_upd_dt >= ''',formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),''')'),\n            'SELECT pod_id,\n                brnd_tx,\n                it_size_cd,\n                uom_cd,\n                mfg_name_tx,\n                mfg_adr_bx,\n                mfg_phon_cd,\n                cprt_tx,\n                prod_desc_bx,\n                prod_dtl_bx,\n                indc_bx,\n                drct_bx,\n                ingr_bx,\n                warn_bx,\n                drug_intc_bx,\n                ctry_of_orig_bx,\n                ppod_sell_bx,\n                dept_tx,\n                cat_tx,\n                sub_cat_tx,\n                fat_free_cd,\n                low_fat_cd,\n                orgn_cd,\n                sugr_free_cd,\n                hght_qy,\n                wdth_qy,\n                dpth_qy,\n                wght_qy,\n                cntr_type_cd,\n                case_pack_qy,\n                innr_pack_qy,\n                src_cd,\n                egg_fl,\n                dary_fl,\n                pnut_fl,\n                gltn_fl,\n                egg_hold_fl,\n                dary_hold_fl,\n                pnut_hold_fl,\n                gltn_hold_fl,\n                egg_stag_fl,\n                dary_stag_fl,\n                pnut_stag_fl,\n                gltn_stag_fl,\n                parv_cd,\n                kshr_1_id,\n                kshr_2_id,\n                kshr_3_id,\n                kshr_4_id,\n                non_gmo_fl,\n                vegn_fl,\n                lact_free_fl,\n                abio_free_fl,\n                whea_free_fl,\n                hrmn_free_fl,\n                ntra_free_fl,\n                ntrl_fl,\n                audt_cr_id,\n                audt_upd_id,\n                TO_CHAR(audt_cr_dt, \"%Y-%m-%d\") as audt_cr_dt,\n                TO_CHAR(audt_upd_dt, \"%Y-%m-%d\") as audt_upd_dt\n                 FROM content:pit_it_pkg_text')",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "pod_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "pod_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "brnd_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "brnd_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "it_size_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_size_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mfg_name_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mfg_name_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mfg_adr_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mfg_adr_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mfg_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mfg_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cprt_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cprt_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prod_desc_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prod_desc_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prod_dtl_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prod_dtl_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "indc_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "indc_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drct_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drct_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ingr_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ingr_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "warn_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "warn_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drug_intc_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drug_intc_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ctry_of_orig_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ctry_of_orig_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ppod_sell_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ppod_sell_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dept_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dept_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cat_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cat_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sub_cat_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sub_cat_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "fat_free_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "fat_free_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "low_fat_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "low_fat_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "orgn_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "orgn_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sugr_free_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sugr_free_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "hght_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "hght_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "wdth_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "wdth_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "dpth_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "dpth_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "wght_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "wght_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "cntr_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cntr_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "case_pack_qy",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "case_pack_qy",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "innr_pack_qy",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "innr_pack_qy",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "src_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "src_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "egg_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "egg_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dary_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dary_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pnut_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pnut_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "gltn_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "gltn_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "egg_hold_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "egg_hold_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dary_hold_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dary_hold_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pnut_hold_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pnut_hold_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "gltn_hold_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "gltn_hold_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "egg_stag_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "egg_stag_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dary_stag_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dary_stag_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pnut_stag_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pnut_stag_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "gltn_stag_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "gltn_stag_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "parv_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "parv_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "kshr_1_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "kshr_1_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "kshr_2_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "kshr_2_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "kshr_3_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "kshr_3_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "kshr_4_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "kshr_4_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "non_gmo_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "non_gmo_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "vegn_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "vegn_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "lact_free_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "lact_free_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "abio_free_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "abio_free_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "whea_free_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "whea_free_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "hrmn_free_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "hrmn_free_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ntra_free_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ntra_free_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ntrl_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ntrl_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_dt",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_dt",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_dt",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_dt",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_ifx_merch_domain_content_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"PARAM_IFX_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_merch_content_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_CONTENT_LAKE_PATH": {
+								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "set-ingest-content-pit-it-pkg-text-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "lkp-ext-start-time",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_cntrl_fl_latest",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_DOMAIN": {
+								"value": "@pipeline().parameters.PARAM_DOMAIN",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "update-btch-cntrl",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "record-count-checkpoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_update_btch_cntrl_fl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"START_TIME": {
+							"value": "@convertFromUtc(activity('ingest-merch-content-pit-it-pkg-text').ExecutionStartTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"END_TIME": {
+							"value": "@convertFromUtc(activity('ingest-merch-content-pit-it-pkg-text').ExecutionEndTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"RECORD_COUNT": {
+							"value": "@activity('ingest-merch-content-pit-it-pkg-text').output.rowsCopied",
+							"type": "Expression"
+						},
+						"STATUS": {
+							"value": "@activity('ingest-merch-content-pit-it-pkg-text').status",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
+							"type": "Expression"
+						},
+						"PARAM_DOMAIN": {
+							"value": "@pipeline().parameters.PARAM_DOMAIN",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "record-count-checkpoint",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ingest-merch-content-pit-it-pkg-text",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('ingest-merch-content-pit-it-pkg-text').output.rowsCopied,0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "mdm-merch-pit-it-pkg-text",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.09:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_mdm_merch_cnt_pit_it_pkg_text",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"SOURCE_LAKE_RELATIVE_PATH": {
+										"value": {
+											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"KEY_COL": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_KEY_COL",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"IS_DELTA": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_IS_DELTA",
+											"type": "Expression"
+										},
+										"type": "bool"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
+									}
+								},
+								"snapshot": true,
+								"sparkPool": {
+									"referenceName": "synsppdlinte201",
+									"type": "BigDataPoolReference"
+								},
+								"executorSize": "Small",
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"driverSize": "Small",
+								"numExecutors": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "content"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "pit_it_pkg_text"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "merch/content/content-pit-it-pkg-text"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "pod_id"
+			},
+			"PARAM_IS_DELTA": {
+				"type": "bool",
+				"defaultValue": false
+			},
+			"PARM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			}
+		},
+		"variables": {
+			"VAR_INGST_MERCH_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/merch/content/pit-it-pkg-text/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/merchandise/content"
+		},
+		"annotations": []
+	}
+}
