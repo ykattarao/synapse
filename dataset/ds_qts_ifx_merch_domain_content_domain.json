@@ -5,7 +5,20 @@
 			"referenceName": "ls_qts_informix_oltp_odbc",
 			"type": "LinkedServiceReference",
 			"parameters": {
-				"IFX_DB_NM": "retailer"
+				"IFX_DB_NM": {
+					"value": "@dataset().IFX_DB_NM",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "content"
+			},
+			"IFX_TBL_NM": {
+				"type": "string",
+				"defaultValue": "cpt_cont_ctl"
 			}
 		},
 		"folder": {
@@ -15,7 +28,10 @@
 		"type": "InformixTable",
 		"schema": [],
 		"typeProperties": {
-			"tableName": "c00dba.pit_cont_ctl"
+			"tableName": {
+				"value": "@dataset().IFX_TBL_NM",
+				"type": "Expression"
+			}
 		}
 	}
 }

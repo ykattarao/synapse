@@ -1,0 +1,376 @@
+{
+	"name": "nb_mdm_merch_rtl_cpv_buy_more_hdr",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/merchandise/product"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "e1df4a00-bbb7-474b-92d0-a37d9577b0ba"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_RELATIVE_PATH = \"opco/ppod/domain/merch/product/retailer-cpv-buy-more-hdr/lake/2023-09-22-12-31-49/\"\r\n",
+					"STAGE_RELATIVE_PATH = \"opco/ppod/domain/merch/product/retailer-cpv-buy-more-hdr/stage/\"\r\n",
+					"TARGET_RELATIVE_PATH = \"opco/{opco}/domain/merch/product/retailer-cpv-buy-more-hdr/master/\"\r\n",
+					"KEY_COL=\"prom_id\"\r\n",
+					"VAL_CNT_THRESHOLD = 2\r\n",
+					"VAL_COL_NAME=\"sale_type_cd\"\r\n",
+					"VAL_COL_VLS= \"['D','P','V']\"\r\n",
+					"IS_DELTA = False\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
+					"PARAM_MERCH_PRODUCT = \"usr-data-integration\""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_rtl_cpv_buy_more_hdr\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - MERCH - RETAIL - CPV_BUY_MORE_HDR - Starting with below parameters\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_RELATIVE_PATH : {0}\".format(SOURCE_LAKE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t STAGE_RELATIVE_PATH : {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t TARGET_RELATIVE_PATH : {0}\".format(TARGET_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t IS_DELTA : {0}\".format(IS_DELTA))\r\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_NAME : {0}\".format(VAL_COL_NAME))\r\n",
+					"logger.info(\"\\t VAL_COL_VLS : {0}\".format(VAL_COL_VLS))\r\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, IntegerType ,StringType ,DecimalType\r\n",
+					"\r\n",
+					"STAGE_RTL_CPV_BUY_MORE_HDR_SCHEMA = StructType([\r\n",
+					"        StructField(\"prom_id\", IntegerType(), False),\r\n",
+					"        StructField(\"sale_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"prom_desc_tx\", StringType(), True),\r\n",
+					"        StructField(\"it_grp_id\", IntegerType(), True),\r\n",
+					"        StructField(\"it_grp_type_cd\", StringType(), True),\r\n",
+					"        StructField(\"unit_lvl_qy\", IntegerType(), False),\r\n",
+					"        StructField(\"prom_disc_qy\", DecimalType(38,18), False),\r\n",
+					"        StructField(\"pr_zone_cd\", IntegerType(), False)\r\n",
+					"])\r\n",
+					"\r\n",
+					"logger.debug(\"schema-defination : Defined the schema for RETAIL:CPV_BUY_MORE_HDR.\\n {0}\".format(STAGE_RTL_CPV_BUY_MORE_HDR_SCHEMA))"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**CPV BUY MORE HDR  STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import current_timestamp, lit\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql import functions as f\r\n",
+					"\r\n",
+					"if(IS_DELTA):\r\n",
+					"    logger.info(\"\\t RETAIL:CPV_BUY_MORE_HDR - Delta is not required.\")\r\n",
+					"else:\r\n",
+					"\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)):\r\n",
+					"        mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH, recurse = True)\r\n",
+					"        logger.info(\"Purging data from STG container {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"\r\n",
+					"    df_cpv_buy_more_hrd_stage = spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"parquet\") \\\r\n",
+					"        .option(\"inferSchema\", \"true\") \\\r\n",
+					"        .schema(STAGE_RTL_CPV_BUY_MORE_HDR_SCHEMA) \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_RELATIVE_PATH) \\\r\n",
+					"        .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"        .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"        .withColumn(\"tgt_audt_cr_id\", lit(PARAM_MERCH_PRODUCT)) \\\r\n",
+					"        .withColumn(\"tgt_audt_upd_id\", lit(PARAM_MERCH_PRODUCT))\r\n",
+					"\r\n",
+					"    str_cols=[colname for colname,coltype in df_cpv_buy_more_hrd_stage.dtypes if coltype==\"string\"] \r\n",
+					"    for colname in str_cols:    \r\n",
+					"        df_cpv_buy_more_hrd_stage=df_cpv_buy_more_hrd_stage.withColumn(colname, f.trim(f.col(colname)))\r\n",
+					"\r\n",
+					"    df_cpv_buy_more_hrd_stage = df_cpv_buy_more_hrd_stage \\\r\n",
+					"                                    .withColumn(\"prom_disc_qy\", df_cpv_buy_more_hrd_stage[\"prom_disc_qy\"].cast(DecimalType(precision=7, scale=2)))\r\n",
+					"\r\n",
+					"\r\n",
+					"    df_cpv_buy_more_hrd_stage\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)\r\n",
+					"    logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RELATIVE_PATH, STAGE_RELATIVE_PATH, df_cpv_buy_more_hrd_stage.count()))\r\n",
+					""
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import count_distinct, col\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .option(\"mergeSchema\", \"True\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .save(path)\r\n",
+					"    logger.info(\"RETAIL:CPV_BUY_MORE_HDR Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"\r\n",
+					"VAL_COL_VLS_LST=eval(VAL_COL_VLS)\r\n",
+					"\r\n",
+					"\r\n",
+					"def init(opco):\r\n",
+					"    logger.info(\"Processing  MDM for RETAIL:CPV_BUY_MORE_HDR OPCO={0}\".format(opco))\r\n",
+					"    \r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))):\r\n",
+					"        df_cpv_buy_more_hrd_master= spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"RETAIL:CPV_BUY_MORE_HDR loaded from master. OPCO = {0}, Count={1}\".format(opco, df_cpv_buy_more_hrd_master.count()))\r\n",
+					"        is_val_success= validate_count(df_cpv_buy_more_hrd_master,df_cpv_buy_more_hrd_stage,VAL_CNT_THRESHOLD)        \r\n",
+					"        is_values_in_list= check_val_list(df_cpv_buy_more_hrd_stage, VAL_COL_NAME, VAL_COL_VLS_LST)      \r\n",
+					"        if(is_val_success & is_values_in_list):\r\n",
+					"            load_master_data(df_cpv_buy_more_hrd_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")        \r\n",
+					"    else:\r\n",
+					"        load_master_data(df_cpv_buy_more_hrd_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"def apply_cdc(opco):\r\n",
+					"    logger.info(\"\\t RETAIL:CPV_BUY_MORE_HDR - Delta is not required.OPCO={0}\".format(opco))\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"\r\n",
+					"# FULL LOAD / DELTA LOAD\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"Processing  MDM for RETAIL:CPV_BUY_MORE_HDR OPCO={0}, IS_DELTA={1}\".format(opco,IS_DELTA))\r\n",
+					"    if(IS_DELTA):\r\n",
+					"       apply_cdc(opco)        \r\n",
+					"    else:\r\n",
+					"       init(opco)\r\n",
+					"        \r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 7
+			}
+		]
+	}
+}

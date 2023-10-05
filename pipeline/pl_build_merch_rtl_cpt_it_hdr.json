@@ -1,0 +1,1137 @@
+{
+	"name": "pl_build_merch_rtl_cpt_it_hdr",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-rtl-cpt-it-hdr-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-rtl-cpt-it-hdr",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-rtl-cpt-it-hdr-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.1:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": {
+							"value": "SELECT  prod_id,\n        it_shrt_name_tx,\n        it_long_name_tx,\n        slct_type_cd,\n        it_size_cd,\n        it_uom_cd,\n        addl_srch_tx,\n        cp_cat_tx,\n        cp_cat_id,\n        mrch_cat_tx,\n        mrch_cat_id,\n        upc_img_actv_cd,\n        ntrn_fact_cd,\n        srvg_size_tx,\n        srvg_per_ctnr_tx,\n        val_prpd_cd,\n        tot_clrs_qy,\n        fat_clrs_qy,\n        fat_clrs_pct_qy,\n        satd_fat_clrs_qy,\n        tot_fat_qy,\n        tot_fat_uom_cd,\n        tot_fat_pct_qy,\n        satd_fat_qy,\n        satd_fat_uom_cd,\n        satd_fat_pct_qy,\n        psat_fat_qy,\n        psat_fat_uom_cd,\n        msat_fat_qy,\n        msat_fat_uom_cd,\n        trns_fat_qy,\n        trns_fat_uom_cd,\n        chlt_qy,\n        chlt_uom_cd,\n        chlt_pct_qy,\n        sodm_qy,\n        sodm_uom_cd,\n        sodm_pct_qy,\n        ptsm_qy,\n        ptsm_uom_cd,\n        ptsm_pct_qy,\n        tot_carb_qy,\n        tot_carb_uom_cd,\n        tot_carb_pct_qy,\n        dtry_fibr_qy,\n        dtry_fibr_uom_cd,\n        dtry_fibr_pct_qy,\n        slbl_fibr_qy,\n        slbl_fibr_uom_cd,\n        islb_fibr_qy,\n        islb_fibr_uom_cd,\n        sugr_qy,\n        sugr_uom_cd,\n        sugr_achl_qy,\n        sugr_achl_uom_cd,\n        added_sugar_qy,\n        added_sugar_uom_cd,\n        added_sugar_pct_qy,\n        othr_carb_qy,\n        othr_carb_uom_cd,\n        prtn_qy,\n        prtn_uom_cd,\n        vtmn_a_pct_qy,\n        vtmn_c_pct_qy,\n        vtmn_d_pct_qy,\n        vtmn_d_uom_cd,\n        vtmn_d_qy,\n        clcm_pct_qy,\n        clcm_qy,\n        iron_pct_qy,\n        iron_qy,\n        kshr_cd,\n        brnd_id,\n        rule_id,\n        cmh_dtry_fl,\n        ww_fl,\n        gs_cd,\n        ntrn_lock_cd,\n        stsh_hlth_fl,\n        harv_fl,\n        ebt_elig_cd,\n        lb_ea_cd \n        FROM retailer:cpt_it_hdr",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "prod_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "prod_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "it_shrt_name_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_shrt_name_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "it_long_name_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_long_name_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "slct_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "slct_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "it_size_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_size_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "it_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "addl_srch_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "addl_srch_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cp_cat_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cp_cat_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cp_cat_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "cp_cat_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "mrch_cat_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mrch_cat_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mrch_cat_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "mrch_cat_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "upc_img_actv_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "upc_img_actv_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ntrn_fact_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ntrn_fact_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "srvg_size_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "srvg_size_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "srvg_per_ctnr_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "srvg_per_ctnr_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "val_prpd_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "val_prpd_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "tot_clrs_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "tot_clrs_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "fat_clrs_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "fat_clrs_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "fat_clrs_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "fat_clrs_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "satd_fat_clrs_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "satd_fat_clrs_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "tot_fat_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "tot_fat_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "tot_fat_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "tot_fat_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "tot_fat_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "tot_fat_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "satd_fat_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "satd_fat_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "satd_fat_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "satd_fat_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "satd_fat_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "satd_fat_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "psat_fat_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "psat_fat_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "psat_fat_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "psat_fat_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "msat_fat_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "msat_fat_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "msat_fat_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "msat_fat_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "trns_fat_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "trns_fat_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "trns_fat_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "trns_fat_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "chlt_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "chlt_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "chlt_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "chlt_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "chlt_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "chlt_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "sodm_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "sodm_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "sodm_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sodm_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sodm_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "sodm_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "ptsm_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "ptsm_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "ptsm_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ptsm_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ptsm_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "ptsm_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "tot_carb_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "tot_carb_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "tot_carb_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "tot_carb_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "tot_carb_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "tot_carb_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "dtry_fibr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "dtry_fibr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "dtry_fibr_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dtry_fibr_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dtry_fibr_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "dtry_fibr_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "slbl_fibr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "slbl_fibr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "slbl_fibr_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "slbl_fibr_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "islb_fibr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "islb_fibr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "islb_fibr_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "islb_fibr_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sugr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "sugr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "sugr_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sugr_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sugr_achl_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "sugr_achl_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "sugr_achl_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sugr_achl_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "added_sugar_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "added_sugar_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "added_sugar_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "added_sugar_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "added_sugar_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "added_sugar_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "othr_carb_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "othr_carb_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "othr_carb_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "othr_carb_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prtn_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "prtn_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "prtn_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prtn_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "vtmn_a_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "vtmn_a_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "vtmn_c_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "vtmn_c_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "vtmn_d_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "vtmn_d_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "vtmn_d_uom_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "vtmn_d_uom_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "vtmn_d_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "vtmn_d_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "clcm_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "clcm_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "clcm_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "clcm_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "iron_pct_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "iron_pct_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "iron_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "iron_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "kshr_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "kshr_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "brnd_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "brnd_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "rule_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "rule_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "cmh_dtry_fl",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "cmh_dtry_fl",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "ww_fl",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "ww_fl",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "gs_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "gs_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "ntrn_lock_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ntrn_lock_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "stsh_hlth_fl",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "stsh_hlth_fl",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "harv_fl",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "harv_fl",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "ebt_elig_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ebt_elig_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "lb_ea_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "lb_ea_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_infomix_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"IFX_TBL_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_INGST_FLDR_PATH": {
+								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "record-count-checkpoint",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ingest-rtl-cpt-it-hdr",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('ingest-rtl-cpt-it-hdr').output.rowsCopied,0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "mdm-merch-rtl-cpt-it-hdr",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.01:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_mdm_merch_rtl_cpt_it_hdr",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"SOURCE_LAKE_RELATIVE_PATH": {
+										"value": {
+											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"KEY_COL": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_KEY_COL",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
+									},
+									"IS_DELTA": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_IS_DELTA",
+											"type": "Expression"
+										},
+										"type": "bool"
+									}
+								},
+								"snapshot": true,
+								"sparkPool": {
+									"referenceName": "synsppdlinte201",
+									"type": "BigDataPoolReference"
+								},
+								"executorSize": "Small",
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"driverSize": "Small",
+								"numExecutors": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "retailer"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "cpt_it_hdr"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "merch/product/retailer-cpt-it-hdr"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "prod_id"
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_IS_DELTA": {
+				"type": "bool",
+				"defaultValue": false
+			}
+		},
+		"variables": {
+			"VAR_INGST_MERCH_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/merch/product/retailer-cpt-it-hdr/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/merchandise/product"
+		},
+		"annotations": []
+	}
+}

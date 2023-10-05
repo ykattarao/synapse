@@ -1,0 +1,345 @@
+{
+	"name": "pl_build_merch_rtl_cpv_buy_more_hdr",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-rtl-cpv-buy-more-hdr-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-rtl-cpv-buy-more-hdr",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-rtl-cpv-buy-more-hdr-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.1:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": {
+							"value": "SELECT  prom_id,\n        sale_type_cd,\n        prom_desc_tx,\n        it_grp_id,\n        it_grp_type_cd,\n        unit_lvl_qy,\n        prom_disc_qy,\n        pr_zone_cd\n        FROM retailer:cpv_buy_more_hdr",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "prom_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "prom_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "sale_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sale_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prom_desc_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prom_desc_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "it_grp_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "it_grp_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "it_grp_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_grp_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "unit_lvl_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "unit_lvl_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "prom_disc_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "prom_disc_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "pr_zone_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "pr_zone_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_infomix_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"IFX_TBL_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_INGST_FLDR_PATH": {
+								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "record-count-checkpoint",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ingest-rtl-cpv-buy-more-hdr",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('ingest-rtl-cpv-buy-more-hdr').output.rowsCopied, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "mdm-rtl-cpv-buy-more-hdr",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.1:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_mdm_merch_rtl_cpv_buy_more_hdr",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"SOURCE_LAKE_RELATIVE_PATH": {
+										"value": {
+											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"KEY_COL": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_KEY_COL",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
+									},
+									"IS_DELTA": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_IS_DELTA",
+											"type": "Expression"
+										},
+										"type": "bool"
+									},
+									"VAL_COL_NAME": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_COL_NAME",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"VAL_COL_VLS": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_COL_VLS",
+											"type": "Expression"
+										},
+										"type": "string"
+									}
+								},
+								"snapshot": true,
+								"sparkPool": {
+									"referenceName": "synsppdlinte201",
+									"type": "BigDataPoolReference"
+								},
+								"executorSize": "Small",
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"driverSize": "Small",
+								"numExecutors": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "retailer"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "cpv_buy_more_hdr"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "merch/product/retailer-cpv-buy-more-hdr"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "prom_id"
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_IS_DELTA": {
+				"type": "bool",
+				"defaultValue": false
+			},
+			"PARAM_VAL_COL_NAME": {
+				"type": "string",
+				"defaultValue": "sale_type_cd"
+			},
+			"PARAM_VAL_COL_VLS": {
+				"type": "string",
+				"defaultValue": "['D','P','V']"
+			}
+		},
+		"variables": {
+			"VAR_INGST_MERCH_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/merch/product/retailer-cpv-buy-more-hdr/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/merchandise/product"
+		},
+		"annotations": []
+	}
+}

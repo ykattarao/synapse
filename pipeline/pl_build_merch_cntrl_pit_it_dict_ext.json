@@ -1,0 +1,543 @@
+{
+	"name": "pl_build_merch_cntrl_pit_it_dict_ext",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-cntrl-pit-it-dict-ext-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-cntrl-pit-it-dict-ext",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-cntrl-pit-it-dict-ext-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.1:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": {
+							"value": "SELECT  pod_id,\n        tax_stat_cd,\n        pkg_data_cd,\n        lb_ea_cd,\n        smpl_it_cd,\n        num_btl_qy,\n        chg_ntc_cd,\n        up_shft_long_desc_tx,\n        unit_cube_qy,\n        in_octv_cd,\n        octv_upc_cd,\n        rdbl_desc_tx,\n        cont_img_type_cd,\n        med_cont_img_type_cd,\n        sm_cont_img_type_cd,\n        prim_cont_img_type_cd,\n        xlrg_cont_img_type_cd,\n        cont_img_lock_cd,\n        med_cont_img_lock_cd,\n        sm_cont_img_lock_cd,\n        prim_cont_img_lock_cd,\n        xlrg_cont_img_lock_cd,\n        it_img_stat_cd,\n        gs_cd,\n        fcst_it_cd,\n        cnc_conv_qy,\n        audt_upd_id,\n        TO_CHAR(audt_upd_dt, \"%Y-%m-%d\") as audt_upd_dt\n          FROM central:pit_it_dict_ext \n        ",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "pod_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "pod_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "tax_stat_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "tax_stat_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pkg_data_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pkg_data_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "lb_ea_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "lb_ea_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "smpl_it_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "smpl_it_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "num_btl_qy",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "num_btl_qy",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "chg_ntc_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "chg_ntc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "up_shft_long_desc_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "up_shft_long_desc_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "unit_cube_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "unit_cube_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "in_octv_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "in_octv_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "octv_upc_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "octv_upc_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "rdbl_desc_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "rdbl_desc_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cont_img_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cont_img_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "med_cont_img_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "med_cont_img_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sm_cont_img_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sm_cont_img_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prim_cont_img_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prim_cont_img_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "xlrg_cont_img_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "xlrg_cont_img_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cont_img_lock_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cont_img_lock_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "med_cont_img_lock_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "med_cont_img_lock_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sm_cont_img_lock_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sm_cont_img_lock_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prim_cont_img_lock_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prim_cont_img_lock_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "xlrg_cont_img_lock_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "xlrg_cont_img_lock_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "it_img_stat_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "it_img_stat_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "gs_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "gs_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "fcst_it_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "fcst_it_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cnc_conv_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "cnc_conv_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_dt",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_dt",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_infomix_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"IFX_TBL_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_INGST_FLDR_PATH": {
+								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "record-count-checkpoint",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ingest-cntrl-pit-it-dict-ext",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('ingest-cntrl-pit-it-dict-ext').output.rowsCopied, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "mdm-merch-cntrl-pit-it-dict-ext",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.01:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_mdm_merch_cntrl_pit_it_dict_ext",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"SOURCE_LAKE_RELATIVE_PATH": {
+										"value": {
+											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"KEY_COL": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_KEY_COL",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
+									},
+									"IS_DELTA": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_IS_DELTA",
+											"type": "Expression"
+										},
+										"type": "bool"
+									}
+								},
+								"snapshot": true,
+								"sparkPool": {
+									"referenceName": "synsppdlinte201",
+									"type": "BigDataPoolReference"
+								},
+								"executorSize": "Small",
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"driverSize": "Small",
+								"numExecutors": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "central"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "pit_it_dict_ext"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "merch/product/central-pit-it-dict-ext"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "pod_id"
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_IS_DELTA": {
+				"type": "bool",
+				"defaultValue": false
+			}
+		},
+		"variables": {
+			"VAR_INGST_MERCH_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/merch/product/central-pit-it-dict-ext/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/merchandise/product"
+		},
+		"annotations": []
+	}
+}

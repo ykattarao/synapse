@@ -1,0 +1,474 @@
+{
+	"name": "nb_mdm_cntrl_pit_stor_it",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/store"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "b78e47a7-175e-4e09-8038-f15e07824d3a"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_RELATIVE_PATH = \"opco/ppod/domain/merch/product/central-pit-stor-it/lake/2023-09-22-04-13-33/\"\r\n",
+					"STAGE_RELATIVE_PATH = \"opco/ppod/domain/merch/product/central-pit-stor-it/stage/\"\r\n",
+					"TARGET_RELATIVE_PATH = \"opco/{opco}/domain/merch/product/central-pit-stor-it/master/\"\r\n",
+					"KEY_COL=\"pod_id\"\r\n",
+					"PARTITION_COL = \"hash\"\r\n",
+					"NO_OF_PARTITIONS = 25\r\n",
+					"IS_DELTA = False\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
+					"PARAM_MERCH_PRODUCT = \"usr-data-integration\"\r\n",
+					"VAL_CNT_THRESHOLD=2\r\n",
+					"VAL_COL_VLS=\"['A','D','L','O','P','R','T']\"\r\n",
+					"VAL_COL_NAME=\"stat_cd\"\r\n",
+					""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_cntrl_pit_stor_it\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - RETAIL PRODUCT - CNTRL - PIT_STOR_ID - Starting with below parameters\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_RELATIVE_PATH : {0}\".format(SOURCE_LAKE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t STAGE_RELATIVE_PATH : {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t TARGET_RELATIVE_PATH : {0}\".format(TARGET_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t NO_OF_PARTITIONS : {0}\".format(NO_OF_PARTITIONS))\r\n",
+					"logger.info(\"\\t IS_DELTA : {0}\".format(IS_DELTA))\r\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t VAL_COL_NAME : {0}\".format(VAL_COL_NAME))\r\n",
+					"logger.info(\"\\t VAL_COL_VLS : {0}\".format(VAL_COL_VLS))\r\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, IntegerType ,StringType ,DecimalType ,TimestampType\r\n",
+					"\r\n",
+					"STAGE_CNTRL_PIT_STOR_IT_SCHEMA = StructType([\r\n",
+					"        StructField(\"pod_id\", IntegerType(), False),\r\n",
+					"        StructField(\"stor_id\", StringType(), False),\r\n",
+					"        StructField(\"stat_cd\", StringType(), False),\r\n",
+					"        StructField(\"fill_cd\", StringType(), False),\r\n",
+					"        StructField(\"it_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"vend_cd\", IntegerType(), False),\r\n",
+					"        StructField(\"sku_cd\", StringType(), False),\r\n",
+					"        StructField(\"vend_rtio_qy\", IntegerType(), False),\r\n",
+					"        StructField(\"slot_cap_qy\", IntegerType(), False),\r\n",
+					"        StructField(\"in_dc_cd\", StringType(), False),\r\n",
+					"        StructField(\"lpn_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"rcv_by_cd\", StringType(), False),\r\n",
+					"        StructField(\"sub_sent_cd\", StringType(), False),\r\n",
+					"        StructField(\"pllu_qy\", IntegerType(), False),\r\n",
+					"        StructField(\"prch_case_bulk_ord_qy\", IntegerType(), False),\r\n",
+					"        StructField(\"auto_temp_stat_cd\", StringType(), False),\r\n",
+					"        StructField(\"it_rvw_scor_qy\", DecimalType(38,18), False),\r\n",
+					"        StructField(\"asrt_dt\", StringType(), False),\r\n",
+					"        StructField(\"ahld_ord_cd\", IntegerType(), False),\r\n",
+					"        StructField(\"ahld_sell_cd\", IntegerType(), False),\r\n",
+					"        StructField(\"able_to_scan_cd\", StringType(), False),\r\n",
+					"        StructField(\"bag_reqd_cd\", StringType(), False),\r\n",
+					"        StructField(\"rcll_cd\", StringType(), False),\r\n",
+					"        StructField(\"pipe_line_cd\", StringType(), False),\r\n",
+					"        StructField(\"pipe_line_dt_tm\", TimestampType(), False),\r\n",
+					"        StructField(\"ecom_only_cd\", StringType(), False),\r\n",
+					"        StructField(\"ltmo_it_fl\", StringType(), False),\r\n",
+					"        StructField(\"load_bal_item\", StringType(), False),\r\n",
+					"        StructField(\"mkt_cat_val_id\", IntegerType(), True),\r\n",
+					"        StructField(\"scnd_vend_cd\", IntegerType(), True),\r\n",
+					"        StructField(\"scnd_sku_cd\", StringType(), True),\r\n",
+					"        StructField(\"scnd_vend_rtio_qy\", IntegerType(), True),\r\n",
+					"        StructField(\"area_cd\", StringType(), True),\r\n",
+					"        StructField(\"aisl_cd\", StringType(), True),\r\n",
+					"        StructField(\"bay_cd\", StringType(), True),\r\n",
+					"        StructField(\"pos_cd\", StringType(), True),\r\n",
+					"        StructField(\"slot_face_qy\", IntegerType(), True),\r\n",
+					"        StructField(\"slot_stck_qy\", IntegerType(), True),\r\n",
+					"        StructField(\"prev_area_cd\", StringType(), True),\r\n",
+					"        StructField(\"prev_aisl_cd\", StringType(), True),\r\n",
+					"        StructField(\"prev_bay_cd\", StringType(), True),\r\n",
+					"        StructField(\"prev_pos_cd\", StringType(), True),\r\n",
+					"        StructField(\"last_slot_chg_dt_tm\", TimestampType(), True),\r\n",
+					"        StructField(\"last_slot_chg_user_id\", StringType(), True),\r\n",
+					"        StructField(\"sfty_fact_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"it_rvw_dmnd_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"it_rvw_lift_fact_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"it_rvw_prom_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"it_rvw_pct_avl_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"it_rvw_oos_unit_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"ref_aou_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"strt_ovrd_aou_dt\", StringType(), True),\r\n",
+					"        StructField(\"end_ovrd_aou_dt\", StringType(), True),\r\n",
+					"        StructField(\"ovrd_aou_0_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"ovrd_aou_1_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"ovrd_aou_2_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"ovrd_aou_3_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"ovrd_aou_4_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"ovrd_aou_5_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"ovrd_aou_6_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"shlf_life_day_qy\", IntegerType(), True),\r\n",
+					"        StructField(\"rcll_end_dt\", StringType(), True),\r\n",
+					"        StructField(\"tkof_last_upd_dt_tm\", TimestampType(), True),\r\n",
+					"        StructField(\"it_long_name_tx\", StringType(), True),\r\n",
+					"        StructField(\"allw_chng_pkg_qy\", StringType(), True),       \r\n",
+					"        StructField(\"audt_cr_user_id\", StringType(), False),\r\n",
+					"        StructField(\"audt_cr_dt\", StringType(), False),\r\n",
+					"        StructField(\"audt_upd_user_id\", StringType(), False),\r\n",
+					"        StructField(\"audt_upd_dt\", StringType(), False)\r\n",
+					"])\r\n",
+					"\r\n",
+					"logger.debug(\"schema-defination : Defined the schema for RETAIL-CNTRL:PIT_STOR_IT.\\n {0}\".format(STAGE_CNTRL_PIT_STOR_IT_SCHEMA))"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**PIT STOR IT STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import current_timestamp, lit\r\n",
+					"from pyspark.sql import functions as f\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)):\r\n",
+					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH, recurse = True)\r\n",
+					"    logger.info(\"Purging data from STG container {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"\r\n",
+					"df_pit_stor_it_stage = spark \\\r\n",
+					"    .read \\\r\n",
+					"    .schema(STAGE_CNTRL_PIT_STOR_IT_SCHEMA) \\\r\n",
+					"    .option(\"inferSchema\", \"true\") \\\r\n",
+					"    .format(\"parquet\") \\\r\n",
+					"    .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_RELATIVE_PATH) \\\r\n",
+					"    .filter(\"stor_id is NOT NULL\") \\\r\n",
+					"    .withColumn(\"hash\", f.abs(f.hash(f.col(\"stor_id\"))%NO_OF_PARTITIONS)) \\\r\n",
+					"    .withColumnRenamed(\"audt_cr_dt\", \"src_audt_cr_dt\") \\\r\n",
+					"    .withColumnRenamed(\"audt_cr_user_id\", \"src_audt_cr_user_id\") \\\r\n",
+					"    .withColumnRenamed(\"audt_upd_dt\", \"src_audt_upd_dt\") \\\r\n",
+					"    .withColumnRenamed(\"audt_upd_user_id\", \"src_audt_upd_user_id\") \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"    .withColumn(\"tgt_audt_cr_id\", lit(PARAM_MERCH_PRODUCT)) \\\r\n",
+					"    .withColumn(\"tgt_audt_upd_id\", lit(PARAM_MERCH_PRODUCT))\r\n",
+					"\r\n",
+					"str_cols=[colname for colname,coltype in df_pit_stor_it_stage.dtypes if coltype==\"string\"] \r\n",
+					"for colname in str_cols:    \r\n",
+					"    df_pit_stor_it_stage=df_pit_stor_it_stage.withColumn(colname, f.trim(f.col(colname)))\r\n",
+					"\r\n",
+					"df_pit_stor_it_stage = df_pit_stor_it_stage \\\r\n",
+					"                        .withColumn(\"sfty_fact_qy\", df_pit_stor_it_stage[\"sfty_fact_qy\"].cast(DecimalType(precision=7, scale=2))) \\\r\n",
+					"                        .withColumn(\"it_rvw_dmnd_qy\", df_pit_stor_it_stage[\"it_rvw_dmnd_qy\"].cast(DecimalType(precision=9, scale=2))) \\\r\n",
+					"                        .withColumn(\"it_rvw_lift_fact_qy\", df_pit_stor_it_stage[\"it_rvw_lift_fact_qy\"].cast(DecimalType(precision=9, scale=2))) \\\r\n",
+					"                        .withColumn(\"it_rvw_prom_qy\", df_pit_stor_it_stage[\"it_rvw_prom_qy\"].cast(DecimalType(precision=9, scale=2))) \\\r\n",
+					"                        .withColumn(\"it_rvw_pct_avl_qy\", df_pit_stor_it_stage[\"it_rvw_pct_avl_qy\"].cast(DecimalType(precision=9, scale=2))) \\\r\n",
+					"                        .withColumn(\"it_rvw_oos_unit_qy\", df_pit_stor_it_stage[\"it_rvw_oos_unit_qy\"].cast(DecimalType(precision=9, scale=2))) \\\r\n",
+					"                        .withColumn(\"it_rvw_scor_qy\", df_pit_stor_it_stage[\"it_rvw_scor_qy\"].cast(DecimalType(precision=9, scale=2))) \\\r\n",
+					"                        .withColumn(\"ref_aou_qy\", df_pit_stor_it_stage[\"ref_aou_qy\"].cast(DecimalType(precision=14, scale=7))) \\\r\n",
+					"                        .withColumn(\"ovrd_aou_0_qy\", df_pit_stor_it_stage[\"ovrd_aou_0_qy\"].cast(DecimalType(precision=14, scale=7))) \\\r\n",
+					"                        .withColumn(\"ovrd_aou_1_qy\", df_pit_stor_it_stage[\"ovrd_aou_1_qy\"].cast(DecimalType(precision=14, scale=7))) \\\r\n",
+					"                        .withColumn(\"ovrd_aou_2_qy\", df_pit_stor_it_stage[\"ovrd_aou_2_qy\"].cast(DecimalType(precision=14, scale=7))) \\\r\n",
+					"                        .withColumn(\"ovrd_aou_3_qy\", df_pit_stor_it_stage[\"ovrd_aou_3_qy\"].cast(DecimalType(precision=14, scale=7))) \\\r\n",
+					"                        .withColumn(\"ovrd_aou_4_qy\", df_pit_stor_it_stage[\"ovrd_aou_4_qy\"].cast(DecimalType(precision=14, scale=7))) \\\r\n",
+					"                        .withColumn(\"ovrd_aou_5_qy\", df_pit_stor_it_stage[\"ovrd_aou_5_qy\"].cast(DecimalType(precision=14, scale=7))) \\\r\n",
+					"                        .withColumn(\"ovrd_aou_6_qy\", df_pit_stor_it_stage[\"ovrd_aou_6_qy\"].cast(DecimalType(precision=14, scale=7)))\r\n",
+					"\r\n",
+					"df_pit_stor_it_stage\\\r\n",
+					"    .repartition(1, KEY_COL) \\\r\n",
+					"    .sort(KEY_COL) \\\r\n",
+					"    .write \\\r\n",
+					"    .format(\"delta\") \\\r\n",
+					"    .mode(\"overwrite\") \\\r\n",
+					"    .partitionBy(PARTITION_COL) \\\r\n",
+					"    .save(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)\r\n",
+					"\r\n",
+					"logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RELATIVE_PATH, STAGE_RELATIVE_PATH, df_pit_stor_it_stage.count()))\r\n",
+					""
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.functions import count_distinct, col\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"        .repartition(1, KEY_COL) \\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .option(\"mergeSchema\", \"True\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .partitionBy(PARTITION_COL) \\\r\n",
+					"        .save(path)\r\n",
+					"    logger.info(\"RETAIL-CNTRL:PIT_STOR_IT Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"    \r\n",
+					"\r\n",
+					"def init(opco):\r\n",
+					"    \r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))):\r\n",
+					"        df_pit_stor_it_master= spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"\\t RETAIL-CNTRL:PIT_STOR_IT loaded from master. OPCO = {0}, Count={1}\".format(opco, df_pit_stor_it_master.count()))\r\n",
+					"        is_val_success= validate_count(df_pit_stor_it_master,df_pit_stor_it_stage,VAL_CNT_THRESHOLD)        \r\n",
+					"        is_values_in_list= check_val_list(df_pit_stor_it_stage, VAL_COL_NAME, VAL_COL_VLS_LST)\r\n",
+					"        if (is_val_success & is_values_in_list)== True:\r\n",
+					"            load_master_data(df_pit_stor_it_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")        \r\n",
+					"    else:\r\n",
+					"        logger.info(\"\\t First Time Master Load\")\r\n",
+					"        load_master_data(df_pit_stor_it_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"\r\n",
+					"    \r\n",
+					"def apply_cdc(opco):\r\n",
+					"    \r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))):\r\n",
+					"        \r\n",
+					"        dt_pit_stor_it_master = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"\\t RETAIL-CNTRL:PIT_STOR_IT loaded from master. OPCO = {0}, Count={1}\".format(opco, dt_pit_stor_it_master.toDF().count()))\r\n",
+					"\r\n",
+					"        dt_pit_stor_it_master.alias(\"mstr\") \\\r\n",
+					"        .merge(df_pit_stor_it_stage.alias(\"stg\"), \"mstr.hash = stg.hash AND mstr.pod_id = stg.pod_id AND mstr.stor_id=stg.stor_id\") \\\r\n",
+					"        .whenMatchedUpdateAll() \\\r\n",
+					"        .whenNotMatchedInsertAll() \\\r\n",
+					"        .execute()\r\n",
+					"        \r\n",
+					"        logger.info(\"\\t RETAIL-CNTRL:PIT_STOR_IT merged delta records to main file. OPCO = {0}, \\nMaster_Count={1}, \\nDelta_Count={2},\\n Path={3}\".format(opco,dt_pit_stor_it_master.toDF().count(), df_pit_stor_it_stage.count(),TARGET_RELATIVE_PATH.format(opco = opco)))\r\n",
+					"      \r\n",
+					"    else:\r\n",
+					"        init(opco)\r\n",
+					"    \r\n",
+					"\r\n",
+					"##############################\r\n",
+					"\r\n",
+					"# FULL LOAD / DELTA LOAD\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"VAL_COL_VLS_LST=eval(VAL_COL_VLS)\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"Processing  MDM for RETAIL-CNTRL:PIT_STOR_IT. OPCO={0}, IS_DELTA={1}\".format(opco,IS_DELTA))\r\n",
+					"    if(IS_DELTA):\r\n",
+					"       apply_cdc(opco)        \r\n",
+					"    else:\r\n",
+					"       init(opco)\r\n",
+					"        \r\n",
+					""
+				],
+				"execution_count": 7
+			}
+		]
+	}
+}

@@ -1,0 +1,481 @@
+{
+	"name": "nb_mdm_merch_rtl_cpt_it_hdr",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/merchandise/product"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "248c7bbc-b9ad-42df-877f-4e87bcc41847"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_RELATIVE_PATH = \"opco/ppod/domain/merch/product/retailer-cpt-it-hdr/lake/2023-09-21-11-21-59/\"\r\n",
+					"STAGE_RELATIVE_PATH = \"opco/ppod/domain/merch/product/retailer-cpt-it-hdr/stage/\"\r\n",
+					"TARGET_RELATIVE_PATH = \"opco/{opco}/domain/merch/product/retailer-cpt-it-hdr/master/\"\r\n",
+					"KEY_COL=\"prod_id\"\r\n",
+					"VAL_CNT_THRESHOLD = 2\r\n",
+					"IS_DELTA = False\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
+					"PARAM_MERCH_PRODUCT = \"usr-data-integration\""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_merch_rtl_cpt_it_hdr\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - MERCH - RETAIL - CIT_IT_HDR - Starting with below parameters\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_RELATIVE_PATH : {0}\".format(SOURCE_LAKE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t STAGE_RELATIVE_PATH : {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t TARGET_RELATIVE_PATH : {0}\".format(TARGET_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"\\t IS_DELTA : {0}\".format(IS_DELTA))\r\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\r\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, StringType, IntegerType,  DecimalType\r\n",
+					"\r\n",
+					"STAGE_RTL_CIT_IT_HDR_SCHEMA = StructType([\r\n",
+					"    StructField(\"prod_id\", IntegerType(), False),\r\n",
+					"    StructField(\"it_shrt_name_tx\", StringType(), True),\r\n",
+					"    StructField(\"it_long_name_tx\", StringType(), True),\r\n",
+					"    StructField(\"slct_type_cd\", StringType(), True),\r\n",
+					"    StructField(\"it_size_cd\", StringType(), True),\r\n",
+					"    StructField(\"it_uom_cd\", StringType(), True),\r\n",
+					"    StructField(\"addl_srch_tx\", StringType(), True),\r\n",
+					"    StructField(\"cp_cat_tx\", StringType(), True),\r\n",
+					"    StructField(\"cp_cat_id\", IntegerType(), True),\r\n",
+					"    StructField(\"mrch_cat_tx\", StringType(), True),\r\n",
+					"    StructField(\"mrch_cat_id\", IntegerType(), True),\r\n",
+					"    StructField(\"upc_img_actv_cd\", StringType(), True),\r\n",
+					"    StructField(\"ntrn_fact_cd\", StringType(), True),\r\n",
+					"    StructField(\"srvg_size_tx\", StringType(), True),\r\n",
+					"    StructField(\"srvg_per_ctnr_tx\", StringType(), True),\r\n",
+					"    StructField(\"val_prpd_cd\", StringType(), True),\r\n",
+					"    StructField(\"tot_clrs_qy\",DecimalType(38,18),False),\r\n",
+					"    StructField(\"fat_clrs_qy\",DecimalType(38,18),False),\r\n",
+					"    StructField(\"fat_clrs_pct_qy\",DecimalType(38,18), True),\r\n",
+					"    StructField(\"satd_fat_clrs_qy\",DecimalType(38,18), False),\r\n",
+					"    StructField(\"tot_fat_qy\",DecimalType(38,18), False),\r\n",
+					"    StructField(\"tot_fat_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"tot_fat_pct_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"satd_fat_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"satd_fat_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"satd_fat_pct_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"psat_fat_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"psat_fat_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"msat_fat_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"msat_fat_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"trns_fat_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"trns_fat_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"chlt_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"chlt_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"chlt_pct_qy\", DecimalType(38,18),True),\r\n",
+					"    StructField(\"sodm_qy\",DecimalType(38,18),False),\r\n",
+					"    StructField(\"sodm_uom_cd\", StringType(),False),\r\n",
+					"    StructField(\"sodm_pct_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"ptsm_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"ptsm_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"ptsm_pct_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"tot_carb_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"tot_carb_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"tot_carb_pct_qy\", DecimalType(38,18), True),\r\n",
+					"    StructField(\"dtry_fibr_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"dtry_fibr_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"dtry_fibr_pct_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"slbl_fibr_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"slbl_fibr_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"islb_fibr_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"islb_fibr_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"sugr_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"sugr_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"sugr_achl_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"sugr_achl_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"added_sugar_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"added_sugar_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"added_sugar_pct_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"othr_carb_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"othr_carb_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"prtn_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"prtn_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"vtmn_a_pct_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"vtmn_c_pct_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"vtmn_d_pct_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"vtmn_d_uom_cd\", StringType(), False),\r\n",
+					"    StructField(\"vtmn_d_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"clcm_pct_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"clcm_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"iron_pct_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"iron_qy\", DecimalType(38,18), False),\r\n",
+					"    StructField(\"kshr_cd\", StringType(), True),\r\n",
+					"    StructField(\"brnd_id\", IntegerType(), True),\r\n",
+					"    StructField(\"rule_id\", IntegerType(), True),\r\n",
+					"    StructField(\"cmh_dtry_fl\", IntegerType(), True),\r\n",
+					"    StructField(\"ww_fl\", IntegerType(), True),\r\n",
+					"    StructField(\"gs_cd\", IntegerType(), False),\r\n",
+					"    StructField(\"ntrn_lock_cd\", StringType(), False),\r\n",
+					"    StructField(\"stsh_hlth_fl\", IntegerType(), True),\r\n",
+					"    StructField(\"harv_fl\", IntegerType(), True),\r\n",
+					"    StructField(\"ebt_elig_cd\", StringType(), False),\r\n",
+					"    StructField(\"lb_ea_cd\", StringType(), True)\r\n",
+					"])\r\n",
+					"\r\n",
+					"logger.debug(\"schema-defination : Defined the schema for retail:cit_it_hdr.\\n {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					""
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**CIT IT HDR STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import current_timestamp, lit\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql.types import DecimalType\r\n",
+					"from pyspark.sql import functions as f\r\n",
+					"\r\n",
+					"\r\n",
+					"if(IS_DELTA):\r\n",
+					"    logger.info(\"\\t RETAIL:CIT_IT_HDR - Delta is not required.\")\r\n",
+					"else:\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)):\r\n",
+					"        mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH, recurse = True)\r\n",
+					"        logger.info(\"Purging data from STG container {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"\r\n",
+					"    df_cit_it_hdr_stage = spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"parquet\") \\\r\n",
+					"        .option(\"inferSchema\", \"true\") \\\r\n",
+					"        .schema(STAGE_RTL_CIT_IT_HDR_SCHEMA) \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_RELATIVE_PATH) \\\r\n",
+					"        .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"        .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"        .withColumn(\"tgt_audt_cr_id\", lit(PARAM_MERCH_PRODUCT)) \\\r\n",
+					"        .withColumn(\"tgt_audt_upd_id\", lit(PARAM_MERCH_PRODUCT))\r\n",
+					"\r\n",
+					"    str_cols=[colname for colname,coltype in df_cit_it_hdr_stage.dtypes if coltype==\"string\"] \r\n",
+					"    for colname in str_cols:    \r\n",
+					"        df_cit_it_hdr_stage=df_cit_it_hdr_stage.withColumn(colname, f.trim(f.col(colname)))\r\n",
+					"\r\n",
+					"    df_cit_it_hdr_stage = df_cit_it_hdr_stage \\\r\n",
+					"                        .withColumn(\"tot_clrs_qy\", df_cit_it_hdr_stage[\"tot_clrs_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"fat_clrs_qy\", df_cit_it_hdr_stage[\"fat_clrs_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"fat_clrs_pct_qy\", df_cit_it_hdr_stage[\"fat_clrs_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"satd_fat_clrs_qy\", df_cit_it_hdr_stage[\"satd_fat_clrs_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"tot_fat_qy\", df_cit_it_hdr_stage[\"tot_fat_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"tot_fat_pct_qy\", df_cit_it_hdr_stage[\"tot_fat_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"satd_fat_qy\", df_cit_it_hdr_stage[\"satd_fat_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"satd_fat_pct_qy\", df_cit_it_hdr_stage[\"satd_fat_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"psat_fat_qy\", df_cit_it_hdr_stage[\"psat_fat_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"msat_fat_qy\", df_cit_it_hdr_stage[\"msat_fat_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"trns_fat_qy\", df_cit_it_hdr_stage[\"trns_fat_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"chlt_qy\", df_cit_it_hdr_stage[\"chlt_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"chlt_pct_qy\", df_cit_it_hdr_stage[\"chlt_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"sodm_qy\", df_cit_it_hdr_stage[\"sodm_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"sodm_pct_qy\", df_cit_it_hdr_stage[\"sodm_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"ptsm_qy\", df_cit_it_hdr_stage[\"ptsm_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"ptsm_pct_qy\", df_cit_it_hdr_stage[\"ptsm_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"tot_carb_qy\", df_cit_it_hdr_stage[\"tot_carb_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"tot_carb_pct_qy\", df_cit_it_hdr_stage[\"tot_carb_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"dtry_fibr_qy\", df_cit_it_hdr_stage[\"dtry_fibr_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"dtry_fibr_pct_qy\", df_cit_it_hdr_stage[\"dtry_fibr_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"slbl_fibr_qy\", df_cit_it_hdr_stage[\"slbl_fibr_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"islb_fibr_qy\", df_cit_it_hdr_stage[\"islb_fibr_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"sugr_qy\", df_cit_it_hdr_stage[\"sugr_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"sugr_achl_qy\", df_cit_it_hdr_stage[\"sugr_achl_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"added_sugar_qy\", df_cit_it_hdr_stage[\"added_sugar_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"added_sugar_pct_qy\", df_cit_it_hdr_stage[\"added_sugar_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"othr_carb_qy\", df_cit_it_hdr_stage[\"othr_carb_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"prtn_qy\", df_cit_it_hdr_stage[\"prtn_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"vtmn_a_pct_qy\", df_cit_it_hdr_stage[\"vtmn_a_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"vtmn_c_pct_qy\", df_cit_it_hdr_stage[\"vtmn_c_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"vtmn_d_qy\", df_cit_it_hdr_stage[\"vtmn_d_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"vtmn_d_pct_qy\", df_cit_it_hdr_stage[\"vtmn_d_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"clcm_qy\", df_cit_it_hdr_stage[\"clcm_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"clcm_pct_qy\", df_cit_it_hdr_stage[\"clcm_pct_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"iron_qy\", df_cit_it_hdr_stage[\"iron_qy\"].cast(DecimalType(precision=6, scale=2))) \\\r\n",
+					"                        .withColumn(\"iron_pct_qy\", df_cit_it_hdr_stage[\"iron_pct_qy\"].cast(DecimalType(precision=6, scale=2)))\r\n",
+					"\r\n",
+					"\r\n",
+					"    df_cit_it_hdr_stage\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)\r\n",
+					"    logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RELATIVE_PATH, STAGE_RELATIVE_PATH, df_cit_it_hdr_stage.count()))\r\n",
+					""
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .option(\"mergeSchema\", \"True\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .save(path)\r\n",
+					"    logger.info(\"RETAIL:CIT_IT_HDR Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"\r\n",
+					"\r\n",
+					"def init(opco):\r\n",
+					"    logger.info(\"Processing  MDM for RETAIL:CIT_IT_HDR. OPCO={0}\".format(opco))\r\n",
+					"    \r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))):\r\n",
+					"        df_cit_it_hdr_master= spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"RETAIL:CIT_IT_HDR loaded from master. OPCO = {0}, Count={1}\".format(opco, df_cit_it_hdr_master.count()))\r\n",
+					"        is_val_success= validate_count(df_cit_it_hdr_master,df_cit_it_hdr_stage,VAL_CNT_THRESHOLD)        \r\n",
+					"        if is_val_success :\r\n",
+					"            load_master_data(df_cit_it_hdr_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")        \r\n",
+					"    else:\r\n",
+					"        \r\n",
+					"        load_master_data(df_cit_it_hdr_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"\r\n",
+					"\r\n",
+					"\r\n",
+					"def apply_cdc(opco):\r\n",
+					"    logger.info(\"\\t RETAIL:CIT_IT_HDR - Delta is not required.OPCO={0}\".format(opco))\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"\r\n",
+					"# FULL LOAD / DELTA LOAD\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"Processing  MDM for RETAIL:CIT_IT_HDR OPCO={0}, IS_DELTA={1}\".format(opco,IS_DELTA))\r\n",
+					"    if(IS_DELTA):\r\n",
+					"       apply_cdc(opco)        \r\n",
+					"    else:\r\n",
+					"       init(opco)\r\n",
+					"        \r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 7
+			}
+		]
+	}
+}

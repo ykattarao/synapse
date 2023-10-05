@@ -1,0 +1,391 @@
+{
+	"name": "nb_mdm_merch_cntrl_pit_it_dict_ext",
+	"properties": {
+		"folder": {
+			"name": "mdm/domain/merchandise/product"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "synsppdlinte201",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "117e8a5b-316b-4921-be53-4080984b9f4d"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/68ab6d29-6524-4862-8fb0-8b171dcf03a9/resourceGroups/rg-synw-pdlintegrations-nonprd-dev-e2-01/providers/Microsoft.Synapse/workspaces/synw-pdlintegrations-nonprd-dev-e2-01/bigDataPools/synsppdlinte201",
+				"name": "synsppdlinte201",
+				"type": "Spark",
+				"endpoint": "https://synw-pdlintegrations-nonprd-dev-e2-01.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synsppdlinte201",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.3",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INITILIZATION OF VARIBLES**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
+					"SOURCE_LAKE_RELATIVE_PATH = \"opco/ppod/domain/merch/product/central-pit-it-dict-ext/lake/2023-09-21-12-25-35/\"\r\n",
+					"STAGE_RELATIVE_PATH = \"opco/ppod/domain/merch/product/central-pit-it-dict-ext/stage/\"\r\n",
+					"TARGET_RELATIVE_PATH = \"opco/{opco}/domain/merch/product/central-pit-it-dict-ext/master/\"\r\n",
+					"KEY_COL=\"pod_id\"\r\n",
+					"VAL_CNT_THRESHOLD = 5\r\n",
+					"IS_DELTA = False\r\n",
+					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
+					"PARAM_MERCH_PRODUCT = \"usr-data-integration\""
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**INCLUDE UTILS**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_mdm_merch_cntrl_pit_it_dict_ext\", LOGGING_LEVEL: \"INFO\" }"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"%run utils/validation/nb_auto_data_validation_framework"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"logger.info(\"**************************************************************************\")\r\n",
+					"logger.info(\"\\t MDM - MERCH - CENTRAL - PIT_IT_DICT_EXT - Starting with below parameters\")\r\n",
+					"logger.info(\"*************************************************************************\")\r\n",
+					"logger.info(\"\\t SOURCE_LAKE_RELATIVE_PATH : {0}\".format(SOURCE_LAKE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t STAGE_RELATIVE_PATH : {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t TARGET_RELATIVE_PATH : {0}\".format(TARGET_RELATIVE_PATH))\r\n",
+					"logger.info(\"\\t OPCO_LST : {0}\".format(OPCO_LST))\r\n",
+					"logger.info(\"\\t IS_DELTA : {0}\".format(IS_DELTA))\r\n",
+					"logger.info(\"\\t KEY_COL : {0}\".format(KEY_COL))\r\n",
+					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
+					"logger.info(\"**************************************************************************\")"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**STAGE SCHEMA DEFINITION**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.types import StructType, StructField, IntegerType ,StringType ,DecimalType \r\n",
+					"\r\n",
+					"STAGE_CNTRL_PIT_IT_DICT_EXT_SCHEMA = StructType([\r\n",
+					"        StructField(\"pod_id\", IntegerType(), False),\r\n",
+					"        StructField(\"tax_stat_cd\", StringType(), False),\r\n",
+					"        StructField(\"pkg_data_cd\", StringType(), False),\r\n",
+					"        StructField(\"lb_ea_cd\", StringType(), False),\r\n",
+					"        StructField(\"smpl_it_cd\", StringType(), False),\r\n",
+					"        StructField(\"num_btl_qy\", IntegerType(), False),\r\n",
+					"        StructField(\"chg_ntc_cd\", StringType(), False),\r\n",
+					"        StructField(\"up_shft_long_desc_tx\", StringType(), True),\r\n",
+					"        StructField(\"unit_cube_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"in_octv_cd\", StringType(), False),\r\n",
+					"        StructField(\"octv_upc_cd\", StringType(), True),\r\n",
+					"        StructField(\"rdbl_desc_tx\", StringType(), True),\r\n",
+					"        StructField(\"cont_img_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"med_cont_img_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"sm_cont_img_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"prim_cont_img_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"xlrg_cont_img_type_cd\", StringType(), False),\r\n",
+					"        StructField(\"cont_img_lock_cd\", StringType(), False),\r\n",
+					"        StructField(\"med_cont_img_lock_cd\", StringType(), False),\r\n",
+					"        StructField(\"sm_cont_img_lock_cd\", StringType(), False),\r\n",
+					"        StructField(\"prim_cont_img_lock_cd\", StringType(), False),\r\n",
+					"        StructField(\"xlrg_cont_img_lock_cd\", StringType(), False),\r\n",
+					"        StructField(\"it_img_stat_cd\", StringType(), False),\r\n",
+					"        StructField(\"gs_cd\", IntegerType(), False),\r\n",
+					"        StructField(\"fcst_it_cd\", StringType(), False),\r\n",
+					"        StructField(\"cnc_conv_qy\", DecimalType(38,18), True),\r\n",
+					"        StructField(\"audt_upd_id\", StringType(), True),\r\n",
+					"        StructField(\"audt_upd_dt\", StringType(), True)\r\n",
+					"])\r\n",
+					"\r\n",
+					"logger.debug(\"schema-defination : Defined the schema for central:PIT_IT_DICT_EXT.\\n {0}\".format(STAGE_CNTRL_PIT_IT_DICT_EXT_SCHEMA))\r\n",
+					""
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**PIT IT DICT EXT  STAGE LOAD**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import current_timestamp, lit\r\n",
+					"from delta.tables import DeltaTable\r\n",
+					"from pyspark.sql import functions as f\r\n",
+					"\r\n",
+					"if(IS_DELTA):\r\n",
+					"    logger.info(\"\\t CENTRAL:PIT_IT_DICT_EXT - Delta is not required.\")\r\n",
+					"else:\r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)):\r\n",
+					"        mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH, recurse = True)\r\n",
+					"        logger.info(\"Purging data from STG container {0}\".format(STAGE_RELATIVE_PATH))\r\n",
+					"\r\n",
+					"    df_pit_it_dict_ext_stage = spark \\\r\n",
+					"        .read \\\r\n",
+					"        .format(\"parquet\") \\\r\n",
+					"        .option(\"inferSchema\", \"true\") \\\r\n",
+					"        .schema(STAGE_CNTRL_PIT_IT_DICT_EXT_SCHEMA) \\\r\n",
+					"        .load(BASE_ADLS_CONN_STR + SOURCE_LAKE_RELATIVE_PATH) \\\r\n",
+					"        .withColumnRenamed(\"audt_upd_dt\", \"src_audt_upd_dt\") \\\r\n",
+					"        .withColumnRenamed(\"audt_upd_id\", \"src_audt_upd_id\") \\\r\n",
+					"        .withColumn(\"tgt_audt_cr_dt_tm\", current_timestamp()) \\\r\n",
+					"        .withColumn(\"tgt_audt_upd_dt_tm\", current_timestamp()) \\\r\n",
+					"        .withColumn(\"tgt_audt_cr_id\", lit(PARAM_MERCH_PRODUCT)) \\\r\n",
+					"        .withColumn(\"tgt_audt_upd_id\", lit(PARAM_MERCH_PRODUCT))\r\n",
+					"\r\n",
+					"    str_cols=[colname for colname,coltype in df_pit_it_dict_ext_stage.dtypes if coltype==\"string\"] \r\n",
+					"    for colname in str_cols:    \r\n",
+					"        df_pit_it_dict_ext_stage=df_pit_it_dict_ext_stage.withColumn(colname, f.trim(f.col(colname)))\r\n",
+					"\r\n",
+					"    df_pit_it_dict_ext_stage = df_pit_it_dict_ext_stage \\\r\n",
+					"                              .withColumn(\"unit_cube_qy\", df_pit_it_dict_ext_stage[\"unit_cube_qy\"].cast(DecimalType(precision=11, scale=4))) \\\r\n",
+					"                              .withColumn(\"cnc_conv_qy\", df_pit_it_dict_ext_stage[\"cnc_conv_qy\"].cast(DecimalType(precision=9, scale=4)))\r\n",
+					"\r\n",
+					"\r\n",
+					"    df_pit_it_dict_ext_stage\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .save(BASE_ADLS_CONN_STR + STAGE_RELATIVE_PATH)\r\n",
+					"\r\n",
+					"    logger.info(\"stg-load: Created STG data from lake source. \\n LAKE = {0} \\n STG = {1} \\n CNT = {2}\".format(SOURCE_LAKE_RELATIVE_PATH, STAGE_RELATIVE_PATH, df_pit_it_dict_ext_stage.count()))\r\n",
+					""
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"**MASTER DATA MANAGEMENT**"
+				]
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from delta.tables import DeltaTable\r\n",
+					"\r\n",
+					"def load_master_data(df_stage, path, opco):\r\n",
+					"    df_stage\\\r\n",
+					"        .sort(KEY_COL) \\\r\n",
+					"        .write \\\r\n",
+					"        .option(\"mergeSchema\", \"True\") \\\r\n",
+					"        .mode(\"overwrite\") \\\r\n",
+					"        .format(\"delta\") \\\r\n",
+					"        .save(path)\r\n",
+					"    logger.info(\"CENTRAL:PIT_IT_DICT_EXT Master data overwritten.OPCO = {0}, Count={1}\".format(opco, df_stage.count()))\r\n",
+					"\r\n",
+					"\r\n",
+					"def init(opco):\r\n",
+					"    logger.info(\"Processing  MDM for CENTRAL:PIT_IT_DICT_EXT OPCO={0}\".format(opco))\r\n",
+					"    \r\n",
+					"    if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))):\r\n",
+					"        df_pit_it_dict_ext_master= spark \\\r\n",
+					"            .read \\\r\n",
+					"            .format(\"delta\") \\\r\n",
+					"            .load(BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco))\r\n",
+					"        logger.info(\"CENTRAL:PIT_IT_DICT_EXT loaded from master. OPCO = {0}, Count={1}\".format(opco, df_pit_it_dict_ext_master.count()))\r\n",
+					"        is_val_success= validate_count(df_pit_it_dict_ext_master,df_pit_it_dict_ext_stage,VAL_CNT_THRESHOLD)        \r\n",
+					"        if is_val_success :\r\n",
+					"            load_master_data(df_pit_it_dict_ext_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"        else:\r\n",
+					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
+					"            raise Exception(\"EXCEEDING_THRESHOLD\")        \r\n",
+					"    else:\r\n",
+					"        \r\n",
+					"        load_master_data(df_pit_it_dict_ext_stage,BASE_ADLS_CONN_STR + TARGET_RELATIVE_PATH.format(opco = opco), opco)\r\n",
+					"\r\n",
+					"\r\n",
+					"def apply_cdc(opco):\r\n",
+					"    logger.info(\"\\t CENTRAL:PIT_IT_DICT_EXT - Delta is not required.OPCO={0}\".format(opco))\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"\r\n",
+					"# FULL LOAD / DELTA LOAD\r\n",
+					"\r\n",
+					"##############################\r\n",
+					"for opco in OPCO_LST:\r\n",
+					"    logger.info(\"Processing  MDM for CENTRAL:PIT_IT_DICT_EXT OPCO={0}, IS_DELTA={1}\".format(opco,IS_DELTA))\r\n",
+					"    if(IS_DELTA):\r\n",
+					"       apply_cdc(opco)        \r\n",
+					"    else:\r\n",
+					"       init(opco)\r\n",
+					"\r\n",
+					""
+				],
+				"execution_count": 7
+			}
+		]
+	}
+}

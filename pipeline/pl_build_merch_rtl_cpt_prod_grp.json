@@ -1,0 +1,323 @@
+{
+	"name": "pl_build_merch_rtl_cpt_prod_grp",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-rtl-cpt-prod-grp-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-rtl-cpt-prod-grp",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-rtl-cpt-prod-grp-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.1:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": {
+							"value": "SELECT  prod_grp_id,\n        grp_tx,\n        prim_dict_tx,\n        grp_type_cd,\n        actv_cd,\n        page_file_tx\n        FROM retailer:cpt_prod_grp",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "prod_grp_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "prod_grp_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "grp_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "grp_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prim_dict_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prim_dict_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "grp_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "grp_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "actv_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "actv_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "page_file_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "page_file_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_infomix_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"IFX_TBL_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_INGST_FLDR_PATH": {
+								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "record-count-checkpoint",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ingest-rtl-cpt-prod-grp",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('ingest-rtl-cpt-prod-grp').output.rowsCopied, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "mdm-rtl-cpt-prod-grp",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.1:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_mdm_merch_rtl_cpt_prod_grp",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"SOURCE_LAKE_RELATIVE_PATH": {
+										"value": {
+											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"KEY_COL": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_KEY_COL",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
+									},
+									"IS_DELTA": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_IS_DELTA",
+											"type": "Expression"
+										},
+										"type": "bool"
+									},
+									"VAL_COL_NAME": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_COL_NAME",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"VAL_COL_VLS": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_COL_VLS",
+											"type": "Expression"
+										},
+										"type": "string"
+									}
+								},
+								"snapshot": true,
+								"sparkPool": {
+									"referenceName": "synsppdlinte201",
+									"type": "BigDataPoolReference"
+								},
+								"executorSize": "Small",
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"driverSize": "Small",
+								"numExecutors": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "retailer"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "cpt_prod_grp"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "merch/product/retailer-cpt-prod-grp"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "prod_grp_id"
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_IS_DELTA": {
+				"type": "bool",
+				"defaultValue": false
+			},
+			"PARAM_VAL_COL_NAME": {
+				"type": "string",
+				"defaultValue": "grp_type_cd"
+			},
+			"PARAM_VAL_COL_VLS": {
+				"type": "string",
+				"defaultValue": "['B','C','M','P','S','X']"
+			}
+		},
+		"variables": {
+			"VAR_INGST_MERCH_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/merch/product/retailer-cpt-prod-grp/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/merchandise/product"
+		},
+		"annotations": []
+	}
+}

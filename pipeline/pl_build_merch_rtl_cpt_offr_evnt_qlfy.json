@@ -1,0 +1,448 @@
+{
+	"name": "pl_build_merch_rtl_cpt_offr_evnt_qlfy",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-rtl-cpt-offr-evnt-qlfy-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-rtl-cpt-offr-evnt-qlfy",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-rtl-cpt-offr-evnt-qlfy-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "lkp-ext-start-time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.1:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": {
+							"value": "@if(pipeline().parameters.PARAM_IS_DELTA,\nconcat('SELECT qlfy_cd,\n                offr_cd,\n                obj_name_tx,\n                key_prop_cd,\n                key_prop_opr_cd,\n                key_prop_val_cd,\n                next_qlfy_cd,\n                audt_cr_id,\n                audt_cr_dt_tm::varchar(20) as audt_cr_dt_tm,\n                audt_upd_id,\n                audt_upd_dt_tm::varchar(20) as audt_upd_dt_tm\n                FROM retailer:cpt_offr_evnt_qlfy\n                WHERE  (audt_cr_dt_tm >=   DATETIME(' ,formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'yyyy-MM-dd HH:mm:ss'),') YEAR TO  SECOND  OR  audt_upd_dt_tm >=   DATETIME(',\n                    formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'yyyy-MM-dd HH:mm:ss'),') YEAR TO  SECOND )')\n,'SELECT        qlfy_cd,\n                offr_cd,\n                obj_name_tx,\n                key_prop_cd,\n                key_prop_opr_cd,\n                key_prop_val_cd,\n                next_qlfy_cd,\n                audt_cr_id,\n                audt_cr_dt_tm::varchar(20) as audt_cr_dt_tm,\n                audt_upd_id,\n                audt_upd_dt_tm::varchar(20) as audt_upd_dt_tm\n                FROM retailer:cpt_offr_evnt_qlfy')",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "qlfy_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "qlfy_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "offr_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "offr_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "obj_name_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "obj_name_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "key_prop_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "key_prop_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "key_prop_opr_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "key_prop_opr_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "key_prop_val_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "key_prop_val_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "next_qlfy_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "next_qlfy_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_dt_tm",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_dt_tm",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_dt_tm",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_dt_tm",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_infomix_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"IFX_TBL_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_INGST_FLDR_PATH": {
+								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "update-btch-cntrl",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "record-count-checkpoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_update_btch_cntrl_fl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"START_TIME": {
+							"value": "@convertFromUtc(activity('ingest-rtl-cpt-offr-evnt-qlfy').ExecutionStartTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"END_TIME": {
+							"value": "@convertFromUtc(activity('ingest-rtl-cpt-offr-evnt-qlfy').ExecutionEndTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"RECORD_COUNT": {
+							"value": "@activity('ingest-rtl-cpt-offr-evnt-qlfy').output.rowsCopied",
+							"type": "Expression"
+						},
+						"STATUS": {
+							"value": "@activity('ingest-rtl-cpt-offr-evnt-qlfy').status",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
+							"type": "Expression"
+						},
+						"PARAM_DOMAIN": {
+							"value": "@pipeline().parameters.PARAM_DOMAIN",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "lkp-ext-start-time",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.0:30:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_cntrl_fl_latest",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_DOMAIN": {
+								"value": "@pipeline().parameters.PARAM_DOMAIN",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "record-count-checkpoint",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ingest-rtl-cpt-offr-evnt-qlfy",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('ingest-rtl-cpt-offr-evnt-qlfy').output.rowsCopied, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "mdm-merch-rtl-cpt-offr-evnt-qlfy",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.1:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_mdm_merch_rtl_cpt_offr_evnt_qlfy",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"SOURCE_LAKE_RELATIVE_PATH": {
+										"value": {
+											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"KEY_COL": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_KEY_COL",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"IS_DELTA": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_IS_DELTA",
+											"type": "Expression"
+										},
+										"type": "bool"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
+									}
+								},
+								"snapshot": true,
+								"sparkPool": {
+									"referenceName": "synsppdlinte201",
+									"type": "BigDataPoolReference"
+								},
+								"executorSize": "Small",
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"driverSize": "Small",
+								"numExecutors": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "retailer"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "cpt_offr_evnt_qlfy"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "merch/product/retailer-cpt-offr-evnt-qlfy"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "qlfy_cd"
+			},
+			"PARAM_IS_DELTA": {
+				"type": "bool",
+				"defaultValue": false
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			}
+		},
+		"variables": {
+			"VAR_INGST_MERCH_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/merch/product/retailer-cpt-offr-evnt-qlfy/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/merchandise/product"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,459 @@
+{
+	"name": "pl_build_merch_rtl_cpt_it_pr_zone",
+	"properties": {
+		"activities": [
+			{
+				"name": "set-ingest-rtl-cpt-it-pr-zone-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
+					"value": {
+						"value": "@concat('opco/'\n        ,toLower(pipeline().parameters.PARAM_OPCO)\n        ,'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ingest-rtl-cpt-it-pr-zone",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-ingest-rtl-cpt-it-pr-zone-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "lkp-ext-start-time",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.1:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "InformixSource",
+						"query": {
+							"value": "@if(pipeline().parameters.PARAM_IS_DELTA,\nconcat('SELECT pr_zone_cd,\n                prod_id,\n                pr_qy,\n                unit_pr_qy,\n                reg_pr_qy,\n                prom_pr_qy,\n                spec_cd,\n                audt_cr_id,\n                audt_cr_dt_tm,\n                audt_upd_id,\n                audt_upd_dt_tm\n                FROM retailer:cpt_it_pr_zone \n                WHERE  (audt_cr_dt_tm >=   DATETIME(' ,formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'yyyy-MM-dd HH:mm:ss'),') YEAR TO  SECOND  OR  audt_upd_dt_tm >=   DATETIME(',\n                    formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'yyyy-MM-dd HH:mm:ss'),') YEAR TO  SECOND )')\n,'SELECT        pr_zone_cd,\n                prod_id,\n                pr_qy,\n                unit_pr_qy,\n                reg_pr_qy,\n                prom_pr_qy,\n                spec_cd,\n                audt_cr_id,\n                audt_cr_dt_tm,\n                audt_upd_id,\n                audt_upd_dt_tm\n                FROM retailer:cpt_it_pr_zone')\n",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "pr_zone_cd",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "pr_zone_cd",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "prod_id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "prod_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "pr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "pr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "unit_pr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "unit_pr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "reg_pr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "reg_pr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "prom_pr_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "prom_pr_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "spec_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "spec_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "audt_cr_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_dt_tm",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "audt_upd_dt_tm",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_qts_infomix_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"IFX_DB_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_DB_NM",
+								"type": "Expression"
+							},
+							"IFX_TBL_NM": {
+								"value": "@pipeline().parameters.PARAM_IFX_TB_NM",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_adls_merch_product_domain",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_INGST_FLDR_PATH": {
+								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "update-btch-cntrl",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "record-count-checkpoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_update_btch_cntrl_fl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"START_TIME": {
+							"value": "@convertFromUtc(activity('ingest-rtl-cpt-it-pr-zone').ExecutionStartTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"END_TIME": {
+							"value": "@convertFromUtc(activity('ingest-rtl-cpt-it-pr-zone').ExecutionEndTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"RECORD_COUNT": {
+							"value": "@activity('ingest-rtl-cpt-it-pr-zone').output.rowsCopied",
+							"type": "Expression"
+						},
+						"STATUS": {
+							"value": "@activity('ingest-rtl-cpt-it-pr-zone').status",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
+							"type": "Expression"
+						},
+						"PARAM_DOMAIN": {
+							"value": "@pipeline().parameters.PARAM_DOMAIN",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "lkp-ext-start-time",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.0:30:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_cntrl_fl_latest",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_DOMAIN": {
+								"value": "@pipeline().parameters.PARAM_DOMAIN",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "record-count-checkpoint",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ingest-rtl-cpt-it-pr-zone",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('ingest-rtl-cpt-it-pr-zone').output.rowsCopied, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "mdm-merch-rtl-cpt-it-pr-zone",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.1:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_mdm_merch_rtl_cpt_it_pr_zone",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"SOURCE_LAKE_RELATIVE_PATH": {
+										"value": {
+											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"KEY_COL": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_KEY_COL",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"NO_OF_PARTITIONS": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_NO_OF_PARTITIONS",
+											"type": "Expression"
+										},
+										"type": "int"
+									},
+									"IS_DELTA": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_IS_DELTA",
+											"type": "Expression"
+										},
+										"type": "bool"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
+									}
+								},
+								"snapshot": true,
+								"sparkPool": {
+									"referenceName": "synsppdlinte201",
+									"type": "BigDataPoolReference"
+								},
+								"executorSize": "Small",
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"driverSize": "Small",
+								"numExecutors": null
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_IFX_DB_NM": {
+				"type": "string",
+				"defaultValue": "retailer"
+			},
+			"PARAM_IFX_TB_NM": {
+				"type": "string",
+				"defaultValue": "cpt_it_pr_zone"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DOMAIN": {
+				"type": "string",
+				"defaultValue": "merch/product/retailer-cpt-it-pr-zone"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_KEY_COL": {
+				"type": "string",
+				"defaultValue": "prod_id"
+			},
+			"PARAM_NO_OF_PARTITIONS": {
+				"type": "int",
+				"defaultValue": 25
+			},
+			"PARAM_IS_DELTA": {
+				"type": "bool",
+				"defaultValue": false
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
+			}
+		},
+		"variables": {
+			"VAR_INGST_MERCH_FLDR_PATH": {
+				"type": "String",
+				"defaultValue": "opco/ppod/domain/merch/product/retailer-cpt-it-pr-zone/lake/"
+			}
+		},
+		"folder": {
+			"name": "domain/merchandise/product"
+		},
+		"annotations": []
+	}
+}
