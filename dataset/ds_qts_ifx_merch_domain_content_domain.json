@@ -6,19 +6,19 @@
 			"type": "LinkedServiceReference",
 			"parameters": {
 				"IFX_DB_NM": {
-					"value": "@dataset().IFX_DB_NM",
+					"value": "@dataset().PARAM_IFX_DB_NM",
 					"type": "Expression"
 				}
 			}
 		},
 		"parameters": {
-			"IFX_DB_NM": {
+			"PARAM_IFX_DB_NM": {
 				"type": "string",
 				"defaultValue": "content"
 			},
-			"IFX_TBL_NM": {
+			"PARAM_IFX_TB_NM": {
 				"type": "string",
-				"defaultValue": "cpt_cont_ctl"
+				"defaultValue": "pit-it-pkg-text"
 			}
 		},
 		"folder": {
@@ -29,7 +29,7 @@
 		"schema": [],
 		"typeProperties": {
 			"tableName": {
-				"value": "@dataset().IFX_TBL_NM",
+				"value": "@dataset().PARAM_IFX_TB_NM",
 				"type": "Expression"
 			}
 		}
