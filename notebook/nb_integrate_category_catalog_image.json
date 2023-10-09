@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "60ea406e-00df-428a-b25a-8a3345a7e0c6"
+				"spark.autotune.trackingId": "6348c774-73e2-4581-a55e-e3a5b75725eb"
 			}
 		},
 		"metadata": {
@@ -400,15 +400,15 @@
 					"                    .mode(\"overwrite\") \\\r\n",
 					"                    .option(\"mergeSchema\",\"True\") \\\r\n",
 					"                    .format(\"delta\") \\\r\n",
-					"                    .save(BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH) \r\n",
+					"                    .save(BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH.format(opco = OPCO)) \r\n",
 					"    logger.info(\"\\t Category image master data is overrided.OPCO = {0}, Count = {1}\".format(OPCO, df_catalog_content_rs.count()))\r\n",
 					"\r\n",
-					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH)):\r\n",
+					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH.format(opco = OPCO))):\r\n",
 					"    logger.info(\"\\t Category image master data already exists.\")\r\n",
 					"    df_old_catalog_image_result = spark \\\r\n",
 					"        .read \\\r\n",
 					"        .format(\"delta\") \\\r\n",
-					"        .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH)\r\n",
+					"        .load(BASE_ADLS_CONN_STR + TARGET_CATEGORY_IMAGE_PATH.format(opco = OPCO))\r\n",
 					"    logger.debug(\"\\t Category image master data loaded for validation. OPCO = {0}, Count={1}\".format(OPCO, df_old_catalog_image_result.count()))\r\n",
 					"    is_val_success = validate_count(df_old_catalog_image_result, df_catalog_content_result, VAL_CNT_THRESHOLD)\r\n",
 					"    if is_val_success:\r\n",

@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "a7db037a-23e5-45cb-ba8a-c3371b1892b6"
+				"spark.autotune.trackingId": "63ca343f-0be3-4e10-9422-3566264c700d"
 			}
 		},
 		"metadata": {
@@ -345,7 +345,7 @@
 					"for opco in OPCO_LST:\r\n",
 					"    logger.info(\"\\t Processing MASTER for CTR OMT_PRIM_CAT - OPCO={0}\".format(opco))\r\n",
 					"    if DELTA_LOAD== False:\r\n",
-					"        init()\r\n",
+					"        init(opco)\r\n",
 					"    else:\r\n",
 					"        apply_cdc(opco)    "
 				],

@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "a13ccfd7-28f5-4b3a-a872-051349019c10"
+				"spark.autotune.trackingId": "bea5ceb6-a51b-4446-82c3-634905142eda"
 			}
 		},
 		"metadata": {
@@ -87,8 +87,9 @@
 					"TARGET_CATEGORY_CONSUMAR_PATH = \"opco/{opco}/integration/category/category-consumer/master\"\r\n",
 					"VAL_CNT_THRESHOLD = 5.0\r\n",
 					"KEY_COL = \"attributeId\"\r\n",
-					"VAR_ATR_ID = 71\r\n",
+					"VAR_ATR_ID = 54\r\n",
 					"VAR_ATR_TYPE_CD = 'C'\r\n",
+					"VAR_LVL_ID = 1\r\n",
 					"OPCO = \"fdln\""
 				],
 				"execution_count": 1
@@ -244,6 +245,7 @@
 					"ds_category_consumer=ds_catalog_attribute.join(ds_catalog_attribute_value,ds_catalog_attribute.atr_id==ds_catalog_attribute_value.atr_id) \\\r\n",
 					"                    .filter(ds_catalog_attribute.atr_id == VAR_ATR_ID) \\\r\n",
 					"                    .filter(ds_catalog_attribute.atr_type_cd == VAR_ATR_TYPE_CD) \\\r\n",
+					"                    .filter(ds_catalog_attribute_value.lvl_id == VAR_LVL_ID) \\\r\n",
 					"                    .select(ds_catalog_attribute_value.atr_val_id.alias(\"id\"), \\\r\n",
 					"                     ds_catalog_attribute.atr_id.alias(\"attributeId\"), \\\r\n",
 					"                     F.when(ds_catalog_attribute_value.lvl_id.isNotNull(),ds_catalog_attribute_value.lvl_id.cast('long')) \\\r\n",
