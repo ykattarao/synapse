@@ -1,9 +1,9 @@
 {
-	"name": "pl_build_stor_cntrl_cit_pup_ctl",
+	"name": "pl_build_merch_cnt_cpt_it_pkg",
 	"properties": {
 		"activities": [
 			{
-				"name": "set-ingest-cntrl-cit-pup-ctl-path",
+				"name": "set-ingest-content-cpt-it-pkg-path",
 				"type": "SetVariable",
 				"dependsOn": [],
 				"policy": {
@@ -12,7 +12,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"variableName": "VAR_INGST_STOR_PATH",
+					"variableName": "VAR_INGST_MERCH_FLDR_PATH",
 					"value": {
 						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/',pipeline().parameters.PARAM_DOMAIN,'/lake/'\n        , formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'yyyy-MM-dd'),'-'\n        ,formatDateTime(convertFromUtc(utcNow(),'Central Standard Time'), 'hh-mm-ss')\n)",
 						"type": "Expression"
@@ -20,18 +20,64 @@
 				}
 			},
 			{
-				"name": "ingest-cntrl-cit-pup-ctl",
+				"name": "lkp-ext-start-time",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.1:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_az_adls_cntrl_fl_latest",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_DOMAIN": {
+								"value": "@pipeline().parameters.PARAM_DOMAIN",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "ingest-merch-content-cpt-it-pkg",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "set-ingest-cntrl-cit-pup-ctl-path",
+						"activity": "set-ingest-content-cpt-it-pkg-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "lkp-ext-start-time",
 						"dependencyConditions": [
 							"Succeeded"
 						]
 					}
 				],
 				"policy": {
-					"timeout": "0.01:00:00",
+					"timeout": "0.8:00:00",
 					"retry": 3,
 					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
@@ -41,7 +87,10 @@
 				"typeProperties": {
 					"source": {
 						"type": "InformixSource",
-						"query": "SELECT pup_ctl.pup_id,\n  pup_ctl.pup_guid_cd,\n  pup_ctl.pup_type_cd,\n  pup_ctl.pup_grp_id,\n  pup_ctl.adr_1_tx,\n  pup_ctl.adr_2_tx,\n  pup_ctl.city_tx,\n  pup_ctl.st_cd,\n  pup_ctl.zip_cd,\n  pup_ctl.pup_voic_phon_cd,\n  pup_ctl.pup_alt_phon_cd,\n  pup_ctl.pup_mail_tx,\n  pup_ctl.loc_istr_tx,\n  pup_ctl.stor_id,\n  pup_ctl.p3_stor_id,\n  pup_ctl.ahld_stor_nbr_cd,\n  pup_ctl.lat_qy,\n  pup_ctl.long_qy,\n  pup_ctl.stor_to_pup_min_qy,\n  pup_ctl.pad_min_qy,\n  pup_ctl.tote_per_cart_qy,\n  pup_ctl.cart_off_truk_min_qy,\n  cast(pup_ctl.pup_open_tm as varchar(25)) as pup_open_tm,\n  cast(pup_ctl.pup_pm_open_tm as varchar(25)) as pup_pm_open_tm,\n  pup_ctl.alt_rte_sys_cd,\n  pup_ctl.hypr_loc_cd,\n  pup_ctl.pup_svc_dur_mult_qy,\n  pup_ctl.pup_frmt_type_cd,\n  pup_ctl.live_dt,\n  pup_ctl.open_dt,\n  pup_ctl.clos_dt,\n  pup_ctl.map_web_link_tx,\n  pup_ctl.dlv_area_id,\n  pup_ctl.tax_grp_cd,\n  pup_ctl.sns_mkt_area_tx,\n  pup_ctl.stor_ttl_tx,\n  pup_ctl.web_actv_cd,\n  pup_ctl.pmtt_div_cd,\n  pup_ctl.cnc_ord_id_qy,\n  pup_ctl.stag_only_fl,\n  pup_ctl.achl_wine_cd,\n  pup_ctl.achl_beer_cd,\n  pup_ctl.achl_lqr_cd,\n  pup_ctl.bag_fee_cd,\n  pup_ctl.dlv_ptnr_tx,\n  pup_ctl.pckp_notf_ptnr_site_id,\n  pup_ctl.rtrn_allow_cd,\n  pup_ctl.ok_to_edit_ord_fl,\n  pup_ctl.sub_rej_cut_wnd,\n  pup_ctl.sub_rej_ntfy_cut_wnd,\n  pup_ctl.ortc_stor_fl,\n  pup_ctl.drop_loc_adr_1_tx,\n  pup_ctl.drop_loc_adr_2_tx,\n  pup_ctl.drop_loc_city_tx,\n  pup_ctl.drop_loc_st_cd,\n  pup_ctl.drop_loc_zip_cd\nFROM central:cit_pup_ctl pup_ctl"
+						"query": {
+							"value": "@if(pipeline().parameters.PARAM_IS_DELTA,\nconcat('SELECT  prod_id,\n                wght_qy,\n                wdth_qy,\n                warn_bx,\n                uom_cd,\n                sugr_free_cd,\n                sub_cat_tx,\n                src_cd,\n                prod_dtl_bx,\n                prod_desc_bx,\n                ppod_sell_bx,\n                pnut_hold_fl,\n                pnut_fl,\n                parv_cd,\n                orgn_cd,\n                mfg_phon_cd,\n                mfg_name_tx,\n                mfg_adr_bx,\n                low_fat_cd,\n                kshr_4_id,\n                kshr_3_id,\n                kshr_2_id,\n                kshr_1_id,\n                it_size_cd,\n                innr_pack_qy,\n                ingr_bx,\n                indc_bx,\n                hght_qy,\n                gltn_hold_fl,\n                gltn_fl,\n                fat_free_cd,\n                egg_hold_fl,\n                egg_fl,\n                drug_intc_bx,\n                drct_bx,\n                dpth_qy,\n                dept_tx,\n                dary_hold_fl,\n                dary_fl,\n                ctry_of_orig_bx,\n                cprt_tx,\n                cntr_type_cd,\n                cat_tx,\n                case_pack_qy,\n                brnd_tx,\n                audt_upd_id,\n                audt_cr_id,\n            TO_CHAR(audt_cr_dt, \"%Y-%m-%d\") as audt_cr_dt,\n            TO_CHAR(audt_upd_dt, \"%Y-%m-%d\") as audt_upd_dt\n        FROM content:cpt_it_pkg\n        WHERE (audt_cr_dt >= ''',formatDateTime(formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),'MM-dd-yyyy'),'''',' OR ',\n            'audt_upd_dt >= ''',formatDateTime(activity('lkp-ext-start-time').output.firstRow.Prop_0,'MM-dd-yyyy'),''')'),\n            'SELECT  prod_id,\n                wght_qy,\n                wdth_qy,\n                warn_bx,\n                uom_cd,\n                sugr_free_cd,\n                sub_cat_tx,\n                src_cd,\n                prod_dtl_bx,\n                prod_desc_bx,\n                ppod_sell_bx,\n                pnut_hold_fl,\n                pnut_fl,\n                parv_cd,\n                orgn_cd,\n                mfg_phon_cd,\n                mfg_name_tx,\n                mfg_adr_bx,\n                low_fat_cd,\n                kshr_4_id,\n                kshr_3_id,\n                kshr_2_id,\n                kshr_1_id,\n                it_size_cd,\n                innr_pack_qy,\n                ingr_bx,\n                indc_bx,\n                hght_qy,\n                gltn_hold_fl,\n                gltn_fl,\n                fat_free_cd,\n                egg_hold_fl,\n                egg_fl,\n                drug_intc_bx,\n                drct_bx,\n                dpth_qy,\n                dept_tx,\n                dary_hold_fl,\n                dary_fl,\n                ctry_of_orig_bx,\n                cprt_tx,\n                cntr_type_cd,\n                cat_tx,\n                case_pack_qy,\n                brnd_tx,\n                audt_upd_id,\n                audt_cr_id,\n            TO_CHAR(audt_cr_dt, \"%Y-%m-%d\") as audt_cr_dt,\n            TO_CHAR(audt_upd_dt, \"%Y-%m-%d\") as audt_upd_dt\n        FROM content:cpt_it_pkg')",
+							"type": "Expression"
+						}
 					},
 					"sink": {
 						"type": "ParquetSink",
@@ -58,616 +107,539 @@
 						"mappings": [
 							{
 								"source": {
-									"name": "pup_id",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "pup_id",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_guid_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pup_guid_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_type_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pup_type_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_grp_id",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "pup_grp_id",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "adr_1_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "adr_1_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "adr_2_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "adr_2_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "city_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "city_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "st_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "st_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "zip_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "zip_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_voic_phon_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pup_voic_phon_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_alt_phon_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pup_alt_phon_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_mail_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pup_mail_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "loc_istr_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "loc_istr_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "stor_id",
-									"type": "String"
-								},
-								"sink": {
-									"name": "stor_id",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "p3_stor_id",
-									"type": "String"
-								},
-								"sink": {
-									"name": "p3_stor_id",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "ahld_stor_nbr_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "ahld_stor_nbr_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "lat_qy",
-									"type": "Double"
-								},
-								"sink": {
-									"name": "lat_qy",
-									"type": "Double",
-									"physicalType": "DOUBLE"
-								}
-							},
-							{
-								"source": {
-									"name": "long_qy",
-									"type": "Double"
-								},
-								"sink": {
-									"name": "long_qy",
-									"type": "Double",
-									"physicalType": "DOUBLE"
-								}
-							},
-							{
-								"source": {
-									"name": "stor_to_pup_min_qy",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "stor_to_pup_min_qy",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "pad_min_qy",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "pad_min_qy",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "tote_per_cart_qy",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "tote_per_cart_qy",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "cart_off_truk_min_qy",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "cart_off_truk_min_qy",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_open_tm",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pup_open_tm",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_pm_open_tm",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pup_pm_open_tm",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "alt_rte_sys_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "alt_rte_sys_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "hypr_loc_cd",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "hypr_loc_cd",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_svc_dur_mult_qy",
-									"type": "Decimal"
-								},
-								"sink": {
-									"name": "pup_svc_dur_mult_qy",
-									"type": "Decimal",
-									"physicalType": "DECIMAL"
-								}
-							},
-							{
-								"source": {
-									"name": "pup_frmt_type_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pup_frmt_type_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "live_dt",
-									"type": "DateTime"
-								},
-								"sink": {
-									"name": "live_dt",
-									"type": "DateTime",
-									"physicalType": "INT_96"
-								}
-							},
-							{
-								"source": {
-									"name": "open_dt",
-									"type": "DateTime"
-								},
-								"sink": {
-									"name": "open_dt",
-									"type": "DateTime",
-									"physicalType": "INT_96"
-								}
-							},
-							{
-								"source": {
-									"name": "clos_dt",
-									"type": "DateTime"
-								},
-								"sink": {
-									"name": "clos_dt",
-									"type": "DateTime",
-									"physicalType": "INT_96"
-								}
-							},
-							{
-								"source": {
-									"name": "map_web_link_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "map_web_link_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "dlv_area_id",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "dlv_area_id",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "tax_grp_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "tax_grp_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "sns_mkt_area_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "sns_mkt_area_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "stor_ttl_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "stor_ttl_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "web_actv_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "web_actv_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pmtt_div_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "pmtt_div_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "cnc_ord_id_qy",
-									"type": "Int16"
-								},
-								"sink": {
-									"name": "cnc_ord_id_qy",
-									"type": "Int16",
-									"physicalType": "INT_32"
-								}
-							},
-							{
-								"source": {
-									"name": "stag_only_fl",
-									"type": "String"
-								},
-								"sink": {
-									"name": "stag_only_fl",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "achl_wine_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "achl_wine_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "achl_beer_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "achl_beer_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "achl_lqr_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "achl_lqr_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "bag_fee_cd",
-									"type": "String"
-								},
-								"sink": {
-									"name": "bag_fee_cd",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "dlv_ptnr_tx",
-									"type": "String"
-								},
-								"sink": {
-									"name": "dlv_ptnr_tx",
-									"type": "String",
-									"physicalType": "UTF8"
-								}
-							},
-							{
-								"source": {
-									"name": "pckp_notf_ptnr_site_id",
+									"name": "prod_id",
 									"type": "Int32"
 								},
 								"sink": {
-									"name": "pckp_notf_ptnr_site_id",
+									"name": "prod_id",
 									"type": "Int32",
 									"physicalType": "INT_32"
 								}
 							},
 							{
 								"source": {
-									"name": "rtrn_allow_cd",
+									"name": "wght_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "wght_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "wdth_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "wdth_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "warn_bx",
 									"type": "String"
 								},
 								"sink": {
-									"name": "rtrn_allow_cd",
+									"name": "warn_bx",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "ok_to_edit_ord_fl",
+									"name": "uom_cd",
 									"type": "String"
 								},
 								"sink": {
-									"name": "ok_to_edit_ord_fl",
+									"name": "uom_cd",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "sub_rej_cut_wnd",
+									"name": "sugr_free_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sugr_free_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "sub_cat_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "sub_cat_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "src_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "src_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prod_dtl_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prod_dtl_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "prod_desc_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "prod_desc_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ppod_sell_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ppod_sell_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pnut_hold_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pnut_hold_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "pnut_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "pnut_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "parv_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "parv_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "orgn_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "orgn_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mfg_phon_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mfg_phon_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mfg_name_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mfg_name_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "mfg_adr_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "mfg_adr_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "low_fat_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "low_fat_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "kshr_4_id",
 									"type": "Int16"
 								},
 								"sink": {
-									"name": "sub_rej_cut_wnd",
+									"name": "kshr_4_id",
 									"type": "Int16",
 									"physicalType": "INT_32"
 								}
 							},
 							{
 								"source": {
-									"name": "sub_rej_ntfy_cut_wnd",
+									"name": "kshr_3_id",
 									"type": "Int16"
 								},
 								"sink": {
-									"name": "sub_rej_ntfy_cut_wnd",
+									"name": "kshr_3_id",
 									"type": "Int16",
 									"physicalType": "INT_32"
 								}
 							},
 							{
 								"source": {
-									"name": "ortc_stor_fl",
+									"name": "kshr_2_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "kshr_2_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "kshr_1_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "kshr_1_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "it_size_cd",
 									"type": "String"
 								},
 								"sink": {
-									"name": "ortc_stor_fl",
+									"name": "it_size_cd",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "drop_loc_adr_1_tx",
+									"name": "innr_pack_qy",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "innr_pack_qy",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "ingr_bx",
 									"type": "String"
 								},
 								"sink": {
-									"name": "drop_loc_adr_1_tx",
+									"name": "ingr_bx",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "drop_loc_adr_2_tx",
+									"name": "indc_bx",
 									"type": "String"
 								},
 								"sink": {
-									"name": "drop_loc_adr_2_tx",
+									"name": "indc_bx",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "drop_loc_city_tx",
+									"name": "hght_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "hght_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "gltn_hold_fl",
 									"type": "String"
 								},
 								"sink": {
-									"name": "drop_loc_city_tx",
+									"name": "gltn_hold_fl",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "drop_loc_st_cd",
+									"name": "gltn_fl",
 									"type": "String"
 								},
 								"sink": {
-									"name": "drop_loc_st_cd",
+									"name": "gltn_fl",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
 							},
 							{
 								"source": {
-									"name": "drop_loc_zip_cd",
+									"name": "fat_free_cd",
 									"type": "String"
 								},
 								"sink": {
-									"name": "drop_loc_zip_cd",
+									"name": "fat_free_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "egg_hold_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "egg_hold_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "egg_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "egg_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drug_intc_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drug_intc_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "drct_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "drct_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dpth_qy",
+									"type": "Decimal"
+								},
+								"sink": {
+									"name": "dpth_qy",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "dept_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dept_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dary_hold_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dary_hold_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "dary_fl",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dary_fl",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ctry_of_orig_bx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "ctry_of_orig_bx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cprt_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cprt_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cntr_type_cd",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cntr_type_cd",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "cat_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cat_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "case_pack_qy",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "case_pack_qy",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "brnd_tx",
+									"type": "String"
+								},
+								"sink": {
+									"name": "brnd_tx",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_id",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_cr_dt",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_cr_dt",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "audt_upd_dt",
+									"type": "String"
+								},
+								"sink": {
+									"name": "audt_upd_dt",
 									"type": "String",
 									"physicalType": "UTF8"
 								}
@@ -682,7 +654,7 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_qts_ifx_stor_domain",
+						"referenceName": "ds_qts_ifx_merch_domain_content_domain",
 						"type": "DatasetReference",
 						"parameters": {
 							"PARAM_IFX_DB_NM": {
@@ -698,11 +670,11 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_az_adls_stor_domain",
+						"referenceName": "ds_az_adls_merch_content_domain",
 						"type": "DatasetReference",
 						"parameters": {
-							"PARAM_STOR_LAKE_PATH": {
-								"value": "@variables('VAR_INGST_STOR_PATH')",
+							"PARAM_CONTENT_LAKE_PATH": {
+								"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
 								"type": "Expression"
 							}
 						}
@@ -714,7 +686,7 @@
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "ingest-cntrl-cit-pup-ctl",
+						"activity": "ingest-merch-content-cpt-it-pkg",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -723,16 +695,16 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@greater(activity('ingest-cntrl-cit-pup-ctl').output.rowsCopied, 0)",
+						"value": "@greater(activity('ingest-merch-content-cpt-it-pkg').output.rowsCopied, 0)",
 						"type": "Expression"
 					},
 					"ifTrueActivities": [
 						{
-							"name": "mdm-stor-cntrl-cit-pup-ctl",
+							"name": "mdm-merch-cpt-it-pkg",
 							"type": "SynapseNotebook",
 							"dependsOn": [],
 							"policy": {
-								"timeout": "0.01:00:00",
+								"timeout": "0.1:00:00",
 								"retry": 3,
 								"retryIntervalInSeconds": 30,
 								"secureOutput": false,
@@ -741,20 +713,20 @@
 							"userProperties": [],
 							"typeProperties": {
 								"notebook": {
-									"referenceName": "nb_mdm_cntrl_cit_pup_ctl",
+									"referenceName": "nb_mdm_merch_cnt_cpt_it_pkg",
 									"type": "NotebookReference"
 								},
 								"parameters": {
-									"BASE_ADLS_CONN_STR": {
+									"SOURCE_LAKE_RELATIVE_PATH": {
 										"value": {
-											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"value": "@variables('VAR_INGST_MERCH_FLDR_PATH')",
 											"type": "Expression"
 										},
 										"type": "string"
 									},
-									"SOURCE_LAKE_RELATIVE_PATH": {
+									"BASE_ADLS_CONN_STR": {
 										"value": {
-											"value": "@variables('VAR_INGST_STOR_PATH')",
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
 											"type": "Expression"
 										},
 										"type": "string"
@@ -766,33 +738,19 @@
 										},
 										"type": "string"
 									},
-									"VAL_CNT_THRESHOLD": {
-										"value": {
-											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
-											"type": "Expression"
-										},
-										"type": "int"
-									},
-									"VAL_COL_CNT_THRESHOLD": {
-										"value": {
-											"value": "@pipeline().parameters.PARAM_VAL_COL_CNT_THRESHOLD",
-											"type": "Expression"
-										},
-										"type": "int"
-									},
-									"VAL_COLS": {
-										"value": {
-											"value": "@string(pipeline().parameters.PARAM_VAL_COLS)",
-											"type": "Expression"
-										},
-										"type": "string"
-									},
 									"IS_DELTA": {
 										"value": {
 											"value": "@pipeline().parameters.PARAM_IS_DELTA",
 											"type": "Expression"
 										},
 										"type": "bool"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
 									}
 								},
 								"snapshot": true,
@@ -802,7 +760,7 @@
 								},
 								"executorSize": "Small",
 								"conf": {
-									"spark.dynamicAllocation.enabled": false,
+									"spark.dynamicAllocation.enabled": null,
 									"spark.dynamicAllocation.minExecutors": null,
 									"spark.dynamicAllocation.maxExecutors": null
 								},
@@ -812,16 +770,62 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "update-btch-cntrl",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "record-count-checkpoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_update_btch_cntrl_fl",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"START_TIME": {
+							"value": "@convertFromUtc(activity('ingest-merch-content-cpt-it-pkg').ExecutionStartTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"END_TIME": {
+							"value": "@convertFromUtc(activity('ingest-merch-content-cpt-it-pkg').ExecutionEndTime,'Central Standard Time')",
+							"type": "Expression"
+						},
+						"RECORD_COUNT": {
+							"value": "@activity('ingest-merch-content-cpt-it-pkg').output.rowsCopied",
+							"type": "Expression"
+						},
+						"STATUS": {
+							"value": "@activity('ingest-merch-content-cpt-it-pkg').status",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
+							"type": "Expression"
+						},
+						"PARAM_DOMAIN": {
+							"value": "@pipeline().parameters.PARAM_DOMAIN",
+							"type": "Expression"
+						}
+					}
+				}
 			}
 		],
 		"parameters": {
 			"PARAM_IFX_DB_NM": {
 				"type": "string",
-				"defaultValue": "central"
+				"defaultValue": "content"
 			},
 			"PARAM_IFX_TB_NM": {
 				"type": "string",
-				"defaultValue": "cit_pup_ctl"
+				"defaultValue": "cpt_it_pkg"
 			},
 			"PARAM_OPCO": {
 				"type": "string",
@@ -829,43 +833,33 @@
 			},
 			"PARAM_DOMAIN": {
 				"type": "string",
-				"defaultValue": "store/central-cit-pup-ctl"
+				"defaultValue": "merch/content/content-cpt-it-pkg"
 			},
 			"PARAM_BASE_ADLS_CONN_STR": {
 				"type": "string",
 				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
 			},
-			"PARAM_VAL_CNT_THRESHOLD": {
-				"type": "int",
-				"defaultValue": 2
-			},
-			"PARAM_VAL_COL_CNT_THRESHOLD": {
-				"type": "int",
-				"defaultValue": 1
-			},
 			"PARAM_KEY_COL": {
 				"type": "string",
-				"defaultValue": "pup_guid_cd"
-			},
-			"PARAM_VAL_COLS": {
-				"type": "string",
-				"defaultValue": [
-					"zip_cd"
-				]
+				"defaultValue": "prod_id"
 			},
 			"PARAM_IS_DELTA": {
 				"type": "bool",
 				"defaultValue": false
+			},
+			"PARM_VAL_CNT_THRESHOLD": {
+				"type": "int",
+				"defaultValue": 2
 			}
 		},
 		"variables": {
-			"VAR_INGST_STOR_PATH": {
+			"VAR_INGST_MERCH_FLDR_PATH": {
 				"type": "String",
-				"defaultValue": "opco/ppod/domain/store/central-cit-pup-ctl/lake/"
+				"defaultValue": "opco/ppod/domain/merch/content/cpt-it-pkg/lake/"
 			}
 		},
 		"folder": {
-			"name": "domain/store"
+			"name": "domain/merchandise/content"
 		},
 		"annotations": []
 	}

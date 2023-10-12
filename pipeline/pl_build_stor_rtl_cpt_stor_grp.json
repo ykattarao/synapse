@@ -41,7 +41,10 @@
 				"typeProperties": {
 					"source": {
 						"type": "InformixSource",
-						"query": "select * from retailer:cpt_stor_grp;"
+						"query": {
+							"value": "SELECT * FROM retailer:cpt_stor_grp",
+							"type": "Expression"
+						}
 					},
 					"sink": {
 						"type": "ParquetSink",
@@ -127,8 +130,8 @@
 				]
 			},
 			{
-				"name": "mdm-stor-rtl-cpt-stor-grp",
-				"type": "SynapseNotebook",
+				"name": "record-count-checkpoint",
+				"type": "IfCondition",
 				"dependsOn": [
 					{
 						"activity": "ingest-rtl-cpt-stor-grp",
@@ -137,56 +140,77 @@
 						]
 					}
 				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebook": {
-						"referenceName": "nb_mdm_rtl_cpt_store_grp",
-						"type": "NotebookReference"
+					"expression": {
+						"value": "@greater(activity('ingest-rtl-cpt-stor-grp').output.rowsCopied, 0)",
+						"type": "Expression"
 					},
-					"parameters": {
-						"BASE_ADLS_CONN_STR": {
-							"value": {
-								"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
-								"type": "Expression"
+					"ifTrueActivities": [
+						{
+							"name": "mdm-stor-rtl-cpt-stor-grp",
+							"type": "SynapseNotebook",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
 							},
-							"type": "string"
-						},
-						"SOURCE_LAKE_RTL_STORE_GRP_PATH": {
-							"value": {
-								"value": "@variables('VAR_INGST_STOR_PATH')",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
-						"KEY_COL": {
-							"value": {
-								"value": "@pipeline().parameters.PARAM_KEY_COL",
-								"type": "Expression"
-							},
-							"type": "string"
-						},
-						"VAL_CNT_THRESHOLD": {
-							"value": {
-								"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
-								"type": "Expression"
-							},
-							"type": "int"
+							"userProperties": [],
+							"typeProperties": {
+								"notebook": {
+									"referenceName": "nb_mdm_rtl_cpt_store_grp",
+									"type": "NotebookReference"
+								},
+								"parameters": {
+									"BASE_ADLS_CONN_STR": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"SOURCE_LAKE_RELATIVE_PATH": {
+										"value": {
+											"value": "@variables('VAR_INGST_STOR_PATH')",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"KEY_COL": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_KEY_COL",
+											"type": "Expression"
+										},
+										"type": "string"
+									},
+									"VAL_CNT_THRESHOLD": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
+											"type": "Expression"
+										},
+										"type": "int"
+									},
+									"IS_DELTA": {
+										"value": {
+											"value": "@pipeline().parameters.PARAM_IS_DELTA",
+											"type": "Expression"
+										},
+										"type": "bool"
+									}
+								},
+								"snapshot": true,
+								"conf": {
+									"spark.dynamicAllocation.enabled": null,
+									"spark.dynamicAllocation.minExecutors": null,
+									"spark.dynamicAllocation.maxExecutors": null
+								},
+								"numExecutors": null
+							}
 						}
-					},
-					"snapshot": true,
-					"conf": {
-						"spark.dynamicAllocation.enabled": null,
-						"spark.dynamicAllocation.minExecutors": null,
-						"spark.dynamicAllocation.maxExecutors": null
-					},
-					"numExecutors": null
+					]
 				}
 			}
 		],
@@ -218,6 +242,10 @@
 			"PARAM_VAL_CNT_THRESHOLD": {
 				"type": "int",
 				"defaultValue": 2
+			},
+			"PARAM_IS_DELTA": {
+				"type": "bool",
+				"defaultValue": false
 			}
 		},
 		"variables": {
