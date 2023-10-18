@@ -549,7 +549,7 @@
 				"type": "ExecutePipeline",
 				"dependsOn": [
 					{
-						"activity": "mdm-store-order-item",
+						"activity": "mdm-store-order-item-user",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -588,6 +588,68 @@
 							"type": "Expression"
 						}
 					}
+				}
+			},
+			{
+				"name": "mdm-store-order-item-user",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "mdm-store-order-item",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.3:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "nb_transform_store_order_item_user",
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"BASE_ADLS_CONN_STR": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_ADLS_CONN_STR",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_STORE_ORDER_ITEM_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/master/order-item/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"TARGET_STORE_ORDER_ITEM_USER_PATH": {
+							"value": {
+								"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/domain/order/store-order/master/order-item-user/')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "synsppdlinte201",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
 				}
 			}
 		],
