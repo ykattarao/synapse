@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "b502a75f-f41b-41b8-88ae-ac6c1e77b38b"
+				"spark.autotune.trackingId": "bbd1c753-0154-4ecf-ad45-b741b91ad265"
 			}
 		},
 		"metadata": {
@@ -82,7 +82,7 @@
 				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\n",
-					"SOURCE_LAKE_STORE_ORDER_PATH = \"opco/fdln/domain/order/store-order/lake/2023-07-12-11-02-15\"\n",
+					"SOURCE_LAKE_STORE_ORDER_PATH = \"opco/fdln/domain/order/store-order/lake/2023-10-13-10-05-06\"\n",
 					"STAGE_STORE_ORDER_PATH = \"opco/fdln/domain/order/store-order/stage/order/\"\n",
 					"STAGE_STORE_ORDER_HEADER_PATH = \"opco/fdln/domain/order/store-order/stage/order-header/\"\n",
 					"STAGE_STORE_ORDER_ITEM_PATH = \"opco/fdln/domain/order/store-order/stage/order-item/\"\n",
@@ -123,7 +123,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_store_order\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": null
+				"execution_count": 2
 			},
 			{
 				"cell_type": "code",
@@ -154,7 +154,7 @@
 					"logger.info(\"\\t PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
 					"logger.info(\"**********************************************************************************\")"
 				],
-				"execution_count": null
+				"execution_count": 3
 			},
 			{
 				"cell_type": "markdown",
@@ -186,6 +186,7 @@
 				"source": [
 					"from pyspark.sql import functions as f\n",
 					"from delta.tables import DeltaTable\n",
+					"from pyspark.sql.types import DecimalType\n",
 					"\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH)):\n",
 					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH, recurse = True)\n",
@@ -202,11 +203,28 @@
 					"    .withColumn(\"order_num\", f.col(\"transaction_id\")) \\\n",
 					"    .withColumn(\"year\", f.year(f.col(\"transaction_ts\"))) \\\n",
 					"    .withColumn(\"month\", f.month(f.col(\"transaction_ts\"))) \\\n",
-					"    .withColumn(\"day\", f.dayofmonth(f.col(\"transaction_ts\")))\n",
+					"    .withColumn(\"day\", f.dayofmonth(f.col(\"transaction_ts\")))\\\n",
+					"    .withColumn(\"total\",f.col(\"total\").cast(DecimalType(precision=9, scale=2)))\\\n",
+					"    .withColumn(\"tax\",f.col(\"tax\").cast(DecimalType(precision=9, scale=2)))\\\n",
+					"    .withColumn(\"subtotal\",f.col(\"subtotal\").cast(DecimalType(precision=9, scale=2)))\n",
+					"\n",
+					"df_store_order_lake_dup = df_store_order_lake \\\n",
+					"    .groupBy(\"order_num\") \\\n",
+					"    .agg(f.count(\"transaction_id\").alias(\"cnt\")) \\\n",
+					"    .where(\"cnt > 1\")\n",
+					"\n",
+					"logger.info(\"stage-load : finding duplicate orders. Lake={0}, Duplicate={1}\".format(df_store_order_lake.count(), df_store_order_lake_dup.count()))\n",
+					"logger.info(\"stage-load : Displaying sample 10 duplicate orders\")\n",
+					"logger.info(\"----------------------------------------------------\")\n",
+					"df_store_order_lake_dup.show(10)\n",
+					"\n",
+					"if df_store_order_lake_dup.count() > 0:\n",
+					"    df_store_order_lake = df_store_order_lake.dropDuplicates([\"order_num\"])\n",
+					"    logger.info(\"stage-load : removed duplcate orders from lake\")\n",
 					"\n",
 					"logger.info(\"stage-load : Load store shopping history from lake path. Count={0}, Path={1}\".format(df_store_order_lake.count(), SOURCE_LAKE_STORE_ORDER_PATH))"
 				],
-				"execution_count": 2
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -394,34 +412,31 @@
 					"        .partitionBy(PARTITION_COLS) \\\n",
 					"        .save(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH)\n",
 					"\n",
-					"    df_store_order_master = spark \\\n",
-					"        .read \\\n",
-					"        .format(\"delta\") \\\n",
-					"        .load(BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_PATH)\n",
-					"\n",
 					"    df_store_order_delta = spark \\\n",
 					"        .read \\\n",
 					"        .format(\"delta\") \\\n",
 					"        .load(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_PATH) \n",
+					"    \n",
+					"    df_store_order_with_user = df_store_order_delta.filter(\"user_id IS NOT NULL\")\n",
+					"    df_store_order_without_user = df_store_order_delta.filter(\"user_id IS NULL\")\n",
 					"\n",
-					"    df_store_order_master.createOrReplaceTempView('tbl_store_order_mstr')\n",
-					"    df_store_order_delta.createOrReplaceTempView('tbl_store_order_delta')\n",
-					"\n",
-					"    spark.sql(\n",
-					"        \"\"\"\n",
-					"        MERGE INTO tbl_store_order_mstr\n",
-					"        USING tbl_store_order_delta\n",
-					"        ON tbl_store_order_mstr.year = tbl_store_order_delta.year\n",
-					"        AND tbl_store_order_mstr.month = tbl_store_order_delta.month\n",
-					"        AND tbl_store_order_mstr.day = tbl_store_order_delta.day\n",
-					"        AND tbl_store_order_mstr.order_num = tbl_store_order_delta.order_num\n",
-					"        WHEN MATCHED THEN \n",
-					"            UPDATE SET *\n",
-					"        WHEN NOT MATCHED THEN\n",
-					"            INSERT *\n",
-					"        \"\"\"\n",
-					"    )\n",
-					"    logger.info(\"cdc-load : Shopping history loaded into master. Master_Count={0}, Delta_Count={1}, Path={2}\".format(df_store_order_master.count(), df_store_order_delta.count(), TARGET_STORE_ORDER_PATH))\n",
+					"    dt_store_order_master = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_PATH)\n",
+					"    dt_store_order_master.alias(\"mstr\") \\\n",
+					"        .merge(df_store_order_with_user.alias(\"stg\"),\"((mstr.year = stg.year) \\\n",
+					"        AND (mstr.month = stg.month) AND (mstr.day = stg.day) \\\n",
+					"        AND (mstr.order_num = stg.order_num) AND (mstr.user_id = stg.user_id))\") \\\n",
+					"        .whenMatchedUpdateAll() \\\n",
+					"        .whenNotMatchedInsertAll() \\\n",
+					"        .execute()\n",
+					"    logger.info(\"cdc-load : Shopping history loaded into master with user_id. Master_Count={0}, Delta_Count={1}, Path={2}\".format(dt_store_order_master.toDF().count(), df_store_order_with_user.count(), TARGET_STORE_ORDER_PATH))\n",
+					"    dt_store_order_master.alias(\"mstr\") \\\n",
+					"        .merge(df_store_order_without_user.alias(\"stg\"),\"((mstr.year = stg.year) \\\n",
+					"        AND (mstr.month = stg.month) AND (mstr.day = stg.day) \\\n",
+					"        AND (mstr.order_num = stg.order_num))\") \\\n",
+					"        .whenMatchedUpdateAll() \\\n",
+					"        .whenNotMatchedInsertAll() \\\n",
+					"        .execute()\n",
+					"    logger.info(\"cdc-load : Shopping history loaded into master without user_id. Master_Count={0}, Delta_Count={1}, Path={2}\".format(dt_store_order_master.toDF().count(), df_store_order_without_user.count(), TARGET_STORE_ORDER_PATH))\n",
 					"\n",
 					"##############################\n",
 					"# FULL LOAD / DELTA LOAD\n",

@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "0eaf0bff-2b77-44bb-ab9a-4496e605fd19"
+				"spark.autotune.trackingId": "533ddfb7-618f-437d-9946-811d8cd9c37b"
 			}
 		},
 		"metadata": {
@@ -90,7 +90,7 @@
 					"KEY_COL = [\"order_num\"]\n",
 					"PARTITION_COLS = [\"year\", \"month\", \"day\"]"
 				],
-				"execution_count": 1
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -121,7 +121,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_transform_store_order_item\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": null
+				"execution_count": 13
 			},
 			{
 				"cell_type": "code",
@@ -149,7 +149,7 @@
 					"logger.info(\"\\t PARTITION_COLS : {0}\".format(PARTITION_COLS))\n",
 					"logger.info(\"**************************************************************************************\")"
 				],
-				"execution_count": null
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -181,6 +181,7 @@
 				"source": [
 					"from pyspark.sql import functions as f\n",
 					"from delta.tables import DeltaTable\n",
+					"from pyspark.sql.types import DecimalType\n",
 					"\n",
 					"def init():\n",
 					"    df_web_order_item = spark \\\n",
@@ -192,11 +193,11 @@
 					"        .withColumn(\"upc_nbr\", f.col(\"col.upc_nbr\")) \\\n",
 					"        .withColumn(\"pod_id\", f.col(\"col.pod_id\")) \\\n",
 					"        .withColumn(\"qty_sld_amt\", f.col(\"col.qty_sld_amt\")) \\\n",
-					"        .withColumn(\"ext_sell_prc_amt\", f.col(\"col.ext_sell_prc_amt\")) \\\n",
-					"        .withColumn(\"item_coupon_savings\", f.col(\"col.item_coupon_savings\")) \\\n",
-					"        .withColumn(\"item_rewardsprogram_savings\", f.col(\"col.item_rewardsprogram_savings\")) \\\n",
-					"        .withColumn(\"item_mvp_savings\", f.col(\"col.item_mvp_savings\")) \\\n",
-					"        .dropDuplicates([\"order_num\", \"line_item_id\", \"pod_id\"]) \\\n",
+					"        .withColumn(\"ext_sell_prc_amt\", f.get_json_object(f.col(\"col.ext_sell_prc_amt\"),\"$.$numberDecimal\").cast(DecimalType(10,4)))\\\n",
+					"        .withColumn(\"item_coupon_savings\", f.get_json_object(f.col(\"col.item_coupon_savings\"),\"$.$numberDecimal\").cast(DecimalType(6,2)))\\\n",
+					"        .withColumn(\"item_rewardsprogram_savings\", f.get_json_object(f.col(\"col.item_rewardsprogram_savings\"),\"$.$numberDecimal\").cast(DecimalType(6,2)))\\\n",
+					"        .withColumn(\"item_mvp_savings\", f.get_json_object(f.col(\"col.item_mvp_savings\"),\"$.$numberDecimal\").cast(DecimalType(6,2)))\\\n",
+					"        .dropDuplicates([\"order_num\", \"line_item_id\", \"pod_id\", \"user_id\"]) \\\n",
 					"        .select(TARGET_STORE_ORDER_ITEM_COLS)\n",
 					"    \n",
 					"    logger.info(\"init-load: Read orders from order container. Count={0}, Path={1}\".format(df_web_order_item.count(),TARGET_STORE_ORDER_PATH))\n",
@@ -220,7 +221,7 @@
 					"    init()\n",
 					""
 				],
-				"execution_count": 2
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -285,39 +286,36 @@
 					"        .withColumn(\"upc_nbr\", f.col(\"col.upc_nbr\")) \\\n",
 					"        .withColumn(\"pod_id\", f.col(\"col.pod_id\")) \\\n",
 					"        .withColumn(\"qty_sld_amt\", f.col(\"col.qty_sld_amt\")) \\\n",
-					"        .withColumn(\"ext_sell_prc_amt\", f.col(\"col.ext_sell_prc_amt\")) \\\n",
-					"        .withColumn(\"item_coupon_savings\", f.col(\"col.item_coupon_savings\")) \\\n",
-					"        .withColumn(\"item_rewardsprogram_savings\", f.col(\"col.item_rewardsprogram_savings\")) \\\n",
-					"        .withColumn(\"item_mvp_savings\", f.col(\"col.item_mvp_savings\")) \\\n",
-					"        .dropDuplicates([\"order_num\", \"line_item_id\", \"pod_id\"]) \\\n",
+					"        .withColumn(\"ext_sell_prc_amt\", f.get_json_object(f.col(\"col.ext_sell_prc_amt\"),\"$.$numberDecimal\").cast(DecimalType(10,4)))\\\n",
+					"        .withColumn(\"item_coupon_savings\", f.get_json_object(f.col(\"col.item_coupon_savings\"),\"$.$numberDecimal\").cast(DecimalType(6,2)))\\\n",
+					"        .withColumn(\"item_rewardsprogram_savings\", f.get_json_object(f.col(\"col.item_rewardsprogram_savings\"),\"$.$numberDecimal\").cast(DecimalType(6,2)))\\\n",
+					"        .withColumn(\"item_mvp_savings\", f.get_json_object(f.col(\"col.item_mvp_savings\"),\"$.$numberDecimal\").cast(DecimalType(6,2)))\\\n",
+					"        .dropDuplicates([\"order_num\", \"line_item_id\", \"pod_id\", \"user_id\"]) \\\n",
 					"        .select(TARGET_STORE_ORDER_ITEM_COLS)\n",
-					"                \n",
-					"    df_store_order_item_master = spark \\\n",
-					"        .read \\\n",
-					"        .format(\"delta\") \\\n",
-					"        .load(BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH)\n",
-					"    \n",
-					"    logger.info(\"cdc-load: Built order-item-stg & order-item-mstr datasets. Stage={0}, Master={1}\".format(df_store_order_item_stage.count(),df_store_order_item_master.count()))\n",
+					"        \n",
 					"\n",
-					"    df_store_order_item_stage.createOrReplaceTempView(\"tbl_store_order_item_stage\")\n",
-					"    df_store_order_item_master.createOrReplaceTempView(\"tbl_store_order_item_master\")\n",
+					"    df_store_order_item_with_user = df_store_order_item_stage.filter(\"user_id IS NOT NULL\")\n",
+					"    df_store_order_item_without_user = df_store_order_item_stage.filter(\"user_id IS NULL\")\n",
 					"\n",
-					"    spark.sql(\n",
-					"        \"\"\"\n",
-					"        MERGE INTO tbl_store_order_item_master\n",
-					"        USING tbl_store_order_item_stage\n",
-					"        ON tbl_store_order_item_master.year = tbl_store_order_item_stage.year\n",
-					"        AND tbl_store_order_item_master.month = tbl_store_order_item_stage.month\n",
-					"        AND tbl_store_order_item_master.day = tbl_store_order_item_stage.day\n",
-					"        AND tbl_store_order_item_master.order_num = tbl_store_order_item_stage.order_num\n",
-					"        AND tbl_store_order_item_master.line_item_id = tbl_store_order_item_stage.line_item_id\n",
-					"        AND tbl_store_order_item_master.pod_id = tbl_store_order_item_stage.pod_id\n",
-					"        WHEN MATCHED THEN \n",
-					"            UPDATE SET *\n",
-					"        WHEN NOT MATCHED THEN\n",
-					"            INSERT *\n",
-					"        \"\"\"\n",
-					"    )\n",
+					"    dt_store_order_item_master = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_STORE_ORDER_ITEM_PATH)\n",
+					"    logger.info(\"cdc-load: Built order-item-stg & order-item-mstr datasets. Stage={0}, Master={1}\".format(df_store_order_item_stage.count(),dt_store_order_item_master.toDF().count()))\n",
+					"    dt_store_order_item_master.alias(\"mstr\") \\\n",
+					"        .merge(df_store_order_item_with_user.alias(\"stg\"),\"mstr.year = stg.year\\\n",
+					"        AND mstr.month = stg.month AND mstr.day = stg.day \\\n",
+					"        AND mstr.order_num = stg.order_num AND mstr.line_item_id = stg.line_item_id\\\n",
+					"        AND mstr.pod_id = stg.pod_id AND mstr.user_id = stg.user_id\") \\\n",
+					"        .whenMatchedUpdateAll() \\\n",
+					"        .whenNotMatchedInsertAll() \\\n",
+					"        .execute()\n",
+					"    dt_store_order_item_master.alias(\"mstr\") \\\n",
+					"        .merge(df_store_order_item_without_user.alias(\"stg\"),\"mstr.year = stg.year\\\n",
+					"        AND mstr.month = stg.month AND mstr.day = stg.day \\\n",
+					"        AND mstr.order_num = stg.order_num AND mstr.line_item_id = stg.line_item_id\\\n",
+					"        AND mstr.pod_id = stg.pod_id \") \\\n",
+					"        .whenMatchedUpdateAll() \\\n",
+					"        .whenNotMatchedInsertAll() \\\n",
+					"        .execute()\n",
+					"    logger.info(\"cdc-load: Merged order-item-stg -> order-item-mstr. Stage={0}, Master={1}\".format(df_store_order_item_stage.count(),dt_store_order_item_master.toDF().count()))\n",
 					"\n",
 					"\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH)):\n",
@@ -325,7 +323,7 @@
 					"else:\n",
 					"    logger.info(\"cdc-load: No delta orders found at path = {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))"
 				],
-				"execution_count": 3
+				"execution_count": 16
 			},
 			{
 				"cell_type": "markdown",
@@ -361,7 +359,7 @@
 					"    mssparkutils.fs.rm(BASE_ADLS_CONN_STR + STAGE_STORE_ORDER_ITEM_PATH, recurse = True)\n",
 					"    logger.info(\"cdc-load: Cleaned up delta data container = {0}\".format(STAGE_STORE_ORDER_ITEM_PATH))"
 				],
-				"execution_count": 4
+				"execution_count": 17
 			}
 		]
 	}

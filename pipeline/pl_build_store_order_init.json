@@ -5,8 +5,6 @@
 			{
 				"name": "set-ingest-fldr-path",
 				"type": "SetVariable",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"secureOutput": false,
@@ -259,8 +257,6 @@
 			{
 				"name": "ext-store-order",
 				"type": "ExecutePipeline",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "set-ingest-fldr-path",
@@ -384,7 +380,7 @@
 		"variables": {
 			"INGST_FLDR_PATH": {
 				"type": "String",
-				"defaultValue": "opco/fdln/domain/order/store-order/lake/2023-08-22-07-27-50-mar23/"
+				"defaultValue": "opco/fdln/domain/order/store-order/lake/"
 			}
 		},
 		"folder": {
