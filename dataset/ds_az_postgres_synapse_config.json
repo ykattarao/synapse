@@ -1,0 +1,35 @@
+{
+	"name": "ds_az_postgres_synapse_config",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_az_postgres_integrations_synapse_config",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"SCHEMA_NAME": {
+				"type": "string",
+				"defaultValue": "config"
+			},
+			"TABLE_NAME": {
+				"type": "string",
+				"defaultValue": "pipeline_config"
+			}
+		},
+		"folder": {
+			"name": "config/synapse-config"
+		},
+		"annotations": [],
+		"type": "AzurePostgreSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().SCHEMA_NAME",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().TABLE_NAME",
+				"type": "Expression"
+			}
+		}
+	}
+}

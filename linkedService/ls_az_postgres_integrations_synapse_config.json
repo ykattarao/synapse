@@ -1,0 +1,21 @@
+{
+	"name": "ls_az_postgres_integrations_synapse_config",
+	"properties": {
+		"annotations": [],
+		"type": "AzurePostgreSql",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "akv-ls-azure-postgres-integrations-synapse-config"
+			}
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedRuntime01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}
