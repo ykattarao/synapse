@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "639c1b5f-aa39-46ba-a10f-5b2d3626b987"
+				"spark.autotune.trackingId": "ccda7d74-9875-4311-b1c3-c62c47f97d7f"
 			}
 		},
 		"metadata": {
@@ -53,6 +53,11 @@
 		"cells": [
 			{
 				"cell_type": "code",
+				"metadata": {
+					"tags": [
+						"parameters"
+					]
+				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
 					"TARGET_STORE_ORDER_ITEM_PATH = \"opco/{opco}/domain/order/store-order/master/order-item/\"\r\n",

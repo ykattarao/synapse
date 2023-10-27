@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "0a4ab76a-68c7-4ed9-83da-a94bfc9cca56"
+				"spark.autotune.trackingId": "fb93a7d5-bfb7-4a22-993e-478812f7daee"
 			}
 		},
 		"metadata": {
@@ -104,7 +104,7 @@
 					"NO_OF_PROD_ORD_RANK=500\r\n",
 					"NO_OF_PARTITONS_ORD_RANK=6\r\n",
 					"YRS_DATA= 1\r\n",
-					"IS_DELTA_LOAD = True\r\n",
+					"IS_DELTA_LOAD = False\r\n",
 					"OPCO = \"fdln\"\r\n",
 					"VAL_CNT_THRESHOLD=5\r\n",
 					"USR_PAST_PURCHASE = \"past-purchase-integration-pipeline\"\r\n",
@@ -112,7 +112,7 @@
 					"COSMOS_CONTAINER_NM = \"past-purchase\"\r\n",
 					"COSMOS_DB_NM = \"purchase_history\""
 				],
-				"execution_count": 38
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",
@@ -143,7 +143,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_past-purchase\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": 39
+				"execution_count": 4
 			},
 			{
 				"cell_type": "code",
@@ -161,7 +161,7 @@
 				"source": [
 					"%run utils/validation/nb_auto_data_validation_framework"
 				],
-				"execution_count": 40
+				"execution_count": 5
 			},
 			{
 				"cell_type": "code",
@@ -194,7 +194,7 @@
 					"logger.info(\"\\t\\t YRS_DATA = {0}\".format(YRS_DATA))\n",
 					"logger.info(\"**********************************************************************************\")"
 				],
-				"execution_count": 41
+				"execution_count": 6
 			},
 			{
 				"cell_type": "markdown",
@@ -260,7 +260,7 @@
 					"    df_delta_usr = df_delta_usr.dropDuplicates()\n",
 					"    logger.info(\"delta-users: Loaded unique Delta Users from Customer and Web Order Domain. OPCO={0}, Count={1}\".format(OPCO, df_delta_usr.count()))"
 				],
-				"execution_count": 42
+				"execution_count": 7
 			},
 			{
 				"cell_type": "markdown",
@@ -333,7 +333,7 @@
 					"    STAGE_STORE_ORDER_PATH=TARGET_STORE_ORDER_ITEM_USER_PATH\r\n",
 					""
 				],
-				"execution_count": 43
+				"execution_count": 8
 			},
 			{
 				"cell_type": "markdown",
@@ -415,7 +415,7 @@
 					"    write_stage_web_ord(df_web_ord_master)\r\n",
 					""
 				],
-				"execution_count": 44
+				"execution_count": 9
 			},
 			{
 				"cell_type": "markdown",
@@ -491,7 +491,7 @@
 					"else:\r\n",
 					"    write_stage_user(df_users_master)"
 				],
-				"execution_count": 45
+				"execution_count": 10
 			},
 			{
 				"cell_type": "markdown",
@@ -545,7 +545,7 @@
 					"        .save(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"replcamen-product: Write repalcement-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_repl_prod.count()))"
 				],
-				"execution_count": 46
+				"execution_count": 11
 			},
 			{
 				"cell_type": "markdown",
@@ -596,7 +596,7 @@
 					"    .save(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"deleted-product: Write deleted-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_del_prod.count()))"
 				],
-				"execution_count": 47
+				"execution_count": 12
 			},
 			{
 				"cell_type": "markdown",
@@ -688,7 +688,7 @@
 					"\r\n",
 					"logger.info(\"stage-data-load: Created required all stage tables for all domains. Ready to start the integration. OPCO={0}\".format(OPCO))"
 				],
-				"execution_count": 48
+				"execution_count": 13
 			},
 			{
 				"cell_type": "markdown",
@@ -729,7 +729,7 @@
 					"df_union_query.createOrReplaceTempView(\"tbl_web_store_order\")\r\n",
 					"logger.info(\"merge-web-store-orders: Merged store and web orders into a single dataset. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 49
+				"execution_count": 14
 			},
 			{
 				"cell_type": "markdown",
@@ -798,7 +798,7 @@
 					"\r\n",
 					"df_usr_prd_all_times=df_usr_prd_all_times.withColumnRenamed(\"user_id\",\"user_id_all\")"
 				],
-				"execution_count": 50
+				"execution_count": 15
 			},
 			{
 				"cell_type": "markdown",
@@ -853,7 +853,7 @@
 					"df_usr_prd_last_order = df_usr_prd_last_order.withColumnRenamed(\"user_id\",\"user_id_last_order\") \r\n",
 					""
 				],
-				"execution_count": 51
+				"execution_count": 16
 			},
 			{
 				"cell_type": "markdown",
@@ -900,8 +900,7 @@
 					"\r\n",
 					"df_removed_purc = df_removed_purc.groupBy(\"user_id_del\") \\\r\n",
 					"                                .agg(f.array_sort(f.array_distinct(f.flatten(f.collect_set(\"removed_repl_prod_purchases\")))).alias(\"removed_purchases\"))\r\n",
-					"                                                   \r\n",
-					"\r\n",
+					"                          \r\n",
 					"df_usr_prd_three_months = df_usr_prd_three_months \\\r\n",
 					"    .join(df_removed_purc, df_usr_prd_three_months.user_id_three_months == df_removed_purc.user_id_del, \"left\") \\\r\n",
 					"    .withColumn(\"three_months_purch_removed\", \\\r\n",
@@ -934,7 +933,7 @@
 					"    .drop(\"user_id_del\",\"removed_purchases\")\r\n",
 					"logger.info(\"aggregate-products: Remove user deleted past-purchase products from df_usr_prd_last_order. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 52
+				"execution_count": 17
 			},
 			{
 				"cell_type": "markdown",
@@ -960,7 +959,8 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
 					"from pyspark.sql.types import StringType, ArrayType,MapType,NullType\r\n",
@@ -1064,13 +1064,17 @@
 					"    logger.debug(\"organic default rankings: Write organic default rankings into STG container. OPCO = {0},path={1} Count = {2}\".format(OPCO,BASE_ADLS_CONN_STR + STAGE_ORDER_GENIUS_DEFAULT_PATH.format(opco = OPCO), df_ord_genius_stg.count()))\r\n",
 					"    \r\n",
 					"df_ord_genius_default=df_user_product_org_default.orderBy(\"ord_gen_user_id\",asc(\"rank\")).groupby(\"ord_gen_user_id\")\\\r\n",
-					"                                                .agg(collect_list(\"pod_id\").alias(\"ordergenius_default\"),\r\n",
-					"                                            udf_ord_rank_partition(collect_list(\"pod_id\"),lit(NO_OF_PROD_ORD_RANK),lit(NO_OF_PARTITONS_ORD_RANK)).alias(\"ordergenius_rank_Partition\"))\r\n",
+					"                                                 .agg(collect_list(\"pod_id\").alias(\"ordergenius_default\"))\r\n",
+					"                                                  \r\n",
+					"df_ord_genius_default = df_ord_genius_default.join(df_removed_purc, df_ord_genius_default.ord_gen_user_id == df_removed_purc.user_id_del, \"left\")\\\r\n",
+					"    .withColumn(\"ordergenius_default\",F.when(F.size(df_removed_purc.removed_purchases) > 0, F.array_except(df_ord_genius_default.ordergenius_default, df_removed_purc.removed_purchases)) \\\r\n",
+					"    .otherwise(df_ord_genius_default.ordergenius_default)).drop(\"user_id_del\",\"removed_purchases\")\r\n",
 					"\r\n",
+					"df_ord_genius_default=df_ord_genius_default.withColumn(\"ordergenius_rank_partition\",udf_ord_rank_partition(col(\"ordergenius_default\"),lit(NO_OF_PROD_ORD_RANK),lit(NO_OF_PARTITONS_ORD_RANK)))\r\n",
 					"                             \r\n",
 					"logger.info(\" Calculate ordergeniusRankPartition and ordergeniusdefault values. OPCO = {0} Count = {1}\".format(OPCO, df_ord_genius_default.count()))"
 				],
-				"execution_count": 53
+				"execution_count": 22
 			},
 			{
 				"cell_type": "markdown",
@@ -1114,7 +1118,7 @@
 					"                        .join(df_removed_purc, df_users.user_id == df_removed_purc.user_id_del, \"left\") \\\r\n",
 					"                        .select(\"user_id\",\"hndl_id\", \"rtlr_card_id\", \"mail_tx\", \"stat_cd\", \"opco_id\", \\\r\n",
 					"                        coalesce(\"ordergenius_default\",array()).alias(\"ordergenius_default\").cast(ArrayType(IntegerType())),\\\r\n",
-					"                        coalesce(\"ordergenius_rank_Partition\",create_map()).alias(\"ordergenius_rank_Partition\").cast(MapType(StringType(),ArrayType(IntegerType()))),\\\r\n",
+					"                        coalesce(\"ordergenius_rank_partition\",create_map()).alias(\"ordergenius_rank_partition\").cast(MapType(StringType(),ArrayType(IntegerType()))),\\\r\n",
 					"                        coalesce(\"three_months\",array()).alias(\"three_months_init\").cast(ArrayType(IntegerType())), \\\r\n",
 					"                        coalesce(\"six_months\",array()).alias(\"six_months_init\").cast(ArrayType(IntegerType())), \\\r\n",
 					"                        coalesce(\"all_times\",array()).alias(\"all_times_init\").cast(ArrayType(IntegerType())), \\\r\n",
@@ -1187,7 +1191,7 @@
 					"    load_past_purchase(df_past_purc_stg,BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO)) \r\n",
 					""
 				],
-				"execution_count": 55
+				"execution_count": null
 			},
 			{
 				"cell_type": "markdown",

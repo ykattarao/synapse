@@ -78,7 +78,7 @@
 						},
 						"NO_OF_PROD_ORD_RANK": {
 							"value": {
-								"value": "@pipeline().parameters.PARAM_NO_OF_PARTITONS_ORD_RANK",
+								"value": "@pipeline().parameters.PARAM_NO_OF_PROD_ORD_RANK",
 								"type": "Expression"
 							},
 							"type": "int"
