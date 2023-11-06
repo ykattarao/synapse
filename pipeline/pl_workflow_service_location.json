@@ -1,0 +1,661 @@
+{
+	"name": "pl_workflow_service_location",
+	"properties": {
+		"activities": [
+			{
+				"name": "If_pup_ctl",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_PUP_CTL,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_cit_pup_ctl",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_cntrl_cit_pup_ctl",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_PUP_CTL",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "ForEach_service_location_all",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "If_pup_ctl",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_ecom_stor_cntl",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_cit_zone_ctl",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_zone_xerf",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_cit_stor_zip",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_cpt_stor_grp",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_cpt_stor_zip",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_zip_lat_long",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_cpt_user_var",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.PARAM_OPCO_LIST",
+						"type": "Expression"
+					},
+					"batchCount": 1,
+					"activities": [
+						{
+							"name": "If_service_location",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(pipeline().parameters.PARAM_RUN_SERVICE_LOCATION_ALL,'true')",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "exec_integration_service_locations_all",
+										"type": "ExecutePipeline",
+										"dependsOn": [
+											{
+												"activity": "set_opco",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"userProperties": [],
+										"typeProperties": {
+											"pipeline": {
+												"referenceName": "pl_integration_service_location_all",
+												"type": "PipelineReference"
+											},
+											"waitOnCompletion": true,
+											"parameters": {
+												"PARAM_BASE_ADLS_CONN_STR": {
+													"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+													"type": "Expression"
+												},
+												"PARAM_OPCO": {
+													"value": "@variables('VAR_OPCO')",
+													"type": "Expression"
+												},
+												"PARAM_VAL_CNT_THRESHOLD": {
+													"value": "@int(pipeline().parameters.PARAM_VAL_CNT_THRESHOLD_SERVICE_LOCATION_ALL)",
+													"type": "Expression"
+												}
+											}
+										}
+									},
+									{
+										"name": "set_opco",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "VAR_OPCO",
+											"value": {
+												"value": "@item()",
+												"type": "Expression"
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_ecom_stor_cntl",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_ECOM_STOR_CTL, 'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_rtl_cpt_ecom_stor_ctl",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_rtl_cpt_ecom_stor_ctl",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_ECOM_STOR_CTL",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_cit_zone_ctl",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_PUP_CTL,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_cntrl_cit_zone_ctl",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_cntrl_cit_zone_ctl",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_ZONE_CTL",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_zone_xerf",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_ZONE_XREF,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_cntrl_pit_pr_zone_xref",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_cntrl_pit_pr_zone_xref",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_ZONE_XREF",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_cit_stor_zip",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_CIT_STOR_ZIP, 'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_cntrl_cit_stor_zip",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_cntrl_cit_stor_zip",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_CIT_STOR_ZIP",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_cpt_stor_grp",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_STOR_GRP,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_rtl_cpt_stor_grp",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_rtl_cpt_stor_grp",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD_STOR_GRP",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_cpt_stor_zip",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_CPT_STOR_ZIP,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_rtl_cpt_stor_zip",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_rtl_cpt_stor_zip",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD_CPT_STOR_ZIP",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_zip_lat_long",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_ZIP_LAT_LONG,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_rtl_cpt_zip_lat_long",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_rtl_cpt_zip_lat_long",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD_ZIP_LAT_LONG",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_cpt_user_var",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_USER_VAR,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_stor_rtl_cpt_user_var",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_stor_rtl_cpt_user_var",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARAM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD_USER_VAR",
+										"type": "Expression"
+									},
+									"PARAM_IS_DELTA": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DELTA_LOAD": {
+				"type": "string",
+				"defaultValue": "false"
+			},
+			"PARAM_OPCO_LIST": {
+				"type": "array",
+				"defaultValue": [
+					"fdln",
+					"stsh",
+					"gntl",
+					"gntc",
+					"mrtn",
+					"hnfd"
+				]
+			},
+			"PARM_VAL_CNT_THRESHOLD_PUP_CTL": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARM_VAL_CNT_THRESHOLD_CIT_STOR_ZIP": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARM_VAL_CNT_THRESHOLD_ZONE_CTL": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARM_VAL_CNT_THRESHOLD_ZONE_XREF": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARM_VAL_CNT_THRESHOLD_ECOM_STOR_CTL": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_VAL_CNT_THRESHOLD_STOR_GRP": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_VAL_CNT_THRESHOLD_USER_VAR": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_VAL_CNT_THRESHOLD_ZIP_LAT_LONG": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_VAL_CNT_THRESHOLD_SERVICE_LOCATION_ALL": {
+				"type": "int",
+				"defaultValue": 2
+			},
+			"PARAM_VAL_CNT_THRESHOLD_CPT_STOR_ZIP": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"PARAM_RUN_PUP_CTL": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_CIT_STOR_ZIP": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_ZONE_CTL": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_ZONE_XREF": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_ECOM_STOR_CTL": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_STOR_GRP": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_USER_VAR": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_ZIP_LAT_LONG": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_SERVICE_LOCATION_ALL": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_CPT_STOR_ZIP": {
+				"type": "string",
+				"defaultValue": "true"
+			}
+		},
+		"variables": {
+			"VAR_OPCO": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "workflow/service-location"
+		},
+		"annotations": []
+	}
+}

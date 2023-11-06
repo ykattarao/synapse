@@ -1,0 +1,434 @@
+{
+	"name": "pl_workflow_category_tree",
+	"properties": {
+		"activities": [
+			{
+				"name": "If_product_content",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_CONTENT,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_merch_product_content_copy1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_merch_product_content",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_CONTENT",
+										"type": "Expression"
+									},
+									"PARAM_DELTA_LOAD": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "ForEach_opco_list",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "If_product_content",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "if_attribute_value",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_catalog_attribute",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_catogery_tree",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "If_category_name",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.PARAM_OPCO_LIST",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 1,
+					"activities": [
+						{
+							"name": "If_integration",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(pipeline().parameters.PARAM_RUN_CATEGORY_ALL,'true')",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "set_opco",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "VAR_OPCO",
+											"value": {
+												"value": "@item()",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "exec_integration_category_all",
+										"type": "ExecutePipeline",
+										"dependsOn": [
+											{
+												"activity": "set_opco",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"userProperties": [],
+										"typeProperties": {
+											"pipeline": {
+												"referenceName": "pl_integration_category",
+												"type": "PipelineReference"
+											},
+											"waitOnCompletion": true,
+											"parameters": {
+												"PARAM_BASE_ADLS_CONN_STR": {
+													"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+													"type": "Expression"
+												},
+												"PARAM_OPCO": {
+													"value": "@variables('VAR_OPCO')",
+													"type": "Expression"
+												},
+												"PARAM_VAL_CNT_THRESHOLD": {
+													"value": "@int(pipeline().parameters.PARAM_VAL_CNT_THRESHOLD_CATEGORY_ALL)",
+													"type": "Expression"
+												},
+												"PARAM_PRODUCT_API_URL": {
+													"value": "@pipeline().parameters.PARAM_PRODUCT_API_URL",
+													"type": "Expression"
+												}
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "if_attribute_value",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_CATALOG_ATTR_VAL,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_merch_product_catalog_attribute_value",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_merch_prod_catalog_attribute_value",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_CATALOG_ATTR_VAL",
+										"type": "Expression"
+									},
+									"PARAM_DELTA_LOAD": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_catalog_attribute",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_CATALOG_ATTR,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_merch_product_catalog_attribute",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_merch_product_catalog_attribute",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_CATALOG_ATTR",
+										"type": "Expression"
+									},
+									"PARAM_DELTA_LOAD": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_catogery_tree",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_CATEGORY_TREE,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_merch_product_catogery_tree",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_merch_product_catogery_tree",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_CATEGORY_TREE",
+										"type": "Expression"
+									},
+									"PARAM_DELTA_LOAD": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "If_category_name",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.PARAM_RUN_CATEGORY_NAME,'true')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "exec_merch_product_category_name",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_build_merch_product_catogery_name",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PARAM_OPCO": {
+										"value": "@pipeline().parameters.PARAM_OPCO",
+										"type": "Expression"
+									},
+									"PARAM_BASE_ADLS_CONN_STR": {
+										"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+										"type": "Expression"
+									},
+									"PARM_VAL_CNT_THRESHOLD": {
+										"value": "@pipeline().parameters.PARM_VAL_CNT_THRESHOLD_CATEGORY_NAME",
+										"type": "Expression"
+									},
+									"PARAM_DELTA_LOAD": {
+										"value": "@pipeline().parameters.PARAM_DELTA_LOAD",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "PPOD"
+			},
+			"PARAM_DELTA_LOAD": {
+				"type": "string",
+				"defaultValue": "false"
+			},
+			"PARAM_PRODUCT_API_URL": {
+				"type": "string",
+				"defaultValue": "http://ada-product-api.service.qa.peapod.com:8080/v1/internal/products/count/"
+			},
+			"PARAM_OPCO_LIST": {
+				"type": "array",
+				"defaultValue": [
+					"fdln",
+					"stsh",
+					"gntl",
+					"gntc",
+					"mrtn",
+					"hnfd"
+				]
+			},
+			"PARM_VAL_CNT_THRESHOLD_CONTENT": {
+				"type": "string",
+				"defaultValue": "5"
+			},
+			"PARM_VAL_CNT_THRESHOLD_CATALOG_ATTR": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"PARM_VAL_CNT_THRESHOLD_CATALOG_ATTR_VAL": {
+				"type": "string",
+				"defaultValue": "5"
+			},
+			"PARM_VAL_CNT_THRESHOLD_CATEGORY_NAME": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"PARM_VAL_CNT_THRESHOLD_CATEGORY_TREE": {
+				"type": "string",
+				"defaultValue": "2"
+			},
+			"PARAM_VAL_CNT_THRESHOLD_CATEGORY_ALL": {
+				"type": "string",
+				"defaultValue": "5"
+			},
+			"PARAM_RUN_CONTENT": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_CATALOG_ATTR": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_CATALOG_ATTR_VAL": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_CATEGORY_NAME": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_CATEGORY_TREE": {
+				"type": "string",
+				"defaultValue": "true"
+			},
+			"PARAM_RUN_CATEGORY_ALL": {
+				"type": "string",
+				"defaultValue": "true"
+			}
+		},
+		"variables": {
+			"VAR_OPCO": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "workflow/category-tree"
+		},
+		"annotations": []
+	}
+}

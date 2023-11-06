@@ -1,0 +1,25 @@
+{
+	"name": "sch_workflow_service_location",
+	"properties": {
+		"description": "Scheduling Trigger for Orchestration Pipeline trigerring Domain Hub Pipelines and Service Location Integration Pipeline. ",
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_workflow_service_location",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Hour",
+				"interval": 3,
+				"startTime": "2023-10-17T17:49:00",
+				"timeZone": "Central Standard Time"
+			}
+		}
+	}
+}
