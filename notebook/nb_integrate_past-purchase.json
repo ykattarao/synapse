@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "fb93a7d5-bfb7-4a22-993e-478812f7daee"
+				"spark.autotune.trackingId": "e5e4c599-b90c-4e01-95fb-a592639aaf02"
 			}
 		},
 		"metadata": {
@@ -103,16 +103,23 @@
 					"NO_OF_PARTITIONS = 25\r\n",
 					"NO_OF_PROD_ORD_RANK=500\r\n",
 					"NO_OF_PARTITONS_ORD_RANK=6\r\n",
-					"YRS_DATA= 1\r\n",
+					"NO_OF_DAYS_DATA= 275\r\n",
 					"IS_DELTA_LOAD = False\r\n",
 					"OPCO = \"fdln\"\r\n",
 					"VAL_CNT_THRESHOLD=5\r\n",
+					"EXCLUDE_COLUMNS=[\"three_months_init\",\"six_months_init\",\"all_times_init\",\"last_order_init\",\"ordergenius_rank_partition\",\r\n",
+					"                \"created_ts\",\"created_by\",\"last_updated_at\",\"last_updated_by\",\"hash\",\"hash_cd\",\"is_processed\",\"is_active\"]\r\n",
+					"COLS_ORDER =    [\"user_id\",\"hndl_id\",\"rtlr_card_id\",\"mail_tx\",\"stat_cd\",\"opco_id\",\"ordergenius_default\",\"ordergenius_rank_partition\",\r\n",
+					"                \"three_months_init\",\"six_months_init\",\"all_times_init\",\"last_order_init\",\"three_months\",\"six_months\",\"all_times\",\"last_order\",\r\n",
+					"                \"removed_purchases\",\"id\",\"ordergenius_set_recency_decay\",\"first_lpurc_dt\",\"last_lpurc_dt\",\"last_purc_dates\",\"avg_qtys\",\"qtys\",\r\n",
+					"                \"categories\",\"category_averages\",\"total_orders\",\"total_amount\",\"avg_ord_amt\",\"max_tot_purc_qy\",\"created_ts\",\r\n",
+					"                \"created_by\",\"last_updated_by\",\"last_updated_at\",\"hash\",\"hash_cd\",\"is_processed\",\"is_active\"]                \r\n",
 					"USR_PAST_PURCHASE = \"past-purchase-integration-pipeline\"\r\n",
 					"COSMOS_LINKED_SERVICE_NM = \"ls_az_cosmos_core_services_purchase_history_fdln\"\r\n",
 					"COSMOS_CONTAINER_NM = \"past-purchase\"\r\n",
 					"COSMOS_DB_NM = \"purchase_history\""
 				],
-				"execution_count": null
+				"execution_count": 88
 			},
 			{
 				"cell_type": "markdown",
@@ -143,7 +150,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_past-purchase\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": 4
+				"execution_count": 67
 			},
 			{
 				"cell_type": "code",
@@ -161,7 +168,7 @@
 				"source": [
 					"%run utils/validation/nb_auto_data_validation_framework"
 				],
-				"execution_count": 5
+				"execution_count": 68
 			},
 			{
 				"cell_type": "code",
@@ -191,10 +198,10 @@
 					"logger.info(\"\\t\\t OUTGOING_WEB_ORDER_FL = {0}\".format(OUTGOING_WEB_ORDER_FL))\n",
 					"logger.info(\"\\t\\t TARGET_PAST_PURC_PATH = {0}\".format(TARGET_PAST_PURC_PATH))\n",
 					"logger.info(\"\\t\\t NO_OF_PARTITIONS = {0}\".format(NO_OF_PARTITIONS))\n",
-					"logger.info(\"\\t\\t YRS_DATA = {0}\".format(YRS_DATA))\n",
+					"logger.info(\"\\t\\t NO_OF_DAYS_DATA = {0}\".format(NO_OF_DAYS_DATA))\n",
 					"logger.info(\"**********************************************************************************\")"
 				],
-				"execution_count": 6
+				"execution_count": 70
 			},
 			{
 				"cell_type": "markdown",
@@ -260,7 +267,7 @@
 					"    df_delta_usr = df_delta_usr.dropDuplicates()\n",
 					"    logger.info(\"delta-users: Loaded unique Delta Users from Customer and Web Order Domain. OPCO={0}, Count={1}\".format(OPCO, df_delta_usr.count()))"
 				],
-				"execution_count": 7
+				"execution_count": 71
 			},
 			{
 				"cell_type": "markdown",
@@ -333,7 +340,7 @@
 					"    STAGE_STORE_ORDER_PATH=TARGET_STORE_ORDER_ITEM_USER_PATH\r\n",
 					""
 				],
-				"execution_count": 8
+				"execution_count": 72
 			},
 			{
 				"cell_type": "markdown",
@@ -367,7 +374,7 @@
 					"\r\n",
 					"def get_all_web_ord():\r\n",
 					"    curr_date= f.current_date()\r\n",
-					"    from_date = curr_date - f.expr(\"INTERVAL \"+ str(YRS_DATA) +\" YEARS\")\r\n",
+					"    from_date = curr_date - f.expr(\"INTERVAL \"+ str(NO_OF_DAYS_DATA) +\" DAYS\")\r\n",
 					"    df_web_order_mstr = load_delta_toDF(BASE_ADLS_CONN_STR + TARGET_WEB_ORDER_ITEM_PATH.format(opco = OPCO))\r\n",
 					"    df_web_order_mstr=df_web_order_mstr.filter((df_web_order_mstr.orderDate >= from_date) & (df_web_order_mstr.orderDate<= curr_date) ) \\\r\n",
 					"                                        .filter(\"userId IS NOT NULL\") \\\r\n",
@@ -415,7 +422,7 @@
 					"    write_stage_web_ord(df_web_ord_master)\r\n",
 					""
 				],
-				"execution_count": 9
+				"execution_count": 73
 			},
 			{
 				"cell_type": "markdown",
@@ -491,7 +498,7 @@
 					"else:\r\n",
 					"    write_stage_user(df_users_master)"
 				],
-				"execution_count": 10
+				"execution_count": 74
 			},
 			{
 				"cell_type": "markdown",
@@ -545,7 +552,7 @@
 					"        .save(BASE_ADLS_CONN_STR + STAGE_REPL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"replcamen-product: Write repalcement-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_repl_prod.count()))"
 				],
-				"execution_count": 11
+				"execution_count": 75
 			},
 			{
 				"cell_type": "markdown",
@@ -596,7 +603,7 @@
 					"    .save(BASE_ADLS_CONN_STR + STAGE_DEL_PROD_PATH.format(opco = OPCO))\r\n",
 					"logger.info(\"deleted-product: Write deleted-products into STG container. OPCO = {0}, Count = {1}\".format(OPCO, df_del_prod.count()))"
 				],
-				"execution_count": 12
+				"execution_count": 76
 			},
 			{
 				"cell_type": "markdown",
@@ -688,7 +695,7 @@
 					"\r\n",
 					"logger.info(\"stage-data-load: Created required all stage tables for all domains. Ready to start the integration. OPCO={0}\".format(OPCO))"
 				],
-				"execution_count": 13
+				"execution_count": 77
 			},
 			{
 				"cell_type": "markdown",
@@ -729,7 +736,7 @@
 					"df_union_query.createOrReplaceTempView(\"tbl_web_store_order\")\r\n",
 					"logger.info(\"merge-web-store-orders: Merged store and web orders into a single dataset. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 14
+				"execution_count": 78
 			},
 			{
 				"cell_type": "markdown",
@@ -798,7 +805,7 @@
 					"\r\n",
 					"df_usr_prd_all_times=df_usr_prd_all_times.withColumnRenamed(\"user_id\",\"user_id_all\")"
 				],
-				"execution_count": 15
+				"execution_count": 79
 			},
 			{
 				"cell_type": "markdown",
@@ -853,7 +860,7 @@
 					"df_usr_prd_last_order = df_usr_prd_last_order.withColumnRenamed(\"user_id\",\"user_id_last_order\") \r\n",
 					""
 				],
-				"execution_count": 16
+				"execution_count": 80
 			},
 			{
 				"cell_type": "markdown",
@@ -933,7 +940,7 @@
 					"    .drop(\"user_id_del\",\"removed_purchases\")\r\n",
 					"logger.info(\"aggregate-products: Remove user deleted past-purchase products from df_usr_prd_last_order. OPCO = {0}\".format(OPCO)) "
 				],
-				"execution_count": 17
+				"execution_count": 81
 			},
 			{
 				"cell_type": "markdown",
@@ -1074,7 +1081,7 @@
 					"                             \r\n",
 					"logger.info(\" Calculate ordergeniusRankPartition and ordergeniusdefault values. OPCO = {0} Count = {1}\".format(OPCO, df_ord_genius_default.count()))"
 				],
-				"execution_count": 22
+				"execution_count": 83
 			},
 			{
 				"cell_type": "markdown",
@@ -1106,10 +1113,90 @@
 				"source": [
 					"from pyspark.sql.functions import coalesce,array,create_map\r\n",
 					"from pyspark.sql.functions import from_unixtime,unix_timestamp\r\n",
+					"from pyspark.sql.functions import xxhash64\r\n",
 					"from pyspark.sql import functions as F\r\n",
 					"\r\n",
 					"logger.info(\"aggregate-products: Aggregate customer and their past-purchases. OPCO = {0}\".format(OPCO)) \r\n",
 					"\r\n",
+					"\r\n",
+					"def apply_cdc(df_past_purch_delta_stg):\r\n",
+					"    logger.info(\"\\t PAST PURCHASE:Past Purchase CDC. OPCO = {0}\".format(OPCO))\r\n",
+					"    dt_past_purchase_mastr = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO))\r\n",
+					"    dt_past_purchase_mastr.alias(\"mstr\") \\\r\n",
+					"                    .merge(df_past_purch_delta_stg.alias(\"stg\"), \"mstr.user_id = stg.user_id\") \\\r\n",
+					"                    .whenMatchedUpdate(set=\r\n",
+					"                    {\r\n",
+					"                        \"user_id\":\"stg.user_id\",\r\n",
+					"                        \"hndl_id\":\"stg.hndl_id\",\r\n",
+					"                        \"rtlr_card_id\":\"stg.rtlr_card_id\",\r\n",
+					"                        \"mail_tx\":\"stg.mail_tx\",\r\n",
+					"                        \"stat_cd\":\"stg.stat_cd\",\r\n",
+					"                        \"opco_id\":\"stg.opco_id\",\r\n",
+					"                        \"ordergenius_default\":\"stg.ordergenius_default\",\r\n",
+					"                        \"ordergenius_rank_partition\":\"stg.ordergenius_rank_partition\",\r\n",
+					"                        \"three_months_init\":\"stg.three_months_init\",\r\n",
+					"                        \"six_months_init\":\"stg.six_months_init\",\r\n",
+					"                        \"all_times_init\":\"stg.all_times_init\",\r\n",
+					"                        \"last_order_init\":\"stg.last_order_init\",\r\n",
+					"                        \"three_months\":\"stg.three_months\",\r\n",
+					"                        \"six_months\":\"stg.six_months\",\r\n",
+					"                        \"all_times\":\"stg.all_times\",\r\n",
+					"                        \"last_order\":\"stg.last_order\",\r\n",
+					"                        \"removed_purchases\":\"stg.removed_purchases\",\r\n",
+					"                        \"id\":\"stg.id\",\r\n",
+					"                        \"ordergenius_set_recency_decay\":\"stg.ordergenius_set_recency_decay\",\r\n",
+					"                        \"first_lpurc_dt\":\"stg.first_lpurc_dt\", \r\n",
+					"                        \"last_lpurc_dt\":\"stg.last_lpurc_dt\", \r\n",
+					"                        \"last_purc_dates\":\"stg.last_purc_dates\", \r\n",
+					"                        \"avg_qtys\":\"stg.avg_qtys\", \r\n",
+					"                        \"qtys\":\"stg.qtys\", \r\n",
+					"                        \"categories\":\"stg.categories\", \r\n",
+					"                        \"category_averages\":\"stg.category_averages\", \r\n",
+					"                        \"total_orders\":\"stg.total_orders\", \r\n",
+					"                        \"total_amount\":\"stg.total_amount\", \r\n",
+					"                        \"avg_ord_amt\":\"stg.avg_ord_amt\", \r\n",
+					"                        \"max_tot_purc_qy\":\"stg.max_tot_purc_qy\", \r\n",
+					"                        \"last_updated_at\":\"stg.last_updated_at\", \r\n",
+					"                        \"last_updated_by\":\"stg.last_updated_by\", \r\n",
+					"                        \"hash\": \"stg.hash\",\r\n",
+					"                        \"hash_cd\":\"stg.hash_cd\",\r\n",
+					"                        \"is_processed\":\"stg.is_processed\",\r\n",
+					"                        \"is_active\":\"stg.is_active\"}) \\\r\n",
+					"                    .whenNotMatchedInsertAll()\\\r\n",
+					"                    .execute()\r\n",
+					"    logger.info(\"Persist: Customers' past-purchase has been processed and persisted for OPCO = {0}, Count={1}, Path={2}\".format(OPCO, df_past_purch_delta_stg.count(), TARGET_PAST_PURC_PATH.format(opco = OPCO)))    \r\n",
+					"\r\n",
+					"\r\n",
+					"def load_past_purchase(df_load,path):\r\n",
+					"        df_load \\\r\n",
+					"                .repartition(1, \"user_id\") \\\r\n",
+					"                .sort(\"user_id\") \\\r\n",
+					"                .write \\\r\n",
+					"                .option(\"mergeSchema\", \"true\") \\\r\n",
+					"                .format(\"delta\") \\\r\n",
+					"                .mode(\"overwrite\") \\\r\n",
+					"                .partitionBy(\"hash\") \\\r\n",
+					"                .save(path)\r\n",
+					"\r\n",
+					"def past_purchase_delta_load(df_past_purchase_mstr,df_past_purc_stg):\r\n",
+					"    \r\n",
+					"    logger.info(\"PAST PURCHASE DELTA:Started getting New,Update and Deleted records for OPCO= {0}\".format(OPCO))\r\n",
+					"\r\n",
+					"    #NEW, UPDATE RECORDS  \r\n",
+					"    df_past_purc_new_update=df_past_purc_stg.join(df_past_purchase_mstr,on=[\"user_id\",\"hash_cd\"],how=\"left_anti\")\r\n",
+					"                       \r\n",
+					"    #DELETE RECORDS\r\n",
+					"    df_past_purchase_del=df_past_purchase_mstr.join(df_past_purc_stg,on=[\"user_id\"],how=\"left_anti\")\r\n",
+					"    df_past_purchase_del=df_past_purchase_del.withColumn(\"is_processed\",lit(False))\\\r\n",
+					"                                            .withColumn(\"is_active\",lit(False))              \r\n",
+					"\r\n",
+					"    df_past_purchase_total_delta=df_past_purc_new_update.select(*COLS_ORDER)\\\r\n",
+					"                                    .union(df_past_purchase_del.select(*COLS_ORDER))\r\n",
+					"    logger.info(\"PAST PURCHASE DELTA :Union of New,Update and Deleted records for loading into master OPCO = {0} ,New_Update_Count={1},Delete_Count={2},Union_Count={3}\".format(OPCO,df_past_purc_new_update.count(),df_past_purchase_del.count(),df_past_purchase_total_delta.count()))                                                                \r\n",
+					"    return df_past_purchase_total_delta      \r\n",
+					"\r\n",
+					"\r\n",
+					"# main starts here\r\n",
 					"df_past_purc = df_users.join(df_usr_prd_all_times, df_users.user_id == df_usr_prd_all_times.user_id_all, \"inner\") \\\r\n",
 					"                        .join(df_usr_prd_six_months, df_users.user_id == df_usr_prd_six_months.user_id_six_months, \"left\") \\\r\n",
 					"                        .join(df_usr_prd_three_months, df_users.user_id == df_usr_prd_three_months.user_id_three_months, \"left\") \\\r\n",
@@ -1128,7 +1215,7 @@
 					"                        coalesce(\"all_times_purch_removed\",array()).alias(\"all_times\").cast(ArrayType(IntegerType())), \\\r\n",
 					"                        coalesce(\"last_order_purch_removed\",array()).alias(\"last_order\").cast(ArrayType(IntegerType())), \\\r\n",
 					"                        coalesce(\"removed_purchases\",array()).alias(\"removed_purchases\").cast(ArrayType(IntegerType())))\r\n",
-					"                    \r\n",
+					"\r\n",
 					"\r\n",
 					"df_past_purc = df_past_purc \\\r\n",
 					"        .withColumn(\"id\", F.col(\"user_id\").cast(\"string\")) \\\r\n",
@@ -1144,54 +1231,42 @@
 					"        .withColumn(\"total_amount\",lit(0.00).cast(DecimalType(10,2))) \\\r\n",
 					"        .withColumn(\"avg_ord_amt\",lit(0.00).cast(DecimalType(10,2))) \\\r\n",
 					"        .withColumn(\"max_tot_purc_qy\",lit(0).cast(IntegerType())) \\\r\n",
+					"        .withColumn(\"created_ts\", current_timestamp()) \\\r\n",
+					"        .withColumn(\"created_by\",lit(USR_PAST_PURCHASE)) \\\r\n",
 					"        .withColumn(\"last_updated_at\", from_unixtime(unix_timestamp(current_timestamp(), \"yyyy-MM-dd'T'HH:mm:ss'Z'\"),\"yyyy-MM-dd'T'HH:mm:ss'Z'\")) \\\r\n",
 					"        .withColumn(\"last_updated_by\",lit(USR_PAST_PURCHASE))\r\n",
-					"                        \r\n",
+					"                           \r\n",
+					"hash_columns=[col for col in df_past_purc.schema.names if col not in EXCLUDE_COLUMNS]\r\n",
+					"df_past_purc_stg =  df_past_purc.withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\\\r\n",
+					"                                .withColumn(\"hash_cd\",xxhash64(*hash_columns))\\\r\n",
+					"                                .withColumn(\"is_processed\",lit(False)) \\\r\n",
+					"                                .withColumn(\"is_active\",lit(True)) \r\n",
 					"\r\n",
-					"df_past_purc_stg =  df_past_purc.withColumn(\"hash\", f.abs(f.hash(f.col(\"user_id\"))%NO_OF_PARTITIONS))\r\n",
-					"\r\n",
-					"def apply_cdc():\r\n",
-					"    logger.info(\"\\t Delta master load\")\r\n",
-					"    dt_past_purchase_mastr = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO))\r\n",
-					"    logger.info(\"\\t PAST PURCHASE:Past Purchase loaded from master. OPCO = {0}, Count={1}\".format(OPCO, dt_past_purchase_mastr.toDF().count()))\r\n",
-					"    dt_past_purchase_mastr.alias(\"mstr\") \\\r\n",
-					"        .merge(df_past_purc_stg.alias(\"stg\"), \"mstr.user_id = stg.user_id\") \\\r\n",
-					"        .whenMatchedUpdateAll() \\\r\n",
-					"        .whenNotMatchedInsertAll() \\\r\n",
-					"        .execute()\r\n",
-					"    logger.info(\"persist: Customers' past-purchase has been processed and persisted for OPCO = {0}, Count={1}, Path={2}\".format(OPCO, df_past_purc_stg.count(), TARGET_PAST_PURC_PATH))\r\n",
-					"\r\n",
-					"\r\n",
-					"def load_past_purchase(df_load,path):\r\n",
-					"    df_load \\\r\n",
-					"        .repartition(1, \"user_id\") \\\r\n",
-					"        .sort(\"user_id\") \\\r\n",
-					"        .write \\\r\n",
-					"        .option(\"mergeSchema\", \"true\") \\\r\n",
-					"        .format(\"delta\") \\\r\n",
-					"        .mode(\"overwrite\") \\\r\n",
-					"        .partitionBy(\"hash\") \\\r\n",
-					"        .save(path)\r\n",
-					"    logger.info(\"persist: Customers' past-purchase has been processed and persisted for OPCO = {0}, Count={1}, Path={2}\".format(OPCO, df_load.count(), TARGET_PAST_PURC_PATH))\r\n",
+					"logger.info(\"\\t Aggregating all datasets and created past-purchase document for OPCO = {0}\".format(OPCO))\r\n",
 					"\r\n",
 					"if(DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO) )):\r\n",
-					"    if IS_DELTA_LOAD:\r\n",
-					"       apply_cdc()\r\n",
+					"    df_past_purchase_mstr=load_delta_toDF(BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH .format(opco = OPCO))\r\n",
+					"    df_past_purchase_mstr=df_past_purchase_mstr.filter(col(\"is_active\")==True)\r\n",
+					"    logger.info(\"\\t PAST PURCHASE : Started CDC Update for Past Purchase\")\r\n",
+					"    logger.info(\"\\t PAST PURCHASE : Past purchase users loaded from master. OPCO = {0}, Count={1}\".format(OPCO, df_past_purchase_mstr.count()))\r\n",
+					"    if IS_DELTA_LOAD:              \r\n",
+					"        if(df_past_purc_stg.count()>0):\r\n",
+					"            apply_cdc(df_past_purc_stg)\r\n",
 					"    else:\r\n",
-					"        df_past_purchase_mstr=load_delta_toDF(BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH .format(opco = OPCO))\r\n",
-					"        logger.info(\"\\t PAST PURCHASE : Past purchase users loaded from master. OPCO = {0}, Count={1}\".format(OPCO, df_past_purchase_mstr.count()))\r\n",
 					"        is_val_success= validate_count(df_past_purchase_mstr,df_past_purc_stg,VAL_CNT_THRESHOLD)        \r\n",
 					"        if is_val_success :\r\n",
-					"            load_past_purchase(df_past_purc_stg,BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO))\r\n",
+					"            df_past_purch_delta_stg=past_purchase_delta_load(df_past_purchase_mstr,df_past_purc_stg)\r\n",
+					"            if(df_past_purch_delta_stg.count()>0):\r\n",
+					"                apply_cdc(df_past_purch_delta_stg)\r\n",
 					"        else:\r\n",
 					"            logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
 					"            raise Exception(\"EXCEEDING_THRESHOLD\")                             \r\n",
 					"else:\r\n",
 					"    logger.info(\"\\t First Time Master Load\")\r\n",
-					"    load_past_purchase(df_past_purc_stg,BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO)) \r\n",
+					"    load_past_purchase(df_past_purc_stg,BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO))\r\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 85
 			},
 			{
 				"cell_type": "markdown",
@@ -1230,46 +1305,57 @@
 					"    \"spark.cosmos.container\": COSMOS_CONTAINER_NM\n",
 					"}\n",
 					"\n",
+					"df_past_purchase_mstr=load_delta_toDF(BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH .format(opco = OPCO))\n",
+					"df_past_purc_new_update= df_past_purchase_mstr.filter((col(\"is_processed\")==False))\n",
 					"\n",
-					"df_past_purc_data_store = df_past_purc \\\n",
-					"    .withColumnRenamed(\"user_id\", \"userId\") \\\n",
-					"    .withColumnRenamed(\"hndl_id\", \"hndlId\") \\\n",
-					"    .withColumnRenamed(\"rtlr_card_id\", \"rtlrCardId\") \\\n",
-					"    .withColumnRenamed(\"mail_tx\", \"email\") \\\n",
-					"    .withColumnRenamed(\"stat_cd\", \"statCd\") \\\n",
-					"    .withColumnRenamed(\"opco_id\", \"opco\") \\\n",
-					"    .withColumnRenamed(\"three_months\", \"threeMonths\") \\\n",
-					"    .withColumnRenamed(\"six_months\", \"sixMonths\") \\\n",
-					"    .withColumnRenamed(\"all_times\", \"allTimes\") \\\n",
-					"    .withColumnRenamed(\"last_order\", \"lastOrder\") \\\n",
-					"    .withColumnRenamed(\"removed_purchases\", \"removedPurchases\") \\\n",
-					"    .withColumnRenamed(\"ordergenius_rank_partition\", \"ordergeniusRankPartition\") \\\n",
-					"    .withColumnRenamed(\"ordergenius_default\", \"ordergeniusDefault\") \\\n",
-					"    .withColumnRenamed(\"ordergenius_set_recency_decay\", \"ordergeniusSetRecencyDecay\") \\\n",
-					"    .withColumnRenamed(\"first_lpurc_dt\", \"firstLpurcDt\") \\\n",
-					"    .withColumnRenamed(\"last_lpurc_dt\", \"lastLpurcDt\") \\\n",
-					"    .withColumnRenamed(\"last_purc_dates\", \"lastPurcDates\") \\\n",
-					"    .withColumnRenamed(\"avg_qtys\", \"avgQtys\") \\\n",
-					"    .withColumnRenamed(\"total_orders\", \"totalOrders\") \\\n",
-					"    .withColumnRenamed(\"total_amount\", \"totalAmount\") \\\n",
-					"    .withColumnRenamed(\"avg_ord_amt\", \"avgOrdAmt\") \\\n",
-					"    .withColumnRenamed(\"max_tot_purc_qy\", \"maxTotPurcQy\") \\\n",
-					"    .withColumnRenamed(\"category_averages\", \"categoryAverages\") \\\n",
-					"    .withColumnRenamed(\"last_updated_at\", \"lastUpdatedAt\") \\\n",
-					"    .withColumnRenamed(\"last_updated_by\", \"lastUpdatedBy\") \\\n",
-					"    .drop(\"hash\", \"three_months_init\", \"six_months_init\", \"all_times_init\", \"last_order_init\")   \n",
+					"logger.info(\"PAST PURCHASE :Filtering data that are not processed to load into Cosmos ={0}\".format(df_past_purc_new_update.count()))\n",
 					"\n",
-					"df_past_purc_data_store \\\n",
-					"    .write \\\n",
-					"    .format(\"cosmos.oltp\") \\\n",
-					"    .options(**cfg) \\\n",
-					"    .mode(\"append\") \\\n",
-					"    .save()\n",
+					"if(df_past_purc_new_update.count()>0):\n",
+					"    df_past_purc_data_store = df_past_purc_new_update \\\n",
+					"        .withColumnRenamed(\"user_id\", \"userId\") \\\n",
+					"        .withColumnRenamed(\"hndl_id\", \"hndlId\") \\\n",
+					"        .withColumnRenamed(\"rtlr_card_id\", \"rtlrCardId\") \\\n",
+					"        .withColumnRenamed(\"mail_tx\", \"email\") \\\n",
+					"        .withColumnRenamed(\"stat_cd\", \"statCd\") \\\n",
+					"        .withColumnRenamed(\"opco_id\", \"opco\") \\\n",
+					"        .withColumnRenamed(\"three_months\", \"threeMonths\") \\\n",
+					"        .withColumnRenamed(\"six_months\", \"sixMonths\") \\\n",
+					"        .withColumnRenamed(\"all_times\", \"allTimes\") \\\n",
+					"        .withColumnRenamed(\"last_order\", \"lastOrder\") \\\n",
+					"        .withColumnRenamed(\"removed_purchases\", \"removedPurchases\") \\\n",
+					"        .withColumnRenamed(\"ordergenius_rank_partition\", \"ordergeniusRankPartition\") \\\n",
+					"        .withColumnRenamed(\"ordergenius_default\", \"ordergeniusDefault\") \\\n",
+					"        .withColumnRenamed(\"ordergenius_set_recency_decay\", \"ordergeniusSetRecencyDecay\") \\\n",
+					"        .withColumnRenamed(\"first_lpurc_dt\", \"firstLpurcDt\") \\\n",
+					"        .withColumnRenamed(\"last_lpurc_dt\", \"lastLpurcDt\") \\\n",
+					"        .withColumnRenamed(\"last_purc_dates\", \"lastPurcDates\") \\\n",
+					"        .withColumnRenamed(\"avg_qtys\", \"avgQtys\") \\\n",
+					"        .withColumnRenamed(\"total_orders\", \"totalOrders\") \\\n",
+					"        .withColumnRenamed(\"total_amount\", \"totalAmount\") \\\n",
+					"        .withColumnRenamed(\"avg_ord_amt\", \"avgOrdAmt\") \\\n",
+					"        .withColumnRenamed(\"max_tot_purc_qy\", \"maxTotPurcQy\") \\\n",
+					"        .withColumnRenamed(\"category_averages\", \"categoryAverages\") \\\n",
+					"        .withColumnRenamed(\"last_updated_at\", \"lastUpdatedAt\") \\\n",
+					"        .withColumnRenamed(\"last_updated_by\", \"lastUpdatedBy\") \\\n",
+					"        .withColumnRenamed(\"is_active\",\"isActive\")\\\n",
+					"        .drop(\"hash\", \"three_months_init\", \"six_months_init\", \"all_times_init\", \"last_order_init\",\"created_ts\",\"created_by\",\"hash_cd\",\"is_processed\")\n",
 					"\n",
-					"logger.info(\"persist: Persisted past-purchase in Cosmos for OPCO = {0}, Count={1}, Container={2}\".format(OPCO, df_past_purc.count(), COSMOS_CONTAINER_NM)) \n",
-					""
+					"   \n",
+					"    df_past_purc_data_store \\\n",
+					"        .write \\\n",
+					"        .format(\"cosmos.oltp\") \\\n",
+					"        .options(**cfg) \\\n",
+					"        .mode(\"append\") \\\n",
+					"        .save()\n",
+					"\n",
+					"    logger.info(\"persist: Persisted past-purchase in Cosmos for OPCO = {0}, Count={1}, Container={2}\".format(OPCO, df_past_purc.count(), COSMOS_CONTAINER_NM))\n",
+					"\n",
+					"    dt_past_purchase_mastr = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO))\n",
+					"    dt_delta = DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_PAST_PURC_PATH.format(opco = OPCO))\n",
+					"    dt_delta.update(col(\"is_processed\")==False,{\"is_processed\": lit(True)})\n",
+					"    logger.info(\"PAST PURCHASE :Updated Is_processed to True in the Delta table in ADLS = {0}\".format(OPCO))"
 				],
-				"execution_count": 85
+				"execution_count": 87
 			}
 		]
 	}

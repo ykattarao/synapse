@@ -90,9 +90,16 @@
 							},
 							"type": "int"
 						},
-						"YRS_DATA": {
+						"NO_OF_DAYS_DATA": {
 							"value": {
-								"value": "@pipeline().parameters.PARAM_YRS_DATA",
+								"value": "@pipeline().parameters.PARAM_NO_OF_DAYS_DATA",
+								"type": "Expression"
+							},
+							"type": "int"
+						},
+						"VAL_CNT_THRESHOLD": {
+							"value": {
+								"value": "@pipeline().parameters.PARAM_VAL_CNT_THRESHOLD",
 								"type": "Expression"
 							},
 							"type": "int"
@@ -155,9 +162,13 @@
 				"type": "string",
 				"defaultValue": "6"
 			},
-			"PARAM_YRS_DATA": {
+			"PARAM_NO_OF_DAYS_DATA": {
 				"type": "string",
-				"defaultValue": "1"
+				"defaultValue": "365"
+			},
+			"PARAM_VAL_CNT_THRESHOLD": {
+				"type": "string",
+				"defaultValue": "5"
 			}
 		},
 		"folder": {
