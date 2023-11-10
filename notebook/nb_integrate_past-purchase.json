@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "e5e4c599-b90c-4e01-95fb-a592639aaf02"
+				"spark.autotune.trackingId": "036f4c7f-a429-4107-9785-5c2a6d351039"
 			}
 		},
 		"metadata": {
@@ -103,7 +103,7 @@
 					"NO_OF_PARTITIONS = 25\r\n",
 					"NO_OF_PROD_ORD_RANK=500\r\n",
 					"NO_OF_PARTITONS_ORD_RANK=6\r\n",
-					"NO_OF_DAYS_DATA= 275\r\n",
+					"NO_OF_DAYS_DATA= 365\r\n",
 					"IS_DELTA_LOAD = False\r\n",
 					"OPCO = \"fdln\"\r\n",
 					"VAL_CNT_THRESHOLD=5\r\n",
