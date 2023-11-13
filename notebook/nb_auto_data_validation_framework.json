@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "91ba7de5-33e1-4f01-a1d1-285f0d860674"
+				"spark.autotune.trackingId": "36c66a0b-91c9-459f-97ed-7a44fbd3fb6d"
 			}
 		},
 		"metadata": {
@@ -100,6 +100,8 @@
 				},
 				"source": [
 					"def percentage_difference(num_1, num_2):\n",
+					"    if num_1 + num_2 == 0:\n",
+					"        return 0\n",
 					"    return abs((num_2 - num_1) / ((num_1 + num_2)/2)) * 100\n",
 					"\n",
 					"def validate_count(df_1, df_2, threshold):\n",
