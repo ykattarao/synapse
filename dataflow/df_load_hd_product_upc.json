@@ -1,0 +1,101 @@
+{
+	"name": "df_load_hd_product_upc",
+	"properties": {
+		"folder": {
+			"name": "01 data_domain/00 product/01 hd_product"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_hd_product_upc_process",
+						"type": "DatasetReference"
+					},
+					"name": "productUpc"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_hd_product_upc_mstr",
+						"type": "DatasetReference"
+					},
+					"name": "sinkHDProductUpcAdls"
+				}
+			],
+			"transformations": [
+				{
+					"name": "selectHits"
+				},
+				{
+					"name": "filterHits"
+				},
+				{
+					"name": "flattenHits"
+				},
+				{
+					"name": "selectAttributes"
+				},
+				{
+					"name": "removeDuplicate"
+				},
+				{
+					"name": "projectAttributes"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          {_scroll_id} as string,",
+				"          {_shards} as (failed as boolean, skipped as boolean, successful as boolean, total as boolean),",
+				"          hits as (hits as ({_id} as string, {_index} as string, {_score} as double, {_source} as (prod_id as integer, upcs as string[]), {_type} as string)[], max_score as double, total as integer),",
+				"          timed_out as boolean,",
+				"          took as short",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     moveFiles: ['/hd-product-price/upc/process','/hd-product-price/upc/process/archive'],",
+				"     documentForm: 'documentPerLine') ~> productUpc",
+				"productUpc select(mapColumn(",
+				"          hits",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectHits",
+				"selectHits filter(size(hits.hits) > 0) ~> filterHits",
+				"filterHits foldDown(unroll(hits.hits),",
+				"     mapColumn(",
+				"          source = hits.hits.{_source}",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flattenHits",
+				"flattenHits select(mapColumn(",
+				"          pod_id = source.prod_id,",
+				"          upcs = source.upcs",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectAttributes",
+				"selectAttributes aggregate(groupBy(pod_id),",
+				"     upcs = first(upcs)) ~> removeDuplicate",
+				"removeDuplicate select(mapColumn(",
+				"          pod_id,",
+				"          upcs",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> projectAttributes",
+				"projectAttributes sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     truncate: true,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          pod_id,",
+				"          upcs",
+				"     )) ~> sinkHDProductUpcAdls"
+			]
+		}
+	}
+}
