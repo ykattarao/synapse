@@ -1,0 +1,375 @@
+{
+	"name": "pl_delete_customer",
+	"properties": {
+		"activities": [
+			{
+				"name": "load_ctrl_table",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzurePostgreSqlSource",
+						"query": "SELECT * from config.tbl_cstmr_prvcy_cntrl \nwhere app_name = 'app_delete'\norder by id;",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_pg_load_ctrl_table",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "update_pg_db",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "load_ctrl_table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('load_ctrl_table').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Set db_name",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "db_name",
+								"value": {
+									"value": "@item().db_name",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Set table_schema",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "table_schema",
+								"value": {
+									"value": "@item().table_schema",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Set table_name",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "table_name",
+								"value": {
+									"value": "@item().table_name",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Set sql_query",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "sql_query",
+								"value": {
+									"value": "@item().update_sql",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Set rtl_crd_id to query",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Set sql_query",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "enrich_query",
+								"value": {
+									"value": "@replace(variables('sql_query'),'#userid#',string(pipeline().parameters.param_userid))",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "lkp pg_datasource",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "Set db_name",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Set table_schema",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Set table_name",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Set rtl_crd_id to query",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 45,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "PostgreSqlSource",
+									"query": {
+										"value": "@variables('enrich_query')",
+										"type": "Expression"
+									}
+								},
+								"dataset": {
+									"referenceName": "ds_pg_update_db",
+									"type": "DatasetReference",
+									"parameters": {
+										"PARAM_DBNAME": {
+											"value": "@variables('db_name')",
+											"type": "Expression"
+										},
+										"PARAM_TABLE_NAME": {
+											"value": "@variables('table_name')",
+											"type": "Expression"
+										},
+										"PARAM_TABLE_SCHEMA": {
+											"value": "@variables('table_schema')",
+											"type": "Expression"
+										}
+									}
+								},
+								"firstRowOnly": true
+							}
+						},
+						{
+							"name": "Set cnt",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "lkp pg_datasource",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "cnt",
+								"value": {
+									"value": "@string(activity('lkp pg_datasource').output.firstRow.cnt)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "audit_log",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Set cnt",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "AzurePostgreSqlSource",
+									"query": {
+										"value": "@concat('SELECT ''',concat(variables('db_name'),'-pg-appdelete'),'''as db_name,''',variables('table_name'),'''as table_name,''',pipeline().parameters.param_userid,'''as loyalty_number,''',variables('cnt'),'''as cnt ;')",
+										"type": "Expression"
+									},
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "AzurePostgreSQLSink",
+									"writeBatchSize": 1000000,
+									"writeBatchTimeout": "00:30:00",
+									"writeMethod": "CopyCommand"
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "db_name",
+												"type": "String",
+												"physicalType": "text"
+											},
+											"sink": {
+												"name": "db_name",
+												"type": "String",
+												"physicalType": "text"
+											}
+										},
+										{
+											"source": {
+												"name": "table_name",
+												"type": "String",
+												"physicalType": "text"
+											},
+											"sink": {
+												"name": "table_name",
+												"type": "String",
+												"physicalType": "text"
+											}
+										},
+										{
+											"source": {
+												"name": "loyalty_number",
+												"type": "String",
+												"physicalType": "text"
+											},
+											"sink": {
+												"name": "loyalty_number",
+												"type": "String",
+												"physicalType": "text"
+											}
+										},
+										{
+											"source": {
+												"name": "cnt",
+												"type": "String",
+												"physicalType": "text"
+											},
+											"sink": {
+												"name": "cnt",
+												"type": "Int32",
+												"physicalType": "integer"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_pg_load_ctrl_table",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_pg_load_customer_auditlog",
+									"type": "DatasetReference"
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"param_userid": {
+				"type": "string"
+			},
+			"param_opco": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"sql_query": {
+				"type": "String"
+			},
+			"db_name": {
+				"type": "String"
+			},
+			"table_schema": {
+				"type": "String"
+			},
+			"table_name": {
+				"type": "String"
+			},
+			"enrich_query": {
+				"type": "String"
+			},
+			"cnt": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "02 outgoing/iso_customer_deletion"
+		},
+		"annotations": []
+	}
+}
