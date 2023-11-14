@@ -1,0 +1,482 @@
+{
+	"name": "pl_integrate_svc_loc_pg",
+	"properties": {
+		"activities": [
+			{
+				"name": "persist-service-locations-to-postgres",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-prqt-fldr-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.parquet",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzurePostgreSQLSink",
+						"writeBatchSize": 1000000,
+						"writeBatchTimeout": "00:30:00",
+						"preCopyScript": "TRUNCATE TABLE store.service_location_stg;",
+						"writeMethod": "CopyCommand"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "id",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "service_location_id",
+									"type": "Int32",
+									"physicalType": "integer"
+								}
+							},
+							{
+								"source": {
+									"name": "location_number",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "location_number",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "opco",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "opco",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "zip",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "zip_code",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "latitude",
+									"type": "Double",
+									"physicalType": "DOUBLE"
+								},
+								"sink": {
+									"name": "latitude",
+									"type": "Double",
+									"physicalType": "double precision"
+								}
+							},
+							{
+								"source": {
+									"name": "longitude",
+									"type": "Double",
+									"physicalType": "DOUBLE"
+								},
+								"sink": {
+									"name": "longitude",
+									"type": "Double",
+									"physicalType": "double precision"
+								}
+							},
+							{
+								"source": {
+									"name": "location_point",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "location_point",
+									"type": "String",
+									"physicalType": "USER-DEFINED"
+								}
+							},
+							{
+								"source": {
+									"name": "user_type",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "user_type",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "service_type",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "service_type",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "active",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "active",
+									"type": "Boolean",
+									"physicalType": "boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "price_zone",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "price_zone",
+									"type": "Int32",
+									"physicalType": "integer"
+								}
+							},
+							{
+								"source": {
+									"name": "service_location",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "service_location",
+									"type": "String",
+									"physicalType": "json"
+								}
+							},
+							{
+								"source": {
+									"name": "created_ts",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "created_ts",
+									"type": "DateTime",
+									"physicalType": "timestamp without time zone"
+								}
+							},
+							{
+								"source": {
+									"name": "created_by",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "created_by",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "updated_ts",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "updated_ts",
+									"type": "DateTime",
+									"physicalType": "timestamp without time zone"
+								}
+							},
+							{
+								"source": {
+									"name": "updated_by",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "updated_by",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "is_processed",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "is_processed",
+									"type": "Boolean",
+									"physicalType": "boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "is_active",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "is_active",
+									"type": "Boolean",
+									"physicalType": "boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "hash_cd",
+									"type": "Int64",
+									"physicalType": "INT64"
+								},
+								"sink": {
+									"name": "hash_cd",
+									"type": "Int64",
+									"physicalType": "bigint"
+								}
+							},
+							{
+								"source": {
+									"name": "city",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "city",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "store_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "store_id",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "ecomm_store_id",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "ecomm_store_id",
+									"type": "Int32",
+									"physicalType": "integer"
+								}
+							},
+							{
+								"source": {
+									"name": "delivery_area_id",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "delivery_area_id",
+									"type": "Int16",
+									"physicalType": "smallint"
+								}
+							},
+							{
+								"source": {
+									"name": "store_status_code",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "store_status_code",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "pickup_location_id",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "pickup_location_id",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_az_adls_svc_loc_prqt",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_PATH": {
+								"value": "@variables('VAR_OUTGOING_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_postgres_svc_loc",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_PG_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_PG_TB_NM",
+								"type": "Expression"
+							},
+							"PARAM_SCHEMA": {
+								"value": "@pipeline().parameters.PARAM_SCHEMA",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "lkp-pg-stg-for-upsert",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "persist-service-locations-to-postgres",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.1:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzurePostgreSqlSource",
+						"query": "INSERT INTO store.service_location_mstr ( service_location_id,\n            location_number,\n            opco,\n            zip_code,\n            latitude,\n            longitude,\n            location_point,\n            user_type,\n            service_type,\n            active,\n            price_zone,\n            service_location,\n            city,\n            store_id,\n            ecomm_store_id,\n            delivery_area_id,\n            store_status_code,\n            pickup_location_id,\n            hash_cd,\n            created_ts,\n            created_by,\n            updated_ts,\n            updated_by,\n            is_processed,\n            is_active)\nSELECT service_location_id,\n            location_number,\n            opco,\n            zip_code,\n            latitude,\n            longitude,\n          ST_GeogFromText('POINT('|| CAST(longitude AS VARCHAR(20)) ||' '||CAST(latitude AS VARCHAR(20))|| ')') AS location_point,\n            user_type,\n            service_type,\n            active,\n            price_zone,\n            service_location,\n            city,\n            store_id,\n            ecomm_store_id,\n            delivery_area_id,\n            store_status_code,\n            pickup_location_id,\n            hash_cd,\n            created_ts,\n            created_by,\n            updated_ts,\n            updated_by,\n            is_processed,\n            is_active\nFROM store.service_location_stg stg\nWHERE is_active=True\nON CONFLICT (service_location_id)\nDO UPDATE SET\n          service_location_id= EXCLUDED.service_location_id,\n          location_number = EXCLUDED.location_number,\n          opco = EXCLUDED.opco,\n          zip_code =EXCLUDED.zip_code,\n          latitude= EXCLUDED.latitude,\n          longitude= EXCLUDED.longitude,\n          location_point= EXCLUDED.location_point,\n          user_type= EXCLUDED.user_type,\n          service_type= EXCLUDED.service_type,\n          active= EXCLUDED.active,\n          price_zone= EXCLUDED.price_zone,\n          service_location= EXCLUDED.service_location,\n          city= EXCLUDED.city,\n          store_id=EXCLUDED.store_id,\n          ecomm_store_id=EXCLUDED.ecomm_store_id,\n          delivery_area_id=EXCLUDED.delivery_area_id,\n          store_status_code=EXCLUDED.store_status_code,\n          pickup_location_id=EXCLUDED.pickup_location_id,\n          hash_cd= EXCLUDED.hash_cd,\n          updated_ts= EXCLUDED.updated_ts,\n          updated_by= EXCLUDED.updated_by,\n          is_processed= EXCLUDED.is_processed,\n          is_active= EXCLUDED.is_active;\n\nDELETE FROM store.service_location_mstr\nWHERE service_location_id IN (\n     SELECT service_location_id \n     FROM store.service_location_stg\n     WHERE is_active=False AND is_processed=False\n);\n\nSELECT 'Upsert completed' as status;",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_az_postgres_svc_loc",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_PG_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_PG_TB_NM",
+								"type": "Expression"
+							},
+							"PARAM_SCHEMA": {
+								"value": "@pipeline().parameters.PARAM_SCHEMA",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "set-prqt-fldr-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_OUTGOING_PATH",
+					"value": {
+						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/integration/service-location/service-locations/outgoing/master/')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "FDLN"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_PG_TB_NM": {
+				"type": "string",
+				"defaultValue": "service_location_stg"
+			},
+			"PARAM_SCHEMA": {
+				"type": "string",
+				"defaultValue": "store"
+			}
+		},
+		"variables": {
+			"VAR_OUTGOING_PATH": {
+				"type": "String",
+				"defaultValue": "opco/stsh/integration/service-location/service-locations/outgoing/master/"
+			}
+		},
+		"folder": {
+			"name": "integration/service-location"
+		},
+		"annotations": []
+	}
+}

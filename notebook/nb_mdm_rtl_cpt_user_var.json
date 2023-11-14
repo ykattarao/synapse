@@ -20,7 +20,8 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "25fffc82-ef34-48c5-90a1-06ae8ab8fd2a"
+				"spark.autotune.trackingId": "69802e0e-932b-4607-95d6-16cf32e6b835"
+
 			}
 		},
 		"metadata": {
@@ -91,6 +92,7 @@
 					"VAL_COL_VLS= \"[ 'C','G','M']\"\r\n",
 					"OPCO_LST = [\"ppod\", \"fdln\", \"hnfd\", \"stsh\", \"gntl\", \"gntc\", \"mrtn\"]\r\n",
 					"IS_DELTA = False"
+
 				],
 				"execution_count": 2
 			},
@@ -241,7 +243,6 @@
 					"from pyspark.sql.functions import current_timestamp, lit\r\n",
 					"from delta.tables import DeltaTable\r\n",
 					"from pyspark.sql import functions as f\r\n",
-					"\r\n",
 					"\r\n",
 					"if(IS_DELTA):\r\n",
 					"    logger.info(\"\\t RETAILER:CPT_USER_VAR - Delta is not supported.\")\r\n",

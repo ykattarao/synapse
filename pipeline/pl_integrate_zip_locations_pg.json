@@ -1,0 +1,301 @@
+{
+	"name": "pl_integrate_zip_locations_pg",
+	"properties": {
+		"activities": [
+			{
+				"name": "persist-zip-locations-to-postgres",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "set-prqt-fldr-path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.parquet",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzurePostgreSQLSink",
+						"writeBatchSize": 1000000,
+						"writeBatchTimeout": "00:30:00",
+						"preCopyScript": "TRUNCATE TABLE store.zip_location_stg;",
+						"writeMethod": "CopyCommand"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "zip_code",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "zip_code",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "latitude",
+									"type": "Double",
+									"physicalType": "DOUBLE"
+								},
+								"sink": {
+									"name": "latitude",
+									"type": "Double",
+									"physicalType": "double precision"
+								}
+							},
+							{
+								"source": {
+									"name": "longitude",
+									"type": "Double",
+									"physicalType": "DOUBLE"
+								},
+								"sink": {
+									"name": "longitude",
+									"type": "Double",
+									"physicalType": "double precision"
+								}
+							},
+							{
+								"source": {
+									"name": "created_ts",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "created_ts",
+									"type": "DateTime",
+									"physicalType": "timestamp without time zone"
+								}
+							},
+							{
+								"source": {
+									"name": "created_by",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "created_by",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "updated_ts",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "updated_ts",
+									"type": "DateTime",
+									"physicalType": "timestamp without time zone"
+								}
+							},
+							{
+								"source": {
+									"name": "updated_by",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "updated_by",
+									"type": "String",
+									"physicalType": "character varying"
+								}
+							},
+							{
+								"source": {
+									"name": "is_processed",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "is_processed",
+									"type": "Boolean",
+									"physicalType": "boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "is_active",
+									"type": "Boolean",
+									"physicalType": "BOOLEAN"
+								},
+								"sink": {
+									"name": "is_active",
+									"type": "Boolean",
+									"physicalType": "boolean"
+								}
+							},
+							{
+								"source": {
+									"name": "hash_cd",
+									"type": "Int64",
+									"physicalType": "INT64"
+								},
+								"sink": {
+									"name": "hash_cd",
+									"type": "Int64",
+									"physicalType": "bigint"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_az_adls_svc_loc_prqt",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_PATH": {
+								"value": "@variables('VAR_OUTGOING_PATH')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_az_postgres_svc_loc",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_PG_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_PG_TM_NM",
+								"type": "Expression"
+							},
+							"PARAM_SCHEMA": {
+								"value": "@pipeline().parameters.PARAM_SCHEMA",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "lkp-stg-pg-for-upsert",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "persist-zip-locations-to-postgres",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzurePostgreSqlSource",
+						"query": "INSERT INTO store.zip_location_mstr ( zip_code,            \r\n            latitude,\r\n            longitude,\r\n            hash_cd,\r\n            created_ts,\r\n            created_by,\r\n            updated_ts,\r\n            updated_by,\r\n            is_processed,\r\n            is_active)\r\nSELECT zip_code,            \r\n            latitude,\r\n            longitude,\r\n            hash_cd,\r\n            created_ts,\r\n            created_by,\r\n            updated_ts,\r\n            updated_by,\r\n            is_processed,\r\n            is_active\r\nFROM store.zip_location_stg\r\nWHERE is_active=True\r\nON CONFLICT (zip_code)\r\nDO UPDATE SET\r\n          zip_code =EXCLUDED.zip_code,\r\n          latitude= EXCLUDED.latitude,\r\n          longitude= EXCLUDED.longitude,\r\n          hash_cd= EXCLUDED.hash_cd,\r\n          updated_ts= EXCLUDED.updated_ts,\r\n          updated_by= EXCLUDED.updated_by,\r\n          is_processed= EXCLUDED.is_processed,\r\n          is_active= EXCLUDED.is_active;\r\n\r\nDELETE FROM store.zip_location_mstr\r\nWHERE zip_code IN (\r\n     SELECT zip_code \r\n     FROM store.zip_location_stg\r\n     WHERE is_active=False AND is_processed=False\r\n);\r\n\r\nSELECT 'Upsert completed' as status;",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_az_postgres_svc_loc",
+						"type": "DatasetReference",
+						"parameters": {
+							"PARAM_OPCO": {
+								"value": "@pipeline().parameters.PARAM_OPCO",
+								"type": "Expression"
+							},
+							"PARAM_PG_TB_NM": {
+								"value": "@pipeline().parameters.PARAM_PG_TM_NM",
+								"type": "Expression"
+							},
+							"PARAM_SCHEMA": {
+								"value": "@pipeline().parameters.PARAM_SCHEMA",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "set-prqt-fldr-path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_OUTGOING_PATH",
+					"value": {
+						"value": "@concat('opco/',toLower(pipeline().parameters.PARAM_OPCO),'/integration/service-location/zip-locations/outgoing/master/')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "FDLN"
+			},
+			"PARAM_PG_TM_NM": {
+				"type": "string",
+				"defaultValue": "zip_location_stg"
+			},
+			"PARAM_BASE_ADLS_CONN_STR": {
+				"type": "string",
+				"defaultValue": "abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/"
+			},
+			"PARAM_SCHEMA": {
+				"type": "string",
+				"defaultValue": "store"
+			}
+		},
+		"variables": {
+			"VAR_OUTGOING_PATH": {
+				"type": "String",
+				"defaultValue": "opco/fdln/integration/service-location-pg/zip-location/outgoing/master/"
+			}
+		},
+		"folder": {
+			"name": "integration/service-location"
+		},
+		"annotations": []
+	}
+}

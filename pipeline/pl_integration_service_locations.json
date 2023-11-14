@@ -36,7 +36,7 @@
 						},
 						"OPCO": {
 							"value": {
-								"value": "@pipeline().parameters.PARAM_OPCO",
+								"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
 								"type": "Expression"
 							},
 							"type": "string"
@@ -63,6 +63,48 @@
 					"driverSize": "Small",
 					"numExecutors": null
 				}
+			},
+			{
+				"name": "execute",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "integrate-store-service-locations",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_integrate_svc_loc_pg",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"PARAM_OPCO": {
+							"value": "@pipeline().parameters.PARAM_OPCO",
+							"type": "Expression"
+						},
+						"PARAM_BASE_ADLS_CONN_STR": {
+							"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+							"type": "Expression"
+						},
+						"PARAM_PG_DB_NM": {
+							"value": "@pipeline().parameters.PARAM_PG_DB_NM",
+							"type": "Expression"
+						},
+						"PARAM_PG_TB_NM": {
+							"value": "@pipeline().parameters.PARAM_PG_TB_NM",
+							"type": "Expression"
+						},
+						"PARAM_SCHEMA": {
+							"value": "@pipeline().parameters.PARAM_SCHEMA",
+							"type": "Expression"
+						}
+					}
+				}
 			}
 		],
 		"parameters": {
@@ -72,7 +114,7 @@
 			},
 			"PARAM_OPCO": {
 				"type": "string",
-				"defaultValue": "fdln"
+				"defaultValue": "FDLN"
 			},
 			"PARAM_STG_INDX": {
 				"type": "bool",
@@ -81,6 +123,14 @@
 			"PARAM_VAL_CNT_THRESHOLD": {
 				"type": "int",
 				"defaultValue": 2
+			},
+			"PARAM_PG_TB_NM": {
+				"type": "string",
+				"defaultValue": "service_location_stg"
+			},
+			"PARAM_SCHEMA": {
+				"type": "string",
+				"defaultValue": "store"
 			}
 		},
 		"folder": {

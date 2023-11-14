@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7dac8898-50fb-427a-a410-0f6157316bdd"
+				"spark.autotune.trackingId": "c29c2629-9ca6-40b4-90f5-3017fc7c9257"
 			}
 		},
 		"metadata": {
@@ -60,7 +60,7 @@
 				},
 				"source": [
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
-					"OPCO=\"gntc\"\r\n",
+					"OPCO=\"hnfd\"\r\n",
 					"TARGET_RTL_STORE_ZIP_PATH = \"opco/{opco}/domain/store/retailer-cpt-store-zip/master/\"\r\n",
 					"TARGET_RTL_ECOM_STORE_CTL_PATH = \"opco/{opco}/domain/store/retailer-cpt-ecom-store-ctl/master/\"\r\n",
 					"TARGET_CNTRL_PUP_CTL_PATH = \"opco/{opco}/domain/store/central-cit-pup-ctl/master/\"\r\n",
@@ -71,10 +71,51 @@
 					"TARGET_CNTRL_ZONE_CTL_PATH = \"opco/{opco}/domain/store/central-cit-zone-ctl/master/\"\r\n",
 					"TARGET_CNTRL_STORE_ZIP_PATH = \"opco/{opco}/domain/store/central-cit-store-zip/master/\"\r\n",
 					"TARGET_SERVICE_LOCATION=\"opco/{opco}/integration/service-location/service-locations/master\"\r\n",
-					"STG_FLAG= True\r\n",
-					"VAL_CNT_THRESHOLD=2"
+					"STG_FLAG= False\r\n",
+					"MAX_FLOAT_VAL=3.4028235e+38\r\n",
+					"VAL_CNT_THRESHOLD=2\r\n",
+					"VAL_COLS_LST=\"['service_type','user_type']\"\r\n",
+					"TARGET_SERVICE_LOCATION_PRQT=\"opco/{opco}/integration/service-location/service-locations/outgoing/master\"\r\n",
+					"PARAM_SVC_LOC=\"service_locations_pipeline\"\r\n",
+					"COLS_ORDER=[\"id\",\"location_number\",\"physical_grocery_store\",\"ecomm_store_id\",\"opco\",\"name\",\"address\",\"address2\",\"city\",\"state\",\"pickup_point_type\",\"zip\",\r\n",
+					"        \"map_url\",\"location\",\"phone_number\",\"active\",\"web_active\",\"instructions\",\"user_type\",\"delivery_area_id\",\"time_diff_qy\",\"price_zone\",\"subscription_price_zone\",\r\n",
+					"        \"service_type\",\"store_status_code\",\"tax_grp_cd\",\"pickup_location_id\",\"checked_pickup_location_id\",\"store_staging_only\",\"pup_staging_only\",\"pickup_sibling\",\r\n",
+					"        \"store_id\",\"store_groups\",\"legacy_fee_amounts\",\"fees\",\"minimum_order_for_checkout\",\"site\",\"pickup_sibling_enabled\",\"pickup_sibling_site\",\"ortec_enabled\",\r\n",
+					"        \"location_centroid\",\"pup_id\",\"hash_cd\",\"service_location\",\"latitude\",\"longitude\",\"location_point\",\"created_ts\",\"created_by\",\"updated_ts\",\"updated_by\",\r\n",
+					"        \"is_processed\",\"is_active\"]\r\n",
+					"SERVICE_LOCATION_JSON_ALIASAS = {\r\n",
+					"    \"location_number\": \"locationNumber\",\r\n",
+					"    \"physical_grocery_store\": \"physicalGroceryStore\",\r\n",
+					"    \"ecomm_store_id\":\"ecommStoreId\",\r\n",
+					"    \"pickup_point_type\":\"pickupPointType\",\r\n",
+					"    \"map_url\":\"mapUrl\",\r\n",
+					"    \"phone_number\":\"phoneNumber\",\r\n",
+					"    \"web_active\":\"webActive\",\r\n",
+					"    \"user_type\":\"userType\",\r\n",
+					"    \"delivery_area_id\":\"deliveryAreaId\",\r\n",
+					"    \"time_diff_qy\":\"timeDiffQy\",\r\n",
+					"    \"price_zone\":\"priceZone\",\r\n",
+					"    \"subscription_price_zone\":\"subscriptionPriceZone\",\r\n",
+					"    \"service_type\":\"serviceType\",\r\n",
+					"    \"store_status_code\":\"storeStatusCode\",\r\n",
+					"    \"tax_grp_cd\":\"taxGrpCd\",\r\n",
+					"    \"pickup_location_id\":\"pickupLocationId\",\r\n",
+					"    \"checked_pickup_location_id\":\"checkedPickupLocationId\",\r\n",
+					"    \"store_staging_only\":\"storeStagingOnly\",\r\n",
+					"    \"pup_staging_only\":\"pupStagingOnly\",\r\n",
+					"    \"pickup_sibling\":\"pickupSibling\",\r\n",
+					"    \"store_id\":\"storeId\",\r\n",
+					"    \"store_groups\":\"storeGroups\",\r\n",
+					"    \"legacy_fee_amounts\":\"legacyFeeAmounts\",\r\n",
+					"    \"minimum_order_for_checkout\":\"minimumOrderForCheckout\",\r\n",
+					"    \"pickup_sibling_enabled\":\"pickupSiblingEnabled\",\r\n",
+					"    \"pickup_sibling_site\":\"pickupSiblingSite\",\r\n",
+					"    \"ortec_enabled\":\"ortecEnabled\",\r\n",
+					"    \"pup_id\":\"pupId\",\r\n",
+					"    \"location_centroid\":\"locationCentroid\"\r\n",
+					"}"
 				],
-				"execution_count": 381
+				"execution_count": 178
 			},
 			{
 				"cell_type": "markdown",
@@ -105,7 +146,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_store_service_location\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": 382
+				"execution_count": 179
 			},
 			{
 				"cell_type": "code",
@@ -123,7 +164,7 @@
 				"source": [
 					"%run utils/validation/nb_auto_data_validation_framework"
 				],
-				"execution_count": null
+				"execution_count": 180
 			},
 			{
 				"cell_type": "code",
@@ -155,7 +196,7 @@
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
 					"logger.info(\"**************************************************************************\")"
 				],
-				"execution_count": 383
+				"execution_count": 181
 			},
 			{
 				"cell_type": "markdown",
@@ -262,10 +303,10 @@
 					"df_pr_zone_xref_master.createOrReplaceTempView(\"tbl_pr_zone_xref\")\r\n",
 					"df_cntrl_store_zip_master.createOrReplaceTempView(\"tbl_cntrl_store_zip\")\r\n",
 					" \r\n",
-					"logger.info(\"\\t DATA LOAD:  RETAILER:cpt_stor_zip,  RETAILER:ecom_stor_ctl, \\n RETAILER:cpt_zip_lat_long, RETAILER:cpt_user_var,\\n RETAILER:cpt_stor_grp, CENTRAL:cit_pup_ctl,\\n CENTRAL:cit_zone_ctl, CENTRAL:cit_stor_zip, \\nCENTRAL:pit_pr_zone_xref from master\")\r\n",
+					"logger.info(\"\\nDATA LOAD FROM TABLES: \\nRETAILER:cpt_stor_zip, RETAILER:ecom_stor_ctl, \\nRETAILER:cpt_zip_lat_long, RETAILER:cpt_user_var,\\nRETAILER:cpt_stor_grp, CENTRAL:cit_pup_ctl,\\nCENTRAL:cit_zone_ctl, CENTRAL:cit_stor_zip, \\nCENTRAL:pit_pr_zone_xref from master\")\r\n",
 					""
 				],
-				"execution_count": 384
+				"execution_count": 182
 			},
 			{
 				"cell_type": "markdown",
@@ -327,9 +368,9 @@
 					"          ORDER BY c.stor_zip_id ;\r\n",
 					"           \"\"\")\r\n",
 					"\r\n",
-					"logger.info(\"\\t INTEGRATION:Integrated the loaded data for service locations.\\n OPCO={0},\\n Count={1}\".format(OPCO,df_service_locations.count()))"
+					"logger.info(\"\\t SERVICE LOCATION:Integrated the loaded data for service locations.\\nOPCO={0},\\nCount={1}\".format(OPCO,df_service_locations.count()))"
 				],
-				"execution_count": 385
+				"execution_count": 183
 			},
 			{
 				"cell_type": "markdown",
@@ -378,13 +419,13 @@
 					"                                df_ecom_stor_ctl_master[\"stor_id\"],\r\n",
 					"                                df_ecom_stor_ctl_master[\"opco_id\"]).distinct()\r\n",
 					"\r\n",
-					"logger.info(\"\\t PRICE ZONE XREF: Data extracted for stor_num.\\n OPCO={0},\\n Path={1},\\n Count={2}\".format(OPCO,TARGET_CNTRL_PR_ZONE_XREF_PATH.format(opco = OPCO),df_price_zone_xref.count()))\r\n",
+					"logger.info(\"\\t SERVICE LOCATION: Data extracted from PRICE ZONE XREF.\\n OPCO={0},\\n Path={1},\\n Count={2}\".format(OPCO,TARGET_CNTRL_PR_ZONE_XREF_PATH.format(opco = OPCO),df_price_zone_xref.count()))\r\n",
 					"df_service_locations = df_service_locations.join(df_price_zone_xref,on=[\"ecom_stor_id\",\"opco_id\",\"pr_zone_cd\"], how=\"left\").select(df_service_locations[\"*\"],df_price_zone_xref[\"stor_num\"])\r\n",
 					"\r\n",
 					"df_service_locations.createOrReplaceTempView(\"tbl_service_locations\")\r\n",
-					"logger.info(\"\\t LOCATION NUMBER: Enriched service locations with stor_num.\\n OPCO={0},\\n Count={1}\".format(OPCO,df_service_locations.count()))"
+					"logger.info(\"\\t SERVICE LOCATION: Enriched service locations with stor_num.\\n OPCO={0},\\n Count={1}\".format(OPCO,df_service_locations.count()))"
 				],
-				"execution_count": 386
+				"execution_count": 184
 			},
 			{
 				"cell_type": "markdown",
@@ -425,9 +466,9 @@
 					"                        .orderBy(col(\"ecom_stor_id\"),\r\n",
 					"                            col(\"user_type_cd\"))\r\n",
 					"\r\n",
-					"logger.info(\"\\t Filtered data from user_var table.\\n OPCO={0},\\n Count={1}\".format(OPCO,df_user_variables.count()))"
+					"logger.info(\"\\tSERVICE LOCATION:Filtered data from user_var table.\\n OPCO={0},\\n Count={1}\".format(OPCO,df_user_variables.count()))"
 				],
-				"execution_count": 387
+				"execution_count": 185
 			},
 			{
 				"cell_type": "markdown",
@@ -458,22 +499,22 @@
 				},
 				"source": [
 					"from pyspark.sql.functions import col, when, max, lit, struct, round\r\n",
-					"\r\n",
+					"import sys\r\n",
 					"\r\n",
 					"df_pickup=df_user_variables.groupBy(\"ecom_stor_id\",\"user_type_cd\").agg(\r\n",
 					"    max(when(col(\"var_cd\")==\"pckp_ord_fee\",col(\"var_qy\"))).alias(\"fee\"),\r\n",
-					"    max(when(col(\"var_cd\")==\"pckp_ord_fee\",col(\"acct_cd\"))).alias(\"accounting_code\")) \r\n",
+					"    max(when(col(\"var_cd\")==\"pckp_ord_fee\",col(\"acct_cd\"))).alias(\"accountingCode\")) \r\n",
 					"    \r\n",
 					"\r\n",
 					"pickup_fee_struct=struct(\r\n",
-					"        lit(0.0).alias(\"min_cart\"),\r\n",
-					"        lit(3.4028235).alias(\"max_cart\"),\r\n",
+					"        lit(0.0).alias(\"minCart\"),\r\n",
+					"        lit(MAX_FLOAT_VAL).alias(\"maxCart\"),\r\n",
 					"        round(col('fee'),2).alias(\"fee\"),\r\n",
-					"        col('accounting_code')\r\n",
+					"        col('accountingCode')\r\n",
 					")\r\n",
 					"df_pickup_fee=df_pickup.withColumn(\"pickup_fee\",pickup_fee_struct).select(\"ecom_stor_id\",\"user_type_cd\",\"pickup_fee\")"
 				],
-				"execution_count": 388
+				"execution_count": 186
 			},
 			{
 				"cell_type": "markdown",
@@ -507,22 +548,22 @@
 					"\r\n",
 					"df_delivery_fee_lvl2_qy = df_user_variables.where(col(\"var_cd\")==\"level2_ord_qy\") \\\r\n",
 					"                                        .groupBy(\"ecom_stor_id\",\"user_type_cd\").agg(\r\n",
-					"                                                        max(\"var_qy\").alias(\"max_cart\")\r\n",
+					"                                                        max(\"var_qy\").alias(\"maxCart\")\r\n",
 					"                                                        )\r\n",
 					"\r\n",
 					"df_delivery_fee_lvl2_fee = df_user_variables.where(col(\"var_cd\")==\"level2_ord_fee\") \\\r\n",
 					"                                        .groupBy(\"ecom_stor_id\",\"user_type_cd\").agg(\r\n",
 					"                                                        max(\"var_qy\").alias(\"fee\"),\r\n",
-					"                                                        max(\"acct_cd\").alias(\"accounting_code\")\r\n",
+					"                                                        max(\"acct_cd\").alias(\"accountingCode\")\r\n",
 					"                                                        )\r\n",
 					"df_delivery_fee_lvl2 = df_delivery_fee_lvl2_qy.join(df_delivery_fee_lvl2_fee,[\"ecom_stor_id\",\"user_type_cd\"], how=\"inner\")   \r\n",
 					"\r\n",
-					"df_delivery_fee_lvl2_final=df_delivery_fee_lvl2.withColumn(\"min_cart\",lit(0.0)) \\\r\n",
+					"df_delivery_fee_lvl2_final=df_delivery_fee_lvl2.withColumn(\"minCart\",lit(0.0)) \\\r\n",
 					"                                      .withColumn(\"fee\",round(col('fee'),2)) \\\r\n",
-					"                                      .select(\"ecom_stor_id\",\"user_type_cd\",\"min_cart\",\"max_cart\",\"fee\",\"accounting_code\")\r\n",
+					"                                      .select(\"ecom_stor_id\",\"user_type_cd\",\"minCart\",\"maxCart\",\"fee\",\"accountingCode\")\r\n",
 					""
 				],
-				"execution_count": 389
+				"execution_count": 187
 			},
 			{
 				"cell_type": "markdown",
@@ -553,34 +594,36 @@
 				},
 				"source": [
 					"from pyspark.sql.functions import col, when, max, lit, least\r\n",
-					"from pyspark.sql import functions as F\r\n",
+					"\r\n",
 					"\r\n",
 					"df_delivery_fee_lvl3_qy=df_user_variables.where(col(\"var_cd\")==\"level3_ord_qy\") \\\r\n",
 					"                                    .groupBy(\"ecom_stor_id\",\"user_type_cd\").agg(\r\n",
-					"                                                    max(\"var_qy\").alias(\"min_cart\"),\r\n",
-					"                                                    max(\"var_qy\").alias(\"max_cart\")\r\n",
+					"                                                    max(\"var_qy\").alias(\"minCart\"),\r\n",
+					"                                                    max(\"var_qy\").alias(\"maxCart\")\r\n",
 					"                                                    )\r\n",
 					" \r\n",
 					"df_delivery_fee_lvl3_fee=df_user_variables.where(col(\"var_cd\")==\"level3_ord_fee\") \\\r\n",
 					"                                    .groupBy(\"ecom_stor_id\",\"user_type_cd\").agg(\r\n",
 					"                                                    max(\"var_qy\").alias(\"fee\"),\r\n",
-					"                                                    max(\"acct_cd\").alias(\"accounting_code\")\r\n",
+					"                                                    max(\"acct_cd\").alias(\"accountingCode\")\r\n",
 					"                                                    )\r\n",
 					"df_delivery_fee_lvl3 = df_delivery_fee_lvl3_qy.join(df_delivery_fee_lvl3_fee,[\"ecom_stor_id\",\"user_type_cd\"], how=\"inner\")\r\n",
 					"\r\n",
-					"df_delivery_fee_lvl3_final = df_delivery_fee_lvl3.join(df_delivery_fee_lvl2_final, (df_delivery_fee_lvl3.ecom_stor_id == df_delivery_fee_lvl2_final.ecom_stor_id) & (df_delivery_fee_lvl3.user_type_cd == df_delivery_fee_lvl2.user_type_cd), 'left') \\\r\n",
-					"                                                .select(least(df_delivery_fee_lvl3.max_cart, \r\n",
-					"                                                                when(df_delivery_fee_lvl2_final.max_cart.isNotNull(), df_delivery_fee_lvl2_final.max_cart)\r\n",
-					"                                                                .otherwise(0.0)).alias('min_cart'),\r\n",
-					"                                                        df_delivery_fee_lvl3.max_cart,\r\n",
-					"                                                        df_delivery_fee_lvl3.accounting_code,\r\n",
-					"                                                        df_delivery_fee_lvl3.fee,\r\n",
+					"df_delivery_fee_lvl3_final = df_delivery_fee_lvl3.join(df_delivery_fee_lvl2_final, \r\n",
+					"                                                (df_delivery_fee_lvl3.ecom_stor_id == df_delivery_fee_lvl2_final.ecom_stor_id) &\r\n",
+					"                                                (df_delivery_fee_lvl3.user_type_cd == df_delivery_fee_lvl2.user_type_cd), 'left') \\\r\n",
+					"                                                .select(least(df_delivery_fee_lvl3.maxCart, \r\n",
+					"                                                                when(df_delivery_fee_lvl2_final.maxCart.isNotNull(), df_delivery_fee_lvl2_final.maxCart)\r\n",
+					"                                                                .otherwise(0.0)).alias('minCart'),\r\n",
+					"                                                        df_delivery_fee_lvl3.maxCart,\r\n",
+					"                                                        df_delivery_fee_lvl3.accountingCode,\r\n",
+					"                                                        round(df_delivery_fee_lvl3.fee,2).alias('fee'),\r\n",
 					"                                                        df_delivery_fee_lvl3.ecom_stor_id,\r\n",
 					"                                                        df_delivery_fee_lvl3.user_type_cd\r\n",
 					"                                                        )\r\n",
 					""
 				],
-				"execution_count": 390
+				"execution_count": 188
 			},
 			{
 				"cell_type": "markdown",
@@ -616,27 +659,27 @@
 					"df_delivery_std=df_user_variables.where(col(\"var_cd\")==\"std_ord_fee\") \\\r\n",
 					"                                .groupBy(\"ecom_stor_id\",\"user_type_cd\").agg(\r\n",
 					"                                                max(\"var_qy\").alias(\"fee\"),\r\n",
-					"                                                max(\"acct_cd\").alias(\"accounting_code\")\r\n",
+					"                                                max(\"acct_cd\").alias(\"accountingCode\")\r\n",
 					"                                                )\r\n",
 					"df_delivery_fee_std=df_delivery_std.select(\"ecom_stor_id\",\"user_type_cd\",\r\n",
-					"                                                lit(0.0).alias(\"min_cart\"),\r\n",
-					"                                                lit(3.4028235).alias(\"max_cart\"),\r\n",
+					"                                                lit(0.0).alias(\"minCart\"),\r\n",
+					"                                                lit(MAX_FLOAT_VAL).alias(\"maxCart\"),\r\n",
 					"                                                col(\"fee\"),\r\n",
-					"                                                col(\"accounting_code\"))\r\n",
+					"                                                col(\"accountingCode\"))\r\n",
 					"\r\n",
 					"df_delivery_fee_std_final = df_delivery_fee_std \\\r\n",
 					"                        .join(df_delivery_fee_lvl2_final, on=[\"ecom_stor_id\",\"user_type_cd\"], how= 'left') \\\r\n",
 					"                        .join(df_delivery_fee_lvl3_final, on=[\"ecom_stor_id\",\"user_type_cd\"],how= 'left') \\\r\n",
 					"                        .select(\r\n",
-					"                                coalesce(df_delivery_fee_lvl3_final.max_cart, df_delivery_fee_lvl2_final.max_cart,lit(0.00)).alias(\"min_cart\"),\r\n",
-					"                                df_delivery_fee_std.max_cart,\r\n",
-					"                                df_delivery_fee_std.fee,\r\n",
-					"                                df_delivery_fee_std.accounting_code,\r\n",
+					"                                coalesce(df_delivery_fee_lvl3_final.maxCart, df_delivery_fee_lvl2_final.maxCart,lit(0.00)).alias(\"minCart\"),\r\n",
+					"                                df_delivery_fee_std.maxCart,\r\n",
+					"                                round(df_delivery_fee_std.fee,2).alias('fee'),\r\n",
+					"                                df_delivery_fee_std.accountingCode,\r\n",
 					"                                df_delivery_fee_std.ecom_stor_id,\r\n",
 					"                                df_delivery_fee_std.user_type_cd\r\n",
 					"                        )"
 				],
-				"execution_count": 391
+				"execution_count": 189
 			},
 			{
 				"cell_type": "markdown",
@@ -665,11 +708,11 @@
 					}
 				},
 				"source": [
-					"df_delivery_fee_lvl3_filtered=df_delivery_fee_lvl3_final.where(df_delivery_fee_lvl3_final.max_cart > when(df_delivery_fee_lvl2_final.max_cart.isNotNull(), df_delivery_fee_lvl2_final.max_cart).otherwise(0.0))\r\n",
+					"df_delivery_fee_lvl3_filtered=df_delivery_fee_lvl3_final.where(df_delivery_fee_lvl3_final.maxCart > when(df_delivery_fee_lvl2_final.maxCart.isNotNull(), df_delivery_fee_lvl2_final.maxCart).otherwise(0.0))\r\n",
 					"df_delivery_fee=df_delivery_fee_lvl2_final.unionByName(df_delivery_fee_lvl3_filtered).unionByName(df_delivery_fee_std_final)\r\n",
-					"df_delivery_fee=df_delivery_fee.withColumn(\"dlvry_fee\",struct(\"min_cart\",\"max_cart\",round(col('fee'),2).alias(\"fee\"),\"accounting_code\")).select(\"ecom_stor_id\",\"user_type_cd\",\"dlvry_fee\")"
+					"df_delivery_fee=df_delivery_fee.withColumn(\"dlvry_fee\",struct(\"minCart\",\"maxCart\",col('fee').alias(\"fee\"),\"accountingCode\")).select(\"ecom_stor_id\",\"user_type_cd\",\"dlvry_fee\")"
 				],
-				"execution_count": 392
+				"execution_count": 190
 			},
 			{
 				"cell_type": "markdown",
@@ -699,7 +742,7 @@
 					"collapsed": false
 				},
 				"source": [
-					"from pyspark.sql.functions import col, when, max,struct,create_map, lit, col,round\r\n",
+					"from pyspark.sql.functions import col, when, max,struct,create_map, lit, col,to_json\r\n",
 					"\r\n",
 					"df_LegFee = df_user_variables.groupBy(\"ecom_stor_id\", \"user_type_cd\").agg(\r\n",
 					"    max(when(col(\"var_cd\") == \"std_ord_fee\", col(\"var_qy\"))).alias(\"standardFee\"),\r\n",
@@ -711,18 +754,18 @@
 					"    max(when(col(\"var_cd\") == \"min_send_ord_qy\", col(\"var_qy\"))).alias(\"minimumDeliveryAmount\"),\r\n",
 					"    max(when(col(\"var_cd\") == \"pckp_send_ord_qy\", col(\"var_qy\"))).alias(\"minimumPickupAmount\")) \r\n",
 					"    \r\n",
-					"df_LegFee = df_LegFee.withColumn(\"legacy_fee_amounts\",create_map(lit('standardFee'),col('standardFee'),\r\n",
-					"                                                               lit('level2Fee'),col('level2Fee'),\r\n",
-					"                                                               lit('level2Qty'),col('level2Qty'),\r\n",
-					"                                                               lit('level3Fee'),col('level3Fee'),\r\n",
-					"                                                               lit('level3Qty'),col('level3Qty'),\r\n",
-					"                                                               lit('pickupFee'),col('pickupFee'),\r\n",
-					"                                                               lit('minimumDeliveryAmount'),col('minimumDeliveryAmount'),\r\n",
-					"                                                               lit('minimumPickupAmount'),col('minimumPickupAmount')\r\n",
+					"df_LegFee = df_LegFee.withColumn(\"legacy_fee_amounts\",struct(col('standardFee').alias('standardFee'),\r\n",
+					"                                                               col('level2Fee').alias('level2Fee'),\r\n",
+					"                                                               col('level2Qty').alias('level2Qty'),\r\n",
+					"                                                               col('level3Fee').alias('level3Fee'),\r\n",
+					"                                                               col('level3Qty').alias('level3Qty'),\r\n",
+					"                                                               col('pickupFee').alias('pickupFee'),\r\n",
+					"                                                               col('minimumDeliveryAmount').alias('minimumDeliveryAmount'),\r\n",
+					"                                                               col('minimumPickupAmount').alias('minimumPickupAmount')\r\n",
 					"                                                               ))\r\n",
 					""
 				],
-				"execution_count": 393
+				"execution_count": 191
 			},
 			{
 				"cell_type": "markdown",
@@ -766,9 +809,9 @@
 					"df_service_locations=df_service_locations.groupBy(*grouped_cols).agg(collect_list(\"dlvry_fee\").alias(\"delivery_fee\"))\r\n",
 					"df_service_locations=df_service_locations.join(df_LegFee,[\"ecom_stor_id\", \"user_type_cd\"],\"left\")\r\n",
 					"\r\n",
-					"logger.info(\"\\tService Locations data after joinig pickup fee, delivery fee, legacy fee amount.\\n OPCO={0},\\n Count={1}\".format(OPCO,df_service_locations.count()))"
+					"logger.info(\"\\tSERVICE LOCATION: Data after joinig pickup fee, delivery fee, legacy fee amount.\\nOPCO={0},\\nCount={1}\".format(OPCO,df_service_locations.count()))"
 				],
-				"execution_count": 394
+				"execution_count": 192
 			},
 			{
 				"cell_type": "markdown",
@@ -818,9 +861,9 @@
 					"                .select(*delivery_select_exprs)\r\n",
 					"df_minorder=pickup_query.unionAll(delivery_query)\r\n",
 					"\r\n",
-					"logger.info(\"\\t Minimum Order For Checkout: Enriched minimum_order_for_checkout for service locations.\\n Count={0}\".format(df_minorder.count()))"
+					"logger.info(\"\\t SERVICE LOCATION: Enriched minimum_order_for_checkout for service locations.\")"
 				],
-				"execution_count": 395
+				"execution_count": 193
 			},
 			{
 				"cell_type": "markdown",
@@ -892,10 +935,10 @@
 					"                                        .withColumnRenamed(\"pup_id\",\"pup_id\") \\\r\n",
 					"                                        .withColumn(\"fees\",expr(\"filter(array_union(array(pickup_fee),delivery_fee),x -> x IS NOT NULL)\")) \\\r\n",
 					"                                        .drop(\"web_actv_cd\",\" store_stagOnly\",\"pup_stagOnly\",\"ortc_stor_fl\",\"longitude\",\"latitude\",\"stor_zip_id\",\"pup_sibling\")\r\n",
-					"logger.info(\"\\t Renaming and Enriching: service location columns.\\n Count={0}\".format(df_service_locs.count()))\r\n",
+					"logger.info(\"\\t SERVICE LOCATION:Renaming and Enriching service location columns.\\nCount={0}\".format(df_service_locs.count()))\r\n",
 					""
 				],
-				"execution_count": 396
+				"execution_count": 194
 			},
 			{
 				"cell_type": "markdown",
@@ -934,9 +977,9 @@
 					"                    )\r\n",
 					"df_service_locs=df_service_locs.withColumn(\"active\",when(active_con,True).otherwise(False))\r\n",
 					"\r\n",
-					"logger.info(\"\\t ACTIVE: Adding active to service locations.\\n Count={0}\".format(df_service_locs.count()))"
+					"logger.info(\"\\t SERVICE LOCATION: Adding active to service locations.\")"
 				],
-				"execution_count": 397
+				"execution_count": 195
 			},
 			{
 				"cell_type": "markdown",
@@ -965,12 +1008,12 @@
 					}
 				},
 				"source": [
-					"df_service_locs=df_service_locs.withColumn(\"pickup_sibling_enabled\", when (lit(STG_FLAG)== True,(~col(\"pup_Staging_only\"))) \\\r\n",
+					"df_service_locs=df_service_locs.withColumn(\"pickup_sibling_enabled\", when (lit(STG_FLAG)!= True,(~col(\"pup_Staging_only\"))) \\\r\n",
 					"                                                                        .when(((col(\"web_active\")== True) & (col(\"service_type\")==\"ACTIVE\")),True) \\\r\n",
 					"                                                                        .otherwise(False))\r\n",
-					"logger.info(\"\\t Pickup Sibling Enabled: Adding pickup_sibling_enabled to service locations.\\n Count={0}\".format(df_service_locs.count()))"
+					"logger.info(\"\\t SERVICE LOCATION: Adding pickup_sibling_enabled to service locations.\")"
 				],
-				"execution_count": 398
+				"execution_count": 196
 			},
 			{
 				"cell_type": "markdown",
@@ -1006,10 +1049,10 @@
 					"df_click_locations=df_click_locations.select(\"price_zone\").groupBy().agg(collect_set(\"price_zone\").alias(\"priceZone_arr\"))\r\n",
 					"df_service_locs=df_service_locs.crossJoin(df_click_locations)\r\n",
 					"df_service_locs=df_service_locs.withColumn(\"physical_grocery_store\", array_contains(df_click_locations[\"priceZone_arr\"],df_service_locs[\"price_zone\"])).drop(col(\"priceZone_arr\"))\r\n",
-					"logger.info(\"\\t Physical Grocery Store: Enriching service locations with physical_grocery_store.\\n Count={0}\".format(df_service_locs.count()))\r\n",
+					"logger.info(\"\\t SERVICE LOCATION: Enriching service locations with physical_grocery_store.\")\r\n",
 					""
 				],
-				"execution_count": 399
+				"execution_count": 197
 			},
 			{
 				"cell_type": "markdown",
@@ -1039,12 +1082,11 @@
 					"collapsed": false
 				},
 				"source": [
-					"from pyspark.sql.functions import col, explode\r\n",
-					"from pyspark.sql import functions as F\r\n",
+					"from pyspark.sql.functions import col, explode,concat,array_distinct,collect_list\r\n",
+					"\r\n",
 					"\r\n",
 					"df_svc_locs_selected=df_service_locs.select(\"ecomm_store_id\",\"zip\",\"location_number\",\"price_zone\")\r\n",
 					"\r\n",
-					"# df_svc_locs_selected=df_svc_locs_selected.distinct()\r\n",
 					"df_stor_grp_ecom_stor_id = df_store_grp_master.withColumn(\"ecom_storeIds\",explode(df_store_grp_master.ecom_store_ids)) \\\r\n",
 					"                                              .withColumnRenamed(\"grp_id\",\"grp_id_ecom\").select(\"grp_id_ecom\",\"ecom_storeIds\")\r\n",
 					"\r\n",
@@ -1065,15 +1107,17 @@
 					"\r\n",
 					"\r\n",
 					"df_grouped_stor_grp=df_svc_loc_stor_grp.groupBy(\"ecomm_store_id\",\"zip\",\"location_number\",\"price_zone\").agg(\r\n",
-					"                                        F.collect_list (\"grp_id_ecom\").alias(\"grp_id_ecom_lst\"),\r\n",
-					"                                        F.collect_list (\"grp_id_zip\").alias(\"grp_id_zip_lst\"),\r\n",
-					"                                        F.collect_list (\"grp_id_stor_num\").alias(\"grp_id_stor_num_lst\"),\r\n",
-					"                                        F.collect_list (\"grp_id_pr_zone\").alias(\"grp_id_pr_zone_lst\")\r\n",
+					"                                        collect_list (\"grp_id_ecom\").alias(\"grp_id_ecom_lst\"),\r\n",
+					"                                        collect_list (\"grp_id_zip\").alias(\"grp_id_zip_lst\"),\r\n",
+					"                                        collect_list (\"grp_id_stor_num\").alias(\"grp_id_stor_num_lst\"),\r\n",
+					"                                        collect_list (\"grp_id_pr_zone\").alias(\"grp_id_pr_zone_lst\")\r\n",
 					"                                    )\r\n",
-					"df_enriched_stor_grp=df_grouped_stor_grp.withColumn(\"stor_grps\",F.concat(\"grp_id_ecom_lst\",\"grp_id_zip_lst\",\"grp_id_stor_num_lst\",\"grp_id_pr_zone_lst\")) \\\r\n",
-					"                     .select(\"ecomm_store_id\",\"zip\",\"location_number\",\"price_zone\",F.array_distinct(\"stor_grps\").alias(\"store_groups\"))"
+					"df_enriched_stor_grp=df_grouped_stor_grp.withColumn(\"stor_grps\",concat(\"grp_id_ecom_lst\",\"grp_id_zip_lst\",\"grp_id_stor_num_lst\",\"grp_id_pr_zone_lst\")) \\\r\n",
+					"                     .select(\"ecomm_store_id\",\"zip\",\"location_number\",\"price_zone\",array_distinct(\"stor_grps\").alias(\"store_groups\"))\r\n",
+					"\r\n",
+					""
 				],
-				"execution_count": 400
+				"execution_count": 198
 			},
 			{
 				"cell_type": "markdown",
@@ -1151,9 +1195,44 @@
 					"                                                df_service_locs[\"location_centroid\"], \\\r\n",
 					"                                                df_service_locs[\"pup_id\"]\r\n",
 					"                                                     )\r\n",
-					"logger.info(\"\\t SERVICE LOCATION: Service locations target df processed. \\n OPCO = {0},\\n Count={1}\".format(OPCO,tdf_service_locations.count()))"
+					"tdf_service_locations=tdf_service_locations.withColumn(\"store_groups\",when(tdf_service_locations.store_groups.isNotNull(),tdf_service_locations.store_groups).otherwise(array())) \r\n",
+					"logger.info(\"\\t SERVICE LOCATION: Service locations target df processed. \\nOPCO = {0},\\nCount={1}\".format(OPCO,tdf_service_locations.count()))"
 				],
-				"execution_count": 401
+				"execution_count": 199
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import to_json,lit, current_timestamp, struct,col, concat,xxhash64\r\n",
+					"\r\n",
+					"\r\n",
+					"df_svc_loc=tdf_service_locations.withColumn(\"hash_cd\",xxhash64(*tdf_service_locations.schema.names))\r\n",
+					"\r\n",
+					"\r\n",
+					"df_svc_loc=df_svc_loc.withColumn(\"service_location\",to_json(struct(*[col(name).alias(SERVICE_LOCATION_JSON_ALIASAS.get(name,name)) for name in df_svc_loc.columns if name!=\"hash_cd\"]), options={\"ignoreNullFields\": False} ))  \\\r\n",
+					"                                    .withColumn(\"latitude\",col(\"location\")[1]) \\\r\n",
+					"                                    .withColumn(\"longitude\",col(\"location\")[0]) \\\r\n",
+					"                                    .withColumn(\"location_point\",lit(None).cast(\"string\")) \\\r\n",
+					"                                    .withColumn(\"created_ts\", current_timestamp()) \\\r\n",
+					"                                    .withColumn(\"created_by\",lit(PARAM_SVC_LOC)) \\\r\n",
+					"                                    .withColumn(\"updated_ts\",current_timestamp()) \\\r\n",
+					"                                    .withColumn(\"updated_by\",lit(PARAM_SVC_LOC)) \\\r\n",
+					"                                    .withColumn(\"is_processed\",lit(False)) \\\r\n",
+					"                                    .withColumn(\"is_active\",lit(True))\r\n",
+					"logger.info(\"\\t SERVICE LOCATION: Service location transformed df to persist into postgres. \\n OPCO = {0},\\n Count={1}\".format(OPCO,df_svc_loc.count()))"
+				],
+				"execution_count": 200
 			},
 			{
 				"cell_type": "markdown",
@@ -1182,38 +1261,152 @@
 					}
 				},
 				"source": [
+					"from pyspark.sql.functions import col,count\r\n",
+					"\r\n",
 					"def check_if_master_file_exists():    \r\n",
 					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION.format(opco = OPCO))\r\n",
 					"\r\n",
-					"def load_service_locations(df_load,path,opco):\r\n",
-					"    df_load\\\r\n",
+					"def unique_data_validation(df_svc_loc,df_mstr,threshold,col_list):\r\n",
+					"    for col_name in col_list:\r\n",
+					"        df_svc_loc_cnt=df_svc_loc.groupby(col_name).agg(count(\"*\").alias(\"count_stg\"))\r\n",
+					"        df_mstr_cnt=df_mstr.groupby(col_name).agg(count(\"*\").alias(\"count_mstr\"))\r\n",
+					"        df_comparision=df_svc_loc_cnt.join(df_mstr_cnt,on=col_name,how=\"outer\")\r\n",
+					"        logger.info(f\"\\t Validating df_svc_loc and df_mstr for {col_name} values are within the acceptable threshold. \")\r\n",
+					"        df_comparision=df_comparision.withColumn(\"percent_diff\",round(((col(\"count_stg\")-col(\"count_mstr\")) / ((col(\"count_stg\")+col(\"count_mstr\"))/2)) * 100,2))\r\n",
+					"        is_thresholdExceeds=df_comparision.filter(df_comparision[\"percent_diff\"] > threshold)\r\n",
+					"        is_val=False\r\n",
+					"        if is_thresholdExceeds.count() > 0:\r\n",
+					"            logger.warning(f\" Threshold_Exceeds for {col_name} data.\")\r\n",
+					"        else:\r\n",
+					"            logger.info(f\"Validation Successful:The percentage difference for {col_name} values are within the acceptable threshold.\")\r\n",
+					"            is_val=True\r\n",
+					"    return is_val\r\n",
+					"def load_delta_file(df_svc_loc,path,opco):    \r\n",
+					"    df_svc_loc\\\r\n",
 					"            .write \\\r\n",
 					"            .option(\"mergeSchema\", \"true\") \\\r\n",
 					"            .mode(\"overwrite\") \\\r\n",
 					"            .format(\"delta\") \\\r\n",
 					"            .save(path)\r\n",
-					"    logger.info(\"\\t SERVICE LOCATION: Service locations master data is written.\\n OPCO = {0},\\n Path={1},\\n Count={2}\".format(OPCO,TARGET_SERVICE_LOCATION.format(opco = OPCO),df_load.count()))\r\n",
+					"    logger.info(\"\\t SERVICE LOCATION: Service locations master data is written.\\nOPCO = {0},\\nPath={1},\\n Count={2}\".format(OPCO,TARGET_SERVICE_LOCATION.format(opco = OPCO),df_svc_loc.count()))\r\n",
 					"\r\n",
+					"def load_parquet_file(df_svc_loc,path,opco):\r\n",
+					"    df_svc_loc_to_be_processed=df_svc_loc.filter(col(\"is_processed\")==False) \\\r\n",
+					"                    .select(\"id\",\"location_number\",\"city\",\"store_id\",\"ecomm_store_id\",\"delivery_area_id\",\"store_status_code\",\"pickup_location_id\",\"opco\",\"zip\",\"active\",\"user_type\",\"price_zone\",\"service_type\",\r\n",
+					"                            \"service_location\",\"latitude\",\"longitude\",\"location_point\",\"hash_cd\",\"created_ts\",\r\n",
+					"                            \"created_by\", \"updated_ts\", \"updated_by\",\"is_processed\",\"is_active\")  \r\n",
+					"    df_svc_loc_to_be_processed\\\r\n",
+					"            .write \\\r\n",
+					"            .option(\"mergeSchema\", \"true\") \\\r\n",
+					"            .mode(\"overwrite\") \\\r\n",
+					"            .format(\"parquet\") \\\r\n",
+					"            .save(BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION_PRQT.format(opco = OPCO))\r\n",
+					"    logger.info(\"\\t Parquet file created. OPCO={0}, Count={1}\".format(OPCO, df_svc_loc.count()))\r\n",
+					"    dt_svc_loc_mstr = DeltaTable.forPath(spark, path)\r\n",
+					"    dt_svc_loc_mstr.update(col(\"is_processed\")==False,{\"is_processed\": lit(True)})    \r\n",
+					"    \r\n",
+					"    \r\n",
 					"# main starts here\r\n",
+					"VAL_COL_LST=eval(VAL_COLS_LST)                        \r\n",
 					"is_master_fl_exist = check_if_master_file_exists()\r\n",
 					"if is_master_fl_exist: \r\n",
-					"    tdf_svc_loc_master= spark \\\r\n",
-					"                                .read \\\r\n",
-					"                                .format(\"delta\") \\\r\n",
-					"                                .load(BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION.format(opco = OPCO))\r\n",
-					"    logger.info(\"\\t SERVICE LOCATION: Service locations loaded from master. OPCO = {0}, Count={1}\".format(OPCO, tdf_svc_loc_master.count()))\r\n",
-					"    is_val_success= validate_count(tdf_svc_loc_master,tdf_service_locations,VAL_CNT_THRESHOLD)        \r\n",
-					"    if is_val_success :\r\n",
-					"        load_service_locations(tdf_service_locations,BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION.format(opco = OPCO), OPCO)\r\n",
+					"    dt_svc_loc_mstr= DeltaTable.forPath(spark, BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION.format(opco = OPCO))\r\n",
+					"    df_svc_loc_mstr=dt_svc_loc_mstr.toDF()\r\n",
+					"    logger.info(\"\\t SERVICE LOCATION: Service locations loaded from master. OPCO = {0}, Count={1}\".format(OPCO, df_svc_loc_mstr.count()))\r\n",
+					"\r\n",
+					"    is_val_success= validate_count(df_svc_loc_mstr,df_svc_loc,VAL_CNT_THRESHOLD)        \r\n",
+					"    is_col_data_cnt_success=unique_data_validation(df_svc_loc,df_svc_loc_mstr,VAL_CNT_THRESHOLD,VAL_COL_LST)\r\n",
+					"\r\n",
+					"    if (is_val_success & is_col_data_cnt_success)== True:\r\n",
+					"        #NEW, UPDATE RECORDS TO PG    \r\n",
+					"        df_svc_loc_new_update=df_svc_loc.join(df_svc_loc_mstr,on=[\"id\",\"hash_cd\"],how=\"left_anti\")\r\n",
+					"       \r\n",
+					"        logger.info(\"\\t NEW & UPDATE records.Count={0}\".format(df_svc_loc_new_update.count()))\r\n",
+					"\r\n",
+					"        #DELETE RECORDS TO PG        \r\n",
+					"        df_svc_loc_del=df_svc_loc_mstr.join(df_svc_loc,on=[\"id\"],how=\"left_anti\")\r\n",
+					"        df_svc_loc_del=df_svc_loc_del.withColumn(\"is_active\",lit(False)) \\\r\n",
+					"                                        .withColumn(\"is_processed\",lit(False) )  \r\n",
+					"        logger.info(\"\\t DELETE records.Count={0}\".format(df_svc_loc_del.count()))\r\n",
+					"        \r\n",
+					"        df_svc_lov_total_delta=df_svc_loc_new_update.select(*COLS_ORDER)  \\\r\n",
+					"                        .union(df_svc_loc_del.select(*COLS_ORDER)) \r\n",
+					"        logger.info(\"\\t UPSERT records.Count={0}\".format(df_svc_lov_total_delta.count()))\r\n",
+					"        dt_svc_loc_mstr.alias(\"mstr\") \\\r\n",
+					"        .merge(\r\n",
+					"            df_svc_lov_total_delta.alias(\"stg\"),\r\n",
+					"            \"mstr.id=stg.id\" \r\n",
+					"            ) \\\r\n",
+					"            .whenMatchedUpdate(set=\r\n",
+					"            {           \r\n",
+					"                \"id\":\"stg.id\",\r\n",
+					"                \"location_number\":\"stg.location_number\",\r\n",
+					"                \"physical_grocery_store\":\"stg.physical_grocery_store\",\r\n",
+					"                \"ecomm_store_id\":\"stg.ecomm_store_id\",\r\n",
+					"                \"opco\":\"stg.opco\",\r\n",
+					"                \"name\":\"stg.name\",\r\n",
+					"                \"address\":\"stg.address\",\r\n",
+					"                \"address2\":\"stg.address2\",\r\n",
+					"                \"city\":\"stg.city\",\r\n",
+					"                \"state\":\"stg.state\",\r\n",
+					"                \"pickup_point_type\":\"stg.pickup_point_type\",\r\n",
+					"                \"zip\":\"stg.zip\",\r\n",
+					"                \"map_url\":\"stg.map_url\",\r\n",
+					"                \"location\":\"stg.location\",\r\n",
+					"                \"phone_number\":\"stg.phone_number\",\r\n",
+					"                \"active\":\"stg.active\",\r\n",
+					"                \"web_active\":\"stg.web_active\",\r\n",
+					"                \"instructions\":\"stg.instructions\",\r\n",
+					"                \"user_type\":\"stg.user_type\",\r\n",
+					"                \"delivery_area_id\":\"stg.delivery_area_id\",\r\n",
+					"                \"time_diff_qy\":\"stg.time_diff_qy\",\r\n",
+					"                \"price_zone\":\"stg.price_zone\",\r\n",
+					"                \"subscription_price_zone\":\"stg.subscription_price_zone\",\r\n",
+					"                \"service_type\":\"stg.service_type\",\r\n",
+					"                \"store_status_code\":\"stg.store_status_code\",\r\n",
+					"                \"tax_grp_cd\":\"stg.tax_grp_cd\",\r\n",
+					"                \"pickup_location_id\":\"stg.pickup_location_id\",\r\n",
+					"                \"checked_pickup_location_id\":\"stg.checked_pickup_location_id\",\r\n",
+					"                \"store_staging_only\":\"stg.store_staging_only\",\r\n",
+					"                \"pup_staging_only\":\"stg.pup_staging_only\",\r\n",
+					"                \"pickup_sibling\":\"stg.pickup_sibling\",\r\n",
+					"                \"store_id\":\"stg.store_id\",\r\n",
+					"                \"store_groups\":\"stg.store_groups\",\r\n",
+					"                \"legacy_fee_amounts\":\"stg.legacy_fee_amounts\",\r\n",
+					"                \"fees\":\"stg.fees\",\r\n",
+					"                \"minimum_order_for_checkout\":\"stg.minimum_order_for_checkout\",\r\n",
+					"                \"site\":\"stg.site\",\r\n",
+					"                \"pickup_sibling_enabled\":\"stg.pickup_sibling_enabled\",\r\n",
+					"                \"pickup_sibling_site\":\"stg.pickup_sibling_site\",\r\n",
+					"                \"ortec_enabled\":\"stg.ortec_enabled\",\r\n",
+					"                \"location_centroid\":\"stg.location_centroid\",\r\n",
+					"                \"pup_id\":\"stg.pup_id\",\r\n",
+					"                \"hash_cd\":\"stg.hash_cd\",\r\n",
+					"                \"service_location\":\"stg.service_location\",\r\n",
+					"                \"latitude\":\"stg.latitude\",\r\n",
+					"                \"longitude\":\"stg.longitude\",\r\n",
+					"                \"location_point\":\"stg.location_point\",\r\n",
+					"                \"updated_ts\":\"stg.updated_ts\",\r\n",
+					"                \"updated_by\":\"stg.updated_by\",\r\n",
+					"                \"is_processed\":\"stg.is_processed\",\r\n",
+					"                \"is_active\":\"stg.is_active\"\r\n",
+					"            }\r\n",
+					"            ) \\\r\n",
+					"            .whenNotMatchedInsertAll() \\\r\n",
+					"            .execute()\r\n",
+					"        logger.info(\"Records to be processed for delta. Count={0}, OPCO={1}\".format(dt_svc_loc_mstr.toDF().count(),OPCO))\r\n",
+					"        load_parquet_file(dt_svc_loc_mstr.toDF(),BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION.format(opco = OPCO),OPCO)                           \r\n",
+					"        \r\n",
 					"    else:\r\n",
 					"        logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
 					"        raise Exception(\"EXCEEDING_THRESHOLD\")                             \r\n",
 					"else:\r\n",
-					"        logger.info(\"\\t First Time Master Load\")\r\n",
-					"        load_service_locations(tdf_service_locations,BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION.format(opco = OPCO), OPCO)\r\n",
+					"    logger.info(\"\\t First Time Master Load\")        \r\n",
+					"    load_delta_file(df_svc_loc,BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION.format(opco = OPCO),OPCO)\r\n",
+					"    load_parquet_file(df_svc_loc,BASE_ADLS_CONN_STR + TARGET_SERVICE_LOCATION.format(opco = OPCO),OPCO)\r\n",
 					""
 				],
-				"execution_count": 402
+				"execution_count": 201
 			}
 		]
 	}

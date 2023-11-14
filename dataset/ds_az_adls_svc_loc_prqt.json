@@ -1,0 +1,32 @@
+{
+	"name": "ds_az_adls_svc_loc_prqt",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_Storage_SelfHosted",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"PARAM_PATH": {
+				"type": "string",
+				"defaultValue": "opco/fdln/integration/service-location-pg/ecom-stores/outgoing/master/"
+			}
+		},
+		"folder": {
+			"name": "integration/service-location"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().PARAM_PATH",
+					"type": "Expression"
+				},
+				"fileSystem": "data-integration"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

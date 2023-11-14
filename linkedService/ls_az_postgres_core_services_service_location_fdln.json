@@ -1,0 +1,30 @@
+{
+	"name": "ls_az_postgres_core_services_service_location_fdln",
+	"properties": {
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "FDLN"
+			}
+		},
+		"annotations": [],
+		"type": "AzurePostgreSql",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_KeyVault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": {
+					"value": "@if(equals('FDLN',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-postgres-core-services-service-location-fdln', \n    if(equals('HNFD',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-postgres-core-services-service-location-hnfd', \n        if(equals('STSH',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-postgres-core-services-service-location-stsh',\n            if(equals('GNTL',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-postgres-core-services-service-location-gntl',\n                if(equals('GNTC',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-postgres-core-services-service-location-gntc',\n                    if(equals('MRTN',toUpper(linkedService().PARAM_OPCO)), 'akv-ls-azure-postgres-core-services-service-location-mrtn','invalid'))))))",
+					"type": "Expression"
+				}
+			}
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedRuntime01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

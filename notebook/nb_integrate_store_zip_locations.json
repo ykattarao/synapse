@@ -20,7 +20,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "0ad10b6a-78ba-4af2-b5d7-9949231d65f1"
+				"spark.autotune.trackingId": "c6642166-9ad9-4562-9c52-d1aefd08af02"
 			}
 		},
 		"metadata": {
@@ -84,10 +84,13 @@
 					"BASE_ADLS_CONN_STR = \"abfss://data-integration@sasynwpdlintnpdeve201.dfs.core.windows.net/\"\r\n",
 					"OPCO=\"fdln\"\r\n",
 					"TARGET_RTL_ZIP_LAT_LONG_PATH = \"opco/{opco}/domain/store/retailer-cpt-zip-lat-long/master/\"\r\n",
+					"TARGET_ZIP_LOCATION_PRQT=\"opco/{opco}/integration/service-location/zip-locations/outgoing/master\"\r\n",
 					"TARGET_ZIP_LOCATIONS=\"opco/{opco}/integration/service-location/zip-locations/master\"\r\n",
-					"VAL_CNT_THRESHOLD=2"
+					"VAL_CNT_THRESHOLD=2\r\n",
+					"PARAM_SVC_LOC=\"zip_locations_pipeline\"\r\n",
+					"COLS_ORDER=[\"zip_code\",\"latitude\",\"longitude\",\"hash_cd\",\"created_ts\",\"created_by\",\"updated_ts\",\"updated_by\",\"is_processed\",\"is_active\"]"
 				],
-				"execution_count": 6
+				"execution_count": 51
 			},
 			{
 				"cell_type": "markdown",
@@ -118,7 +121,7 @@
 				"source": [
 					"%run utils/logging/nb_logging_util { LOGGER_NM: \"nb_integrate_store_zip_locations\", LOGGING_LEVEL: \"INFO\" }"
 				],
-				"execution_count": 7
+				"execution_count": 52
 			},
 			{
 				"cell_type": "code",
@@ -136,7 +139,7 @@
 				"source": [
 					"%run utils/validation/nb_auto_data_validation_framework"
 				],
-				"execution_count": null
+				"execution_count": 53
 			},
 			{
 				"cell_type": "code",
@@ -162,7 +165,7 @@
 					"logger.info(\"\\t VAL_CNT_THRESHOLD : {0}\".format(VAL_CNT_THRESHOLD))\r\n",
 					"logger.info(\"********************************************************************\")"
 				],
-				"execution_count": 8
+				"execution_count": 54
 			},
 			{
 				"cell_type": "markdown",
@@ -210,7 +213,7 @@
 					"\r\n",
 					"logger.info(\"\\t DATA LOAD: zip_lat_long from master.\\n OPCO={0},\\n Count={1}\".format(OPCO,df_zip_locations.count()))"
 				],
-				"execution_count": 11
+				"execution_count": 55
 			},
 			{
 				"cell_type": "markdown",
@@ -245,7 +248,33 @@
 					"                                        col(\"cntr_long_qy\").alias(\"longitude\")\r\n",
 					"                                        )"
 				],
-				"execution_count": 12
+				"execution_count": 56
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from pyspark.sql.functions import lit, current_timestamp, col, xxhash64\r\n",
+					"df_zip_locations=df_zip_locations.withColumn(\"hash_cd\",xxhash64(*df_zip_locations.schema.names)) \r\n",
+					"df_zip_locations=df_zip_locations.withColumn(\"created_ts\", current_timestamp()) \\\r\n",
+					"                                        .withColumn(\"created_by\",lit(PARAM_SVC_LOC)) \\\r\n",
+					"                                        .withColumn(\"updated_ts\",current_timestamp()) \\\r\n",
+					"                                        .withColumn(\"updated_by\",lit(PARAM_SVC_LOC)) \\\r\n",
+					"                                        .withColumn(\"is_processed\",lit(False)) \\\r\n",
+					"                                        .withColumn(\"is_active\",lit(True))\r\n",
+					"logger.info(\"\\t SERVICE LOCATION: Zip location transformed df to persist into postgres. \\n OPCO = {0},\\n Count={1}\".format(OPCO,df_zip_locations.count()))                                        "
+				],
+				"execution_count": 57
 			},
 			{
 				"cell_type": "markdown",
@@ -277,34 +306,81 @@
 					"def check_if_master_file_exists():    \r\n",
 					"    return DeltaTable.isDeltaTable(spark, BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO))\r\n",
 					"\r\n",
-					"def load_zip_locations(df_load,path,opco):\r\n",
-					"    df_load\\\r\n",
+					"def load_delta_file(df_zip_locations,path,opco):\r\n",
+					"    df_zip_locations\\\r\n",
 					"            .write \\\r\n",
 					"            .option(\"mergeSchema\", \"true\") \\\r\n",
 					"            .mode(\"overwrite\") \\\r\n",
 					"            .format(\"delta\") \\\r\n",
 					"            .save(path)\r\n",
-					"    logger.info(\"\\t SERVICE LOCATION: Zip locations master data is overrided.\\n OPCO = {0},\\n Path={1},\\n Count={2}\".format(OPCO,TARGET_ZIP_LOCATIONS.format(opco=OPCO), df_load.count()))\r\n",
+					"    logger.info(\"\\t SERVICE LOCATION: Zip locations master data is overrided.\\n OPCO = {0},\\n Path={1},\\n Count={2}\".format(OPCO,TARGET_ZIP_LOCATIONS.format(opco=OPCO), df_zip_locations.count()))\r\n",
+					"\r\n",
+					"def load_parquet_file(df_zip_locations,path,opco):\r\n",
+					"  \r\n",
+					"    df_zip_locations_to_be_processed=df_zip_locations.filter(col(\"is_processed\")==False)    \r\n",
+					"    df_zip_locations_to_be_processed\\\r\n",
+					"            .write \\\r\n",
+					"            .option(\"mergeSchema\", \"true\") \\\r\n",
+					"            .mode(\"overwrite\") \\\r\n",
+					"            .format(\"parquet\") \\\r\n",
+					"            .save(BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATION_PRQT.format(opco = OPCO))\r\n",
+					"    logger.info(\"\\t Parquet file created. OPCO={0}, Count={1}\".format(OPCO, df_zip_locations.count()))\r\n",
+					"    df_zip_locations_mstr = DeltaTable.forPath(spark, path)\r\n",
+					"    df_zip_locations_mstr.update(col(\"is_processed\")==False,{\"is_processed\": lit(True)})\r\n",
+					"\r\n",
+					"\r\n",
 					"# main starts here\r\n",
 					"is_master_fl_exist = check_if_master_file_exists()\r\n",
-					"if is_master_fl_exist: \r\n",
-					"    df_zip_locations_master= spark \\\r\n",
-					"                                .read \\\r\n",
-					"                                .format(\"delta\") \\\r\n",
-					"                                .load(BASE_ADLS_CONN_STR +TARGET_ZIP_LOCATIONS.format(opco = OPCO))\r\n",
-					"    logger.info(\"\\t SERVICE LOCATION: Zip locations loaded from master. OPCO = {0}, Count={1}\".format(OPCO, df_zip_locations_master.count()))\r\n",
-					"    is_val_success= validate_count(df_zip_locations_master,df_zip_locations,VAL_CNT_THRESHOLD)        \r\n",
+					"if is_master_fl_exist:    \r\n",
+					"    dt_zip_location_mstr= DeltaTable.forPath(spark, BASE_ADLS_CONN_STR +TARGET_ZIP_LOCATIONS.format(opco = OPCO))\r\n",
+					"    df_zip_location_mstr=dt_zip_location_mstr.toDF()\r\n",
+					"    is_val_success= validate_count(df_zip_location_mstr,df_zip_locations,VAL_CNT_THRESHOLD)        \r\n",
 					"    if is_val_success :\r\n",
-					"        load_zip_locations(df_zip_locations,BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO), OPCO)\r\n",
+					"            \r\n",
+					"        #NEW, UPDATE RECORDS TO PG        \r\n",
+					"        df_zip_location_delta_stg=df_zip_locations.join(df_zip_location_mstr,on=[\"zip_code\",\"hash_cd\"],how=\"left_anti\")       \r\n",
+					"        logger.info(\"\\t NEW & UPDATE records.Count={0}\".format(df_zip_location_delta_stg.count()))\r\n",
+					"\r\n",
+					"        #DELETE RECORDS TO PG        \r\n",
+					"        df_zip_location_del=df_zip_location_mstr.join(df_zip_locations,on=[\"zip_code\"],how=\"left_anti\")\r\n",
+					"        df_zip_location_del=df_zip_location_del.withColumn(\"is_processed\",lit(False)) \\\r\n",
+					"                                            .withColumn(\"is_active\",lit(False))   \r\n",
+					"        logger.info(\"\\t DELETE records.Count={0}\".format(df_zip_location_del.count()))\r\n",
+					"    \r\n",
+					"        df_zip_location_total_delta=df_zip_location_delta_stg.select(*COLS_ORDER) \\\r\n",
+					"                            .union(df_zip_location_del).select(*COLS_ORDER)\r\n",
+					"        \r\n",
+					"        dt_zip_location_mstr.alias(\"mstr\") \\\r\n",
+					"        .merge(\r\n",
+					"            df_zip_location_total_delta.alias(\"stg\"),\r\n",
+					"            \"mstr.zip_code=stg.zip_code\" \r\n",
+					"            ) \\\r\n",
+					"            .whenMatchedUpdate(set=\r\n",
+					"            {\r\n",
+					"                \"zip_code\": \"stg.zip_code\",\r\n",
+					"                \"latitude\": \"stg.latitude\",\r\n",
+					"                \"longitude\": \"stg.longitude\",            \r\n",
+					"                \"hash_cd\": \"stg.hash_cd\",\r\n",
+					"                \"updated_ts\": \"stg.updated_ts\",\r\n",
+					"                \"updated_by\": \"stg.updated_by\",\r\n",
+					"                \"is_processed\": \"stg.is_processed\",\r\n",
+					"                \"is_active\": \"stg.is_active\"\r\n",
+					"            }\r\n",
+					"            ) \\\r\n",
+					"            .whenNotMatchedInsertAll() \\\r\n",
+					"            .execute()\r\n",
+					"        logger.info(\"\\t Records to be processed for delta. Count={0}, OPCO={1}\".format(dt_zip_location_mstr.toDF().count(),OPCO))\r\n",
+					"        load_parquet_file(dt_zip_location_mstr.toDF(),BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO), OPCO) \r\n",
 					"    else:\r\n",
 					"        logger.error(\"\\t Failed to override master since threshold is exceding \")\r\n",
-					"        raise Exception(\"EXCEEDING_THRESHOLD\")                             \r\n",
+					"        raise Exception(\"EXCEEDING_THRESHOLD\")\r\n",
+					"                                \r\n",
 					"else:\r\n",
 					"        logger.info(\"\\t First Time Master Load\")\r\n",
-					"        load_zip_locations(df_zip_locations,BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO), OPCO)\r\n",
-					""
+					"        load_delta_file(df_zip_locations,BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO), OPCO)\r\n",
+					"        load_parquet_file(df_zip_locations,BASE_ADLS_CONN_STR + TARGET_ZIP_LOCATIONS.format(opco = OPCO),OPCO)"
 				],
-				"execution_count": 14
+				"execution_count": 58
 			}
 		]
 	}

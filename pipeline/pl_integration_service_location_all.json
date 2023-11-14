@@ -36,7 +36,7 @@
 						},
 						"OPCO": {
 							"value": {
-								"value": "@pipeline().parameters.PARAM_OPCO",
+								"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
 								"type": "Expression"
 							},
 							"type": "string"
@@ -98,7 +98,7 @@
 						},
 						"OPCO": {
 							"value": {
-								"value": "@pipeline().parameters.PARAM_OPCO",
+								"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
 								"type": "Expression"
 							},
 							"type": "string"
@@ -160,7 +160,7 @@
 						},
 						"OPCO": {
 							"value": {
-								"value": "@pipeline().parameters.PARAM_OPCO",
+								"value": "@toLower(pipeline().parameters.PARAM_OPCO)",
 								"type": "Expression"
 							},
 							"type": "string"
@@ -187,6 +187,132 @@
 					"driverSize": "Small",
 					"numExecutors": null
 				}
+			},
+			{
+				"name": "execute-svc-loc-pg",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "integrate-store-service-locations",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_integrate_svc_loc_pg",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"PARAM_OPCO": {
+							"value": "@pipeline().parameters.PARAM_OPCO",
+							"type": "Expression"
+						},
+						"PARAM_BASE_ADLS_CONN_STR": {
+							"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+							"type": "Expression"
+						},
+						"PARAM_PG_DB_NM": {
+							"value": "@pipeline().parameters.PARAM_PG_DB_NM",
+							"type": "Expression"
+						},
+						"PARAM_PG_TB_NM": {
+							"value": "@pipeline().parameters.PARAM_SVC_LOC_TB_NM",
+							"type": "Expression"
+						},
+						"PARAM_SCHEMA": {
+							"value": "@pipeline().parameters.PARAM_SCHEMA",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "execute-ecom-store-pg",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "integrate-store-ecom-stores",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_integrate_ecom_stores_pg",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"PARAM_BASE_ADLS_CONN_STR": {
+							"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+							"type": "Expression"
+						},
+						"PARAM_OPCO": {
+							"value": "@pipeline().parameters.PARAM_OPCO",
+							"type": "Expression"
+						},
+						"PARAM_PG_DB_NM": {
+							"value": "@pipeline().parameters.PARAM_PG_DB_NM",
+							"type": "Expression"
+						},
+						"PARAM_PG_TB_NM": {
+							"value": "@pipeline().parameters.PARAM_ECOM_STORE_TB_NM",
+							"type": "Expression"
+						},
+						"PARAM_SCHEMA": {
+							"value": "@pipeline().parameters.PARAM_SCHEMA",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "execute-zip-location-pg",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "integrate-store-zip-locations",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_integrate_zip_locations_pg",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"PARAM_OPCO": {
+							"value": "@pipeline().parameters.PARAM_OPCO",
+							"type": "Expression"
+						},
+						"PARAM_PG_DB_NM": {
+							"value": "@pipeline().parameters.PARAM_PG_DB_NM",
+							"type": "Expression"
+						},
+						"PARAM_PG_TM_NM": {
+							"value": "@pipeline().parameters.PARAM_ZIP_LOCATION_TB_NM",
+							"type": "Expression"
+						},
+						"PARAM_BASE_ADLS_CONN_STR": {
+							"value": "@pipeline().parameters.PARAM_BASE_ADLS_CONN_STR",
+							"type": "Expression"
+						},
+						"PARAM_SCHEMA": {
+							"value": "@pipeline().parameters.PARAM_SCHEMA",
+							"type": "Expression"
+						}
+					}
+				}
 			}
 		],
 		"parameters": {
@@ -196,15 +322,31 @@
 			},
 			"PARAM_OPCO": {
 				"type": "string",
-				"defaultValue": "fdln"
+				"defaultValue": "FDLN"
 			},
 			"PARAM_STG_INDX": {
 				"type": "bool",
-				"defaultValue": true
+				"defaultValue": false
 			},
 			"PARAM_VAL_CNT_THRESHOLD": {
 				"type": "int",
 				"defaultValue": 2
+			},
+			"PARAM_SCHEMA": {
+				"type": "string",
+				"defaultValue": "store"
+			},
+			"PARAM_SVC_LOC_TB_NM": {
+				"type": "string",
+				"defaultValue": "service_location_stg"
+			},
+			"PARAM_ECOM_STORE_TB_NM": {
+				"type": "string",
+				"defaultValue": "ecom_store_stg"
+			},
+			"PARAM_ZIP_LOCATION_TB_NM": {
+				"type": "string",
+				"defaultValue": "zip_location_stg"
 			}
 		},
 		"folder": {

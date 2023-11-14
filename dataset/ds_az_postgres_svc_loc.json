@@ -1,0 +1,44 @@
+{
+	"name": "ds_az_postgres_svc_loc",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_az_postgres_core_services_service_location_fdln",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"PARAM_OPCO": {
+					"value": "@dataset().PARAM_OPCO",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"PARAM_OPCO": {
+				"type": "string",
+				"defaultValue": "FDLN"
+			},
+			"PARAM_PG_TB_NM": {
+				"type": "string"
+			},
+			"PARAM_SCHEMA": {
+				"type": "string",
+				"defaultValue": "store"
+			}
+		},
+		"folder": {
+			"name": "integration/service-location"
+		},
+		"annotations": [],
+		"type": "AzurePostgreSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().PARAM_SCHEMA",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().PARAM_PG_TB_NM",
+				"type": "Expression"
+			}
+		}
+	}
+}
